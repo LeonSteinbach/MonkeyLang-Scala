@@ -35,7 +35,7 @@
 
 # sbt's target directories
 /target/
-/project/**/target/
+/project/
 /test/macro-annot/target/
 /test/files/target/
 /test/target/
