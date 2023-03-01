@@ -18,20 +18,26 @@ case class InfixExpression(operator: String, left: Expression, right: Expression
 
 class MonkeyParser extends RegexParsers {
 
-  private def identifier: Parser[Identifier] = """[a-zA-Z_]\w*""".r ^^ { name => Identifier(name) }
+  private def identifier: Parser[Identifier] = """[a-zA-Z_]\w*""".r ^^ {
+    name => Identifier(name)
+  }
 
-  private def integer: Parser[IntegerLiteral] = """\d+""".r ^^ { value => IntegerLiteral(value.toInt) }
+  private def integer: Parser[IntegerLiteral] = """\d+""".r ^^ {
+    value => IntegerLiteral(value.toInt)
+  }
 
-  private def boolean: Parser[BooleanLiteral] = "true|false".r ^^ { value => BooleanLiteral(value.toBoolean) }
+  private def boolean: Parser[BooleanLiteral] = "true|false".r ^^ {
+    value => BooleanLiteral(value.toBoolean)
+  }
 
   private def value: Parser[Expression] = identifier | integer | boolean
 
-  private def letStatement: Parser[LetStatement] = "let" ~ identifier ~ "=" ~ expression ^^ {
-    case _ ~ name ~ _ ~ value => LetStatement(name, value)
+  private def letStatement: Parser[LetStatement] = "let" ~> identifier ~ ("=" ~> expression <~ ";") ^^ {
+    case name ~ value => LetStatement(name, value)
   }
 
-  private def returnStatement: Parser[ReturnStatement] = "return" ~ expression ^^ {
-    case _ ~ value => ReturnStatement(value)
+  private def returnStatement: Parser[ReturnStatement] = "return" ~> expression <~ ";" ^^ {
+    value => ReturnStatement(value)
   }
 
   private def prefixExpression: Parser[PrefixExpression] = ("-" | "!") ~ factor ^^ {
@@ -50,21 +56,22 @@ class MonkeyParser extends RegexParsers {
     }
   }
 
-  private def factor: Parser[Expression] = prefixExpression | value | "(" ~ expression ~ ")" ^^ {
-    case "(" ~ expression ~ ")" => expression
-    case _ ~ value ~ _ => value
-  }
+  private def factor: Parser[Expression] = prefixExpression | value | "(" ~> expression <~ ")"
 
-  private def expressionStatement: Parser[ExpressionStatement] = expression <~ ";" ^^ { expression => ExpressionStatement(expression) }
+  private def expressionStatement: Parser[ExpressionStatement] = expression <~ ";" ^^ {
+    expression => ExpressionStatement(expression)
+  }
 
   private def statement: Parser[Statement] = letStatement | returnStatement | expressionStatement
 
-  def program: Parser[Program] = rep(statement) ^^ { statements => Program(statements) }
+  def program: Parser[Program] = rep(statement) ^^ {
+    statements => Program(statements)
+  }
 
 }
 
 object Main extends App {
   private val parser = new MonkeyParser()
-  private val result = parser.parseAll(parser.program, "let foo = (1 + -2) * -(-3 / --4)")
+  private val result = parser.parseAll(parser.program, "let foo = (1 + -2) * -(-3 / --4);")
   println(result)
 }
