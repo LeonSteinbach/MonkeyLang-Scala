@@ -53,6 +53,10 @@ class MonkeyParser extends RegexParsers {
     case parameters ~ body => FunctionLiteral(parameters, body)
   }
 
+  private def callExpression: Parser[Expression] = identifier ~ ("(" ~> repsep(expression, ",") <~ ")") ^^ {
+    case function ~ arguments => CallExpression(function, arguments)
+  }
+
   private def blockStatement = "{" ~> rep(statement) <~ "}" ^^ {
     statements => BlockStatement(statements)
   }
@@ -61,7 +65,7 @@ class MonkeyParser extends RegexParsers {
     case operator ~ value => PrefixExpression(operator, value)
   }
 
-  private def expression: Parser[Expression] = ifExpression | functionLiteral | equalityExpression ~ rep(("==" | "!=" | "<" | ">") ~ equalityExpression) ^^ {
+  private def expression: Parser[Expression] = ifExpression | functionLiteral | callExpression | equalityExpression ~ rep(("==" | "!=" | "<" | ">") ~ equalityExpression) ^^ {
     case equalityExpression ~ list => (list foldLeft equalityExpression) {
       case (acc, op ~ next) => InfixExpression(op, acc, next)
     }
@@ -95,6 +99,6 @@ class MonkeyParser extends RegexParsers {
 
 object Main extends App {
   private val parser = new MonkeyParser()
-  private val result = parser.parseAll(parser.program, "let foo = fn(x, y) { x * y; };")
+  private val result = parser.parseAll(parser.program, "asdf(1, x, y > z == y > x);")
   println(result)
 }
