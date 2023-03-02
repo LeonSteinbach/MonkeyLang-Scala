@@ -99,6 +99,6 @@ class MonkeyParser extends RegexParsers {
 
 object Main extends App {
   private val parser = new MonkeyParser()
-  private val result = parser.parseAll(parser.program, "asdf(1, x, y > z == y > x);")
+  private val result = parser.parseAll(parser.program, "1a;")
   println(result)
 }
