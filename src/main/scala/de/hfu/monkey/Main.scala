@@ -36,12 +36,44 @@ class MonkeyParser extends RegexParsers {
 
   private def value: Parser[Expression] = identifier | integer | boolean
 
+  private def prefixExpression: Parser[PrefixExpression] = ("-" | "!") ~ factor ^^ {
+    case operator ~ value => PrefixExpression(operator, value)
+  }
+
+  private def factor: Parser[Expression] = prefixExpression | value | "(" ~> expression <~ ")"
+
+  private def multiplicativeExpression: Parser[Expression] = factor ~ rep(("*" | "/") ~ factor) ^^ {
+    case factor ~ list => (list foldLeft factor) {
+      case (acc, op ~ next) => InfixExpression(op, acc, next)
+    }
+  }
+
+  private def additiveExpression: Parser[Expression] = multiplicativeExpression ~ rep(("+" | "-") ~ multiplicativeExpression) ^^ {
+    case term ~ list => (list foldLeft term) {
+      case (acc, op ~ next) => InfixExpression(op, acc, next)
+    }
+  }
+
+  private def expression: Parser[Expression] = ifExpression | functionLiteral | callExpression | additiveExpression ~ rep(("==" | "!=" | "<" | ">") ~ additiveExpression) ^^ {
+    case equalityExpression ~ list => (list foldLeft equalityExpression) {
+      case (acc, op ~ next) => InfixExpression(op, acc, next)
+    }
+  }
+
+  private def expressionStatement: Parser[ExpressionStatement] = expression <~ ";" ^^ {
+    expression => ExpressionStatement(expression)
+  }
+
   private def letStatement: Parser[LetStatement] = "let" ~> identifier ~ ("=" ~> expression <~ ";") ^^ {
     case name ~ value => LetStatement(name, value)
   }
 
   private def returnStatement: Parser[ReturnStatement] = "return" ~> expression <~ ";" ^^ {
     value => ReturnStatement(value)
+  }
+
+  private def blockStatement = "{" ~> rep(statement) <~ "}" ^^ {
+    statements => BlockStatement(statements)
   }
 
   private def ifExpression: Parser[Expression] = "if" ~> ("(" ~> expression <~ ")") ~ blockStatement ~ opt("else" ~> blockStatement) ^^ {
@@ -55,38 +87,6 @@ class MonkeyParser extends RegexParsers {
 
   private def callExpression: Parser[Expression] = identifier ~ ("(" ~> repsep(expression, ",") <~ ")") ^^ {
     case function ~ arguments => CallExpression(function, arguments)
-  }
-
-  private def blockStatement = "{" ~> rep(statement) <~ "}" ^^ {
-    statements => BlockStatement(statements)
-  }
-
-  private def prefixExpression: Parser[PrefixExpression] = ("-" | "!") ~ factor ^^ {
-    case operator ~ value => PrefixExpression(operator, value)
-  }
-
-  private def expression: Parser[Expression] = ifExpression | functionLiteral | callExpression | equalityExpression ~ rep(("==" | "!=" | "<" | ">") ~ equalityExpression) ^^ {
-    case equalityExpression ~ list => (list foldLeft equalityExpression) {
-      case (acc, op ~ next) => InfixExpression(op, acc, next)
-    }
-  }
-
-  private def equalityExpression: Parser[Expression] = term ~ rep(("+" | "-") ~ term) ^^ {
-    case term ~ list => (list foldLeft term) {
-      case (acc, op ~ next) => InfixExpression(op, acc, next)
-    }
-  }
-
-  private def term: Parser[Expression] = factor ~ rep(("*" | "/") ~ factor) ^^ {
-    case factor ~ list => (list foldLeft factor) {
-      case (acc, op ~ next) => InfixExpression(op, acc, next)
-    }
-  }
-
-  private def factor: Parser[Expression] = prefixExpression | value | "(" ~> expression <~ ")"
-
-  private def expressionStatement: Parser[ExpressionStatement] = expression <~ ";" ^^ {
-    expression => ExpressionStatement(expression)
   }
 
   private def statement: Parser[Statement] = letStatement | returnStatement | expressionStatement | blockStatement
