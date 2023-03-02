@@ -1,13 +1,12 @@
 package de.hfu.monkey
 
 import org.scalatest.funsuite.AnyFunSuite
-import de.hfu.monkey.MonkeyParser
 
 import scala.util.Failure
 
 class ParserTest extends AnyFunSuite {
 
-  val parser = new MonkeyParser()
+  val parser = new Parser()
 
   test("parser.identifier") {
 
