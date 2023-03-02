@@ -12,6 +12,10 @@ case class IntegerLiteral(value: Int) extends Expression
 case class BooleanLiteral(value: Boolean) extends Expression
 case class LetStatement(name: Identifier, value: Expression) extends Statement
 case class ReturnStatement(value: Expression) extends Statement
+case class BlockStatement(statements: List[Statement]) extends Statement
+case class IfExpression(condition: Expression, consequence: BlockStatement, alternative: BlockStatement) extends Expression
+case class FunctionLiteral(parameters: List[Identifier], body: BlockStatement) extends Expression
+case class CallExpression(function: Expression, arguments: List[Expression]) extends Expression
 case class ExpressionStatement(expression: Expression) extends Statement
 case class PrefixExpression(operator: String, value: Expression) extends Expression
 case class InfixExpression(operator: String, left: Expression, right: Expression) extends Expression
@@ -40,11 +44,26 @@ class MonkeyParser extends RegexParsers {
     value => ReturnStatement(value)
   }
 
+  private def ifExpression: Parser[Expression] = "if" ~> ("(" ~> expression <~ ")") ~ blockStatement ~ opt("else" ~> blockStatement) ^^ {
+    case condition ~ consequence ~ Some(alternative) => IfExpression(condition, consequence, alternative)
+    case condition ~ consequence ~ None => IfExpression(condition, consequence, BlockStatement(Nil))
+  }
+
+  private def blockStatement = "{" ~> rep(statement) <~ "}" ^^ {
+    statements => BlockStatement(statements)
+  }
+
   private def prefixExpression: Parser[PrefixExpression] = ("-" | "!") ~ factor ^^ {
     case operator ~ value => PrefixExpression(operator, value)
   }
 
-  private def expression: Parser[Expression] = term ~ rep(("+" | "-") ~ term) ^^ {
+  private def expression: Parser[Expression] = ifExpression | equalityExpression ~ rep(("==" | "!=" | "<" | ">") ~ equalityExpression) ^^ {
+    case equalityExpression ~ list => (list foldLeft equalityExpression) {
+      case (acc, op ~ next) => InfixExpression(op, acc, next)
+    }
+  }
+
+  private def equalityExpression: Parser[Expression] = term ~ rep(("+" | "-") ~ term) ^^ {
     case term ~ list => (list foldLeft term) {
       case (acc, op ~ next) => InfixExpression(op, acc, next)
     }
@@ -62,7 +81,7 @@ class MonkeyParser extends RegexParsers {
     expression => ExpressionStatement(expression)
   }
 
-  private def statement: Parser[Statement] = letStatement | returnStatement | expressionStatement
+  private def statement: Parser[Statement] = letStatement | returnStatement | expressionStatement | blockStatement
 
   def program: Parser[Program] = rep(statement) ^^ {
     statements => Program(statements)
@@ -72,6 +91,6 @@ class MonkeyParser extends RegexParsers {
 
 object Main extends App {
   private val parser = new MonkeyParser()
-  private val result = parser.parseAll(parser.program, "let foo = (1 + -2) * -(-3 / --4);")
+  private val result = parser.parseAll(parser.program, "let a = if (x > 0 == !false) { x * 2; } else { x / x; };")
   println(result)
 }
