@@ -42,23 +42,19 @@ class Parser extends RegexParsers {
 
   private def factor: Parser[Expression] = callExpression | prefixExpression | value | "(" ~> expression <~ ")"
 
-  private def multiplicativeExpression: Parser[Expression] = factor ~ rep(("*" | "/") ~ factor) ^^ {
-    case factor ~ list => (list foldLeft factor) {
-      case (acc, op ~ next) => InfixExpression(op, acc, next)
+  private def binaryExpression(operatorParser: Parser[String], operandParser: Parser[Expression]): Parser[Expression] = {
+    operandParser ~ rep(operatorParser ~ operandParser) ^^ {
+      case expression ~ list => (list foldLeft expression) {
+        case (left, op ~ right) => InfixExpression(op, left, right)
+      }
     }
   }
 
-  private def additiveExpression: Parser[Expression] = multiplicativeExpression ~ rep(("+" | "-") ~ multiplicativeExpression) ^^ {
-    case expr ~ list => (list foldLeft expr) {
-      case (acc, op ~ next) => InfixExpression(op, acc, next)
-    }
-  }
+  private def multiplicativeExpression: Parser[Expression] = binaryExpression("*" | "/", factor)
 
-  private def expression: Parser[Expression] = ifExpression | functionLiteral | additiveExpression ~ rep(("==" | "!=" | "<" | ">") ~ additiveExpression) ^^ {
-    case expr ~ list => (list foldLeft expr) {
-      case (acc, op ~ next) => InfixExpression(op, acc, next)
-    }
-  }
+  private def additiveExpression: Parser[Expression] = binaryExpression("+" | "-", multiplicativeExpression)
+
+  private def expression: Parser[Expression] = ifExpression | functionLiteral | binaryExpression("==" | "!=" | "<" | ">", additiveExpression)
 
   private def expressionStatement: Parser[ExpressionStatement] = expression <~ ";" ^^ {
     expression => ExpressionStatement(expression)

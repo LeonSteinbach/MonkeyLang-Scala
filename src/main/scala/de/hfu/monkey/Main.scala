@@ -6,7 +6,7 @@ object Main extends App {
   private val result = parser.parseAll(parser.program,
     "let fib = fn(n) { " +
     "  if (n < 2) {" +
-    "    n; " +
+    "    return n; " +
     "  };" +
     "  fib(n-1) + fib(n-2);" +
     "};" +
