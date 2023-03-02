@@ -22,7 +22,7 @@ case class InfixExpression(operator: String, left: Expression, right: Expression
 
 class Parser extends RegexParsers {
 
-  private def identifier: Parser[Identifier] = """[a-zA-Z_]\w*""".r ^^ {
+  private def identifier: Parser[Identifier] = not("let" | "return" | "fn" | "true" | "false") ~> """[a-zA-Z_]\w*\b""".r ^^ {
     name => Identifier(name)
   }
 
