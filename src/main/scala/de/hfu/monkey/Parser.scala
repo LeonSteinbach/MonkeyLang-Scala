@@ -30,7 +30,7 @@ class Parser extends RegexParsers {
     value => IntegerLiteral(value.toInt)
   }
 
-  private def boolean: Parser[BooleanLiteral] = "true|false".r ^^ {
+  private def boolean: Parser[BooleanLiteral] = ("true" | "false") ^^ {
     value => BooleanLiteral(value.toBoolean)
   }
 
