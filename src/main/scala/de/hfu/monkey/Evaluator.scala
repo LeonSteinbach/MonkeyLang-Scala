@@ -62,12 +62,8 @@ object Evaluator {
   }
 
   private def evaluatePrefixExpression(operator: String, right: Object): Object = operator match {
-    case "!" => right match {
-      case TRUE => FALSE
-      case FALSE => TRUE
-      case NULL => TRUE
-      case _ => FALSE
-    }
+    case "!" if isTruthy(right) => FALSE
+    case "!" => TRUE
     case "-" => right.`type`() match {
       case ObjectType.INTEGER => IntegerObject(-right.asInstanceOf[IntegerObject].value)
       case _ => NULL
