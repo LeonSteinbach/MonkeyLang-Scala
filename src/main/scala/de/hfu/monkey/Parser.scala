@@ -22,73 +22,74 @@ case class InfixExpression(operator: String, left: Expression, right: Expression
 
 class Parser extends RegexParsers {
 
-  private def identifier: Parser[Identifier] = not("let" | "return" | "fn" | "true" | "false") ~> """[a-zA-Z_]\w*\b""".r ^^ {
-    name => Identifier(name)
-  }
+	private def identifier: Parser[Identifier] = not("let" | "return" | "fn" | "true" | "false") ~> """[a-zA-Z_]\w*\b""".r ^^ {
+		name => Identifier(name)
+	}
 
-  private def integer: Parser[IntegerLiteral] = """\d+""".r ^^ {
-    value => IntegerLiteral(value.toInt)
-  }
+	private def integer: Parser[IntegerLiteral] =
+		"""\d+""".r ^^ {
+			value => IntegerLiteral(value.toInt)
+		}
 
-  private def boolean: Parser[BooleanLiteral] = ("true" | "false") ^^ {
-    value => BooleanLiteral(value.toBoolean)
-  }
+	private def boolean: Parser[BooleanLiteral] = ("true" | "false") ^^ {
+		value => BooleanLiteral(value.toBoolean)
+	}
 
-  private def value: Parser[Expression] = identifier | integer | boolean
+	private def value: Parser[Expression] = identifier | integer | boolean
 
-  private def prefixExpression: Parser[PrefixExpression] = ("-" | "!") ~ factor ^^ {
-    case operator ~ value => PrefixExpression(operator, value)
-  }
+	private def prefixExpression: Parser[PrefixExpression] = ("-" | "!") ~ factor ^^ {
+		case operator ~ value => PrefixExpression(operator, value)
+	}
 
-  private def factor: Parser[Expression] = callExpression | prefixExpression | value | "(" ~> expression <~ ")"
+	private def factor: Parser[Expression] = callExpression | prefixExpression | value | "(" ~> expression <~ ")"
 
-  private def binaryExpression(operatorParser: Parser[String], operandParser: Parser[Expression]): Parser[Expression] = {
-    operandParser ~ rep(operatorParser ~ operandParser) ^^ {
-      case expression ~ list => (list foldLeft expression) {
-        case (left, op ~ right) => InfixExpression(op, left, right)
-      }
-    }
-  }
+	private def binaryExpression(operatorParser: Parser[String], operandParser: Parser[Expression]): Parser[Expression] = {
+		operandParser ~ rep(operatorParser ~ operandParser) ^^ {
+			case expression ~ list => (list foldLeft expression) {
+				case (left, op ~ right) => InfixExpression(op, left, right)
+			}
+		}
+	}
 
-  private def multiplicativeExpression: Parser[Expression] = binaryExpression("*" | "/", factor)
+	private def multiplicativeExpression: Parser[Expression] = binaryExpression("*" | "/", factor)
 
-  private def additiveExpression: Parser[Expression] = binaryExpression("+" | "-", multiplicativeExpression)
+	private def additiveExpression: Parser[Expression] = binaryExpression("+" | "-", multiplicativeExpression)
 
-  private def expression: Parser[Expression] = ifExpression | functionLiteral | binaryExpression("==" | "!=" | "<" | ">", additiveExpression)
+	private def expression: Parser[Expression] = ifExpression | functionLiteral | binaryExpression("==" | "!=" | "<" | ">", additiveExpression)
 
-  private def expressionStatement: Parser[ExpressionStatement] = expression <~ ";" ^^ {
-    expression => ExpressionStatement(expression)
-  }
+	private def expressionStatement: Parser[ExpressionStatement] = expression <~ ";" ^^ {
+		expression => ExpressionStatement(expression)
+	}
 
-  private def letStatement: Parser[LetStatement] = "let" ~> identifier ~ ("=" ~> expression <~ ";") ^^ {
-    case name ~ value => LetStatement(name, value)
-  }
+	private def letStatement: Parser[LetStatement] = "let" ~> identifier ~ ("=" ~> expression <~ ";") ^^ {
+		case name ~ value => LetStatement(name, value)
+	}
 
-  private def returnStatement: Parser[ReturnStatement] = "return" ~> expression <~ ";" ^^ {
-    value => ReturnStatement(value)
-  }
+	private def returnStatement: Parser[ReturnStatement] = "return" ~> expression <~ ";" ^^ {
+		value => ReturnStatement(value)
+	}
 
-  private def blockStatement = "{" ~> rep(statement) <~ "}" ^^ {
-    statements => BlockStatement(statements)
-  }
+	private def blockStatement = "{" ~> rep(statement) <~ "}" ^^ {
+		statements => BlockStatement(statements)
+	}
 
-  private def ifExpression: Parser[Expression] = "if" ~> ("(" ~> expression <~ ")") ~ blockStatement ~ opt("else" ~> blockStatement) ^^ {
-    case condition ~ consequence ~ Some(alternative) => IfExpression(condition, consequence, alternative)
-    case condition ~ consequence ~ None => IfExpression(condition, consequence, BlockStatement(Nil))
-  }
+	private def ifExpression: Parser[Expression] = "if" ~> ("(" ~> expression <~ ")") ~ blockStatement ~ opt("else" ~> blockStatement) ^^ {
+		case condition ~ consequence ~ Some(alternative) => IfExpression(condition, consequence, alternative)
+		case condition ~ consequence ~ None => IfExpression(condition, consequence, BlockStatement(Nil))
+	}
 
-  private def functionLiteral: Parser[Expression] = "fn" ~> ("(" ~> repsep(identifier, ",") <~ ")") ~ blockStatement ^^ {
-    case parameters ~ body => FunctionLiteral(parameters, body)
-  }
+	private def functionLiteral: Parser[Expression] = "fn" ~> ("(" ~> repsep(identifier, ",") <~ ")") ~ blockStatement ^^ {
+		case parameters ~ body => FunctionLiteral(parameters, body)
+	}
 
-  private def callExpression: Parser[Expression] = identifier ~ ("(" ~> repsep(expression, ",") <~ ")") ^^ {
-    case function ~ arguments => CallExpression(function, arguments)
-  }
+	private def callExpression: Parser[Expression] = identifier ~ ("(" ~> repsep(expression, ",") <~ ")") ^^ {
+		case function ~ arguments => CallExpression(function, arguments)
+	}
 
-  private def statement: Parser[Statement] = letStatement | returnStatement | expressionStatement | blockStatement
+	private def statement: Parser[Statement] = letStatement | returnStatement | expressionStatement | blockStatement
 
-  def program: Parser[Program] = rep(statement) ^^ {
-    statements => Program(statements)
-  }
+	def program: Parser[Program] = rep(statement) ^^ {
+		statements => Program(statements)
+	}
 
 }
