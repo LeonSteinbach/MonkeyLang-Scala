@@ -10,7 +10,7 @@ case class Token(tokenType: TokenType, literal: String) {
 }
 
 object Token {
-	val keywords: Map[String, TokenType] = Map(
+	private val keywords: Map[String, TokenType] = Map(
 		"fn" -> TokenType.FUNCTION,
 		"let" -> TokenType.LET,
 		"true" -> TokenType.TRUE,
