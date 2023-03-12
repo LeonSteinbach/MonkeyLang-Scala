@@ -4,8 +4,8 @@ import java.io.StringReader
 
 object Main extends App {
 
-	private val lexer: Lexer = Lexer("foo 123 = ! * / return let true false if else fn foo123bar")
-	var token: Option[Token] = Some(lexer.nextToken())
+	private val lexer: Lexer = Lexer("; (")
+	var token: Option[Token] = None
 	private val startTime1 = System.currentTimeMillis()
 	while (token.forall(_.tokenType != TokenType.EOF)) {
 		token = Some(lexer.nextToken())

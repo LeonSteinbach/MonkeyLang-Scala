@@ -7,6 +7,8 @@ case class Lexer(private val input: String) {
 	private var readPosition: Int = 0
 	private var currentCharacter: Option[Byte] = None
 
+	readCharacter()
+
 	private def readCharacter(): Unit = {
 		currentCharacter = if (readPosition >= input.length) Some(-1.toByte) else Some(input.charAt(readPosition).toByte)
 		position = readPosition
@@ -21,19 +23,19 @@ case class Lexer(private val input: String) {
 		val token = currentCharacter match {
 			case Some('=') => processDoubleCharacterToken(TokenType.EQ, TokenType.ASSIGN, '=')
 			case Some('!') => processDoubleCharacterToken(TokenType.NEQ, TokenType.BANG, '=')
-			case Some('+') => Token(TokenType.PLUS, currentCharacter.getOrElse("").toString)
-			case Some('-') => Token(TokenType.MINUS, currentCharacter.getOrElse("").toString)
-			case Some('*') => Token(TokenType.ASTERIX, currentCharacter.getOrElse("").toString)
-			case Some('/') => Token(TokenType.SLASH, currentCharacter.getOrElse("").toString)
-			case Some('<') => Token(TokenType.LT, currentCharacter.getOrElse("").toString)
-			case Some('>') => Token(TokenType.GT, currentCharacter.getOrElse("").toString)
-			case Some(';') => Token(TokenType.SEMICOLON, currentCharacter.getOrElse("").toString)
-			case Some('(') => Token(TokenType.LPAREN, currentCharacter.getOrElse("").toString)
-			case Some(')') => Token(TokenType.RPAREN, currentCharacter.getOrElse("").toString)
-			case Some(',') => Token(TokenType.COMMA, currentCharacter.getOrElse("").toString)
-			case Some('{') => Token(TokenType.LBRACE, currentCharacter.getOrElse("").toString)
-			case Some('}') => Token(TokenType.RBRACE, currentCharacter.getOrElse("").toString)
-			case Some(-1 )=> Token(TokenType.EOF, "")
+			case Some('+') => Token(TokenType.PLUS, currentCharacter.get.toChar.toString)
+			case Some('-') => Token(TokenType.MINUS, currentCharacter.get.toChar.toString)
+			case Some('*') => Token(TokenType.ASTERIX, currentCharacter.get.toChar.toString)
+			case Some('/') => Token(TokenType.SLASH, currentCharacter.get.toChar.toString)
+			case Some('<') => Token(TokenType.LT, currentCharacter.get.toChar.toString)
+			case Some('>') => Token(TokenType.GT, currentCharacter.get.toChar.toString)
+			case Some(';') => Token(TokenType.SEMICOLON, currentCharacter.get.toChar.toString)
+			case Some('(') => Token(TokenType.LPAREN, currentCharacter.get.toChar.toString)
+			case Some(')') => Token(TokenType.RPAREN, currentCharacter.get.toChar.toString)
+			case Some(',') => Token(TokenType.COMMA, currentCharacter.get.toChar.toString)
+			case Some('{') => Token(TokenType.LBRACE, currentCharacter.get.toChar.toString)
+			case Some('}') => Token(TokenType.RBRACE, currentCharacter.get.toChar.toString)
+			case Some(-1) => Token(TokenType.EOF, "")
 			case _ => getIdentifier
 		}
 		readCharacter()
@@ -46,13 +48,13 @@ case class Lexer(private val input: String) {
 				val literal = readIdentifierOrNumber(_.isLetterOrDigit)
 				Token(Token.lookupIdent(literal), literal)
 			case Some(c) if c.toChar.isDigit =>
-				val literal = readIdentifierOrNumber(c => c.isDigit || c == '.')
-				if (literal.length > 1 && (literal.startsWith("0") || literal.exists(_.isLetter)))
+				val literal = readIdentifierOrNumber(_.isDigit)
+				if (literal.length > 1 && literal.startsWith("0"))
 					Token(TokenType.ILLEGAL, literal)
 				else
 					Token(TokenType.INT, literal)
 			case Some(c) =>
-				Token(TokenType.ILLEGAL, c.toString)
+				Token(TokenType.ILLEGAL, c.toChar.toString)
 			case None =>
 				Token(TokenType.ILLEGAL, "")
 		}
@@ -61,12 +63,12 @@ case class Lexer(private val input: String) {
 	private def processDoubleCharacterToken(doubleCharTokenType: TokenType, singleCharTokenType: TokenType, currentChar: Char): Token = {
 		peekCharacter() match {
 			case Some(c) if c == currentChar =>
-				var literal = currentCharacter.getOrElse("").toString
+				var literal = currentCharacter.get.toChar.toString
 				readCharacter()
-				literal += currentCharacter.getOrElse("").toString
+				literal += currentCharacter.get.toChar.toString
 				Token(doubleCharTokenType, literal)
 			case _ =>
-				Token(singleCharTokenType, currentCharacter.getOrElse("").toString)
+				Token(singleCharTokenType, currentCharacter.get.toChar.toString)
 		}
 	}
 
