@@ -20,7 +20,5 @@ object Token {
 		"return" -> TokenType.RETURN
 	)
 
-	def lookupIdent(ident: String): TokenType = {
-		keywords.getOrElse(ident, TokenType.IDENT)
-	}
+	def lookupIdent(ident: String): TokenType = keywords.getOrElse(ident, TokenType.IDENT)
 }

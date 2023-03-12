@@ -4,7 +4,7 @@ import java.io.StringReader
 
 object Main extends App {
 
-	private val lexer: Lexer = Lexer("1 2 123 qwerty abc123 ads123asd 0123 return let fn true false if else else123")
+	private val lexer: Lexer = Lexer("foo 123 = ! * / return let true false if else fn foo123bar")
 	var token: Option[Token] = Some(lexer.nextToken())
 	private val startTime1 = System.currentTimeMillis()
 	while (token.forall(_.tokenType != TokenType.EOF)) {

@@ -1,37 +1,39 @@
 package de.hfu.monkey
 
+import scala.annotation.tailrec
+
 case class Lexer(private val input: String) {
 	private var position: Int = 0
 	private var readPosition: Int = 0
-	private var currentCharacter: Byte = 0
+	private var currentCharacter: Option[Byte] = None
 
 	private def readCharacter(): Unit = {
-		currentCharacter = if (readPosition >= input.length) -1 else input.charAt(readPosition).toByte
+		currentCharacter = if (readPosition >= input.length) Some(-1.toByte) else Some(input.charAt(readPosition).toByte)
 		position = readPosition
 		readPosition += 1
 	}
 
-	private def peekCharacter(): Byte = if (readPosition >= input.length) -1 else input.charAt(readPosition).toByte
+	private def peekCharacter(): Option[Byte] = if (readPosition >= input.length) Some(-1.toByte) else Some(input.charAt(readPosition).toByte)
 
 	def nextToken(): Token = {
 		skipWhitespace()
 
 		val token = currentCharacter match {
-			case '=' => processDoubleCharacterToken(TokenType.EQ, TokenType.ASSIGN, '=')
-			case '!' => processDoubleCharacterToken(TokenType.NEQ, TokenType.BANG, '=')
-			case '+' => Token(TokenType.PLUS, currentCharacter.toChar.toString)
-			case '-' => Token(TokenType.MINUS, currentCharacter.toChar.toString)
-			case '*' => Token(TokenType.ASTERIX, currentCharacter.toChar.toString)
-			case '/' => Token(TokenType.SLASH, currentCharacter.toChar.toString)
-			case '<' => Token(TokenType.LT, currentCharacter.toChar.toString)
-			case '>' => Token(TokenType.GT, currentCharacter.toChar.toString)
-			case ';' => Token(TokenType.SEMICOLON, currentCharacter.toChar.toString)
-			case '(' => Token(TokenType.LPAREN, currentCharacter.toChar.toString)
-			case ')' => Token(TokenType.RPAREN, currentCharacter.toChar.toString)
-			case ',' => Token(TokenType.COMMA, currentCharacter.toChar.toString)
-			case '{' => Token(TokenType.LBRACE, currentCharacter.toChar.toString)
-			case '}' => Token(TokenType.RBRACE, currentCharacter.toChar.toString)
-			case -1 => Token(TokenType.EOF, "")
+			case Some('=') => processDoubleCharacterToken(TokenType.EQ, TokenType.ASSIGN, '=')
+			case Some('!') => processDoubleCharacterToken(TokenType.NEQ, TokenType.BANG, '=')
+			case Some('+') => Token(TokenType.PLUS, currentCharacter.getOrElse("").toString)
+			case Some('-') => Token(TokenType.MINUS, currentCharacter.getOrElse("").toString)
+			case Some('*') => Token(TokenType.ASTERIX, currentCharacter.getOrElse("").toString)
+			case Some('/') => Token(TokenType.SLASH, currentCharacter.getOrElse("").toString)
+			case Some('<') => Token(TokenType.LT, currentCharacter.getOrElse("").toString)
+			case Some('>') => Token(TokenType.GT, currentCharacter.getOrElse("").toString)
+			case Some(';') => Token(TokenType.SEMICOLON, currentCharacter.getOrElse("").toString)
+			case Some('(') => Token(TokenType.LPAREN, currentCharacter.getOrElse("").toString)
+			case Some(')') => Token(TokenType.RPAREN, currentCharacter.getOrElse("").toString)
+			case Some(',') => Token(TokenType.COMMA, currentCharacter.getOrElse("").toString)
+			case Some('{') => Token(TokenType.LBRACE, currentCharacter.getOrElse("").toString)
+			case Some('}') => Token(TokenType.RBRACE, currentCharacter.getOrElse("").toString)
+			case Some(-1 )=> Token(TokenType.EOF, "")
 			case _ => getIdentifier
 		}
 		readCharacter()
@@ -39,40 +41,53 @@ case class Lexer(private val input: String) {
 	}
 
 	private def getIdentifier: Token = {
-		if (currentCharacter.toChar.isLetter) {
-			val literal = readIdentifierOrNumber
-			Token(Token.lookupIdent(literal), literal)
-		} else if (currentCharacter.toChar.isDigit) {
-			val literal = readIdentifierOrNumber
-			if (literal.length > 1 && (literal.startsWith("0") || literal.exists(_.isLetter)))
-				Token(TokenType.ILLEGAL, literal)
-			else
-				Token(TokenType.INT, literal)
-		} else {
-			Token(TokenType.ILLEGAL, currentCharacter.toChar.toString)
+		currentCharacter match {
+			case Some(c) if c.toChar.isLetter =>
+				val literal = readIdentifierOrNumber(_.isLetterOrDigit)
+				Token(Token.lookupIdent(literal), literal)
+			case Some(c) if c.toChar.isDigit =>
+				val literal = readIdentifierOrNumber(c => c.isDigit || c == '.')
+				if (literal.length > 1 && (literal.startsWith("0") || literal.exists(_.isLetter)))
+					Token(TokenType.ILLEGAL, literal)
+				else
+					Token(TokenType.INT, literal)
+			case Some(c) =>
+				Token(TokenType.ILLEGAL, c.toString)
+			case None =>
+				Token(TokenType.ILLEGAL, "")
 		}
 	}
 
 	private def processDoubleCharacterToken(doubleCharTokenType: TokenType, singleCharTokenType: TokenType, currentChar: Char): Token = {
-		if (peekCharacter() == currentChar) {
-			var literal = currentCharacter.toChar.toString
-			readCharacter()
-			literal += currentCharacter.toChar.toString
-			Token(doubleCharTokenType, literal)
-		} else {
-			Token(singleCharTokenType, currentCharacter.toChar.toString)
+		peekCharacter() match {
+			case Some(c) if c == currentChar =>
+				var literal = currentCharacter.getOrElse("").toString
+				readCharacter()
+				literal += currentCharacter.getOrElse("").toString
+				Token(doubleCharTokenType, literal)
+			case _ =>
+				Token(singleCharTokenType, currentCharacter.getOrElse("").toString)
 		}
 	}
 
-	private def readIdentifierOrNumber: String = {
-		val oldPosition = position
-		while (peekCharacter().toChar.isLetter || peekCharacter().toChar.isDigit)
-			readCharacter()
-		input.substring(oldPosition, position + 1)
+	@tailrec
+	private def readIdentifierOrNumber(condition: Char => Boolean, acc: String = ""): String = {
+		currentCharacter match {
+			case Some(c) if condition(c.toChar) =>
+				readCharacter()
+				readIdentifierOrNumber(condition, acc + c.toChar)
+			case _ =>
+				acc
+		}
 	}
 
+	@tailrec
 	private def skipWhitespace(): Unit = {
-		while (List(' ', '\t', '\n', '\r').contains(currentCharacter.toChar))
-			readCharacter()
+		currentCharacter match {
+			case Some(c) if c.toChar.isWhitespace =>
+				readCharacter()
+				skipWhitespace()
+			case _ =>
+		}
 	}
 }
