@@ -3,9 +3,9 @@ package de.hfu.monkey
 import org.scalatest.funsuite.AnyFunSuite
 import scala.util.Failure
 
-class ParserTest extends AnyFunSuite {
+class CombinatorParserTest extends AnyFunSuite {
 
-  val parser = new Parser()
+  val parser = new CombinatorParser()
 
   test("parser.identifier") {
     assert(parser.parseAll(parser.program, "foo; a123b;").get ===

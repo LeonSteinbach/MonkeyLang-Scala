@@ -2,7 +2,7 @@ package de.hfu.monkey
 
 import scala.util.parsing.combinator.RegexParsers
 
-class Parser extends RegexParsers {
+class CombinatorParser extends RegexParsers {
 
 	private def identifier: Parser[Identifier] = not("let" | "return" | "fn" | "true" | "false") ~> """[a-zA-Z_]\w*\b""".r ^^ {
 		name => Identifier(name)

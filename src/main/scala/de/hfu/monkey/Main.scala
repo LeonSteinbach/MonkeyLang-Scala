@@ -4,6 +4,7 @@ import java.io.StringReader
 
 object Main extends App {
 
+	/*
 	private val lexer: Lexer = Lexer("; (")
 	var token: Option[Token] = None
 	private val startTime1 = System.currentTimeMillis()
@@ -13,6 +14,13 @@ object Main extends App {
 	}
 	private val endTime1 = System.currentTimeMillis()
 	println(s"Lexer [ms]: ${endTime1 - startTime1}")
+	*/
+
+	private val lexer: Lexer = Lexer("let foo = bar; return 0;")
+	private val parser: ManualParser = ManualParser(lexer)
+	private val parsed: Program = parser.parseProgram()
+	println("\n" + parsed.toString + "\n")
+	parser.errors.foreach(error => println(error))
 
 	/*
 	private val startTime1 = System.currentTimeMillis()

@@ -4,7 +4,7 @@ import org.scalatest.funsuite.AnyFunSuite
 
 class EvaluatorTest extends AnyFunSuite {
 
-	private val parser = new Parser()
+	private val parser = new CombinatorParser()
 
 	test("evaluator.integer") {
 		var parsed = parser.parseAll(parser.program, "1;")
