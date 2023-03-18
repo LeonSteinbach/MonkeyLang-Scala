@@ -3,7 +3,7 @@ package de.hfu.monkey
 import scala.collection.mutable.ListBuffer
 
 enum Precedence {
-	case LOWEST, EQUALS, LESSGREATER, SUM, PRODUCT, PREFIX, CALL
+	case LOWEST, EQUALS, LESSGREATER, SUM, PRODUCT, CALL
 }
 
 case class ManualParser(lexer: Lexer) {

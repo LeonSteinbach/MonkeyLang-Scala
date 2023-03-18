@@ -16,27 +16,30 @@ object Main extends App {
 	println(s"Lexer [ms]: ${endTime1 - startTime1}")
 */
 
-	private val lexer: Lexer = Lexer("foo(1, bar, fn(a, b) { a+b; });")
-	private val parser: ManualParser = ManualParser(lexer)
-	private val parsed: Program = parser.parseProgram()
-	println("\n" + parsed.toString + "\n")
-	parser.errors.foreach(error => println(error))
+	private val input: String = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(25);"
 
-	/*
+	private val lexer: Lexer = Lexer(input)
+	private val manualParser: ManualParser = ManualParser(lexer)
+
 	private val startTime1 = System.currentTimeMillis()
-	private val parser = new Parser()
-	private val parsed = parser.parseAll(parser.program,
-		"let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(25);")
+	private var parsed: Program = manualParser.parseProgram()
 	private val endTime1 = System.currentTimeMillis()
 
+	private val combinatorParser = new CombinatorParser()
 	private val startTime2 = System.currentTimeMillis()
-	private val evaluated = Evaluator.evaluateProgram(parsed.get, new Environment)
+	parsed = combinatorParser.parseAll(combinatorParser.program, input).get
 	private val endTime2 = System.currentTimeMillis()
+
+	private val startTime3 = System.currentTimeMillis()
+	private val evaluated = Evaluator.evaluateProgram(parsed, new Environment)
+	private val endTime3 = System.currentTimeMillis()
 
 	println(parsed)
 	println(evaluated)
-	println(s"Parser [ms]:    ${endTime1 - startTime1}")
-	println(s"Evaluator [ms]: ${endTime2 - startTime2}")
-	*/
+	println(s"Manual Parser [ms]:     ${endTime1 - startTime1}")
+	println(s"Combinator Parser [ms]: ${endTime2 - startTime2}")
+	println(s"Evaluator [ms]:         ${endTime3 - startTime3}")
+
+	manualParser.errors.foreach(error => println(error))
 
 }
