@@ -29,8 +29,11 @@ case class ManualParser(lexer: Lexer) {
 		TokenType.INT -> (() => parseIntegerLiteral: Option[Node]),
 		TokenType.TRUE -> (() => parseBooleanLiteral: Option[Node]),
 		TokenType.FALSE -> (() => parseBooleanLiteral: Option[Node]),
+		TokenType.BANG -> (() => parsePrefixExpression: Option[Node]),
+		TokenType.MINUS -> (() => parsePrefixExpression: Option[Node]),
 		TokenType.LPAREN -> (() => parseGroupedExpression: Option[Node]),
 		TokenType.IF -> (() => parseIfExpression: Option[Node]),
+		//TokenType.FUNCTION -> (() => parseFunctionLiteral: Option[Node]),
 	)
 
 	private val infixParseFunctions: Map[TokenType, Expression => Expression] = Map(
@@ -224,6 +227,16 @@ case class ManualParser(lexer: Lexer) {
 			advanceTokens()
 		}
 		Some(BlockStatement(statements.toList))
+	}
+
+	private def parsePrefixExpression: Option[PrefixExpression] = {
+		val operator: String = currentToken.get.literal
+		advanceTokens()
+		val expression: Expression = parseExpression(Precedence.LOWEST) match {
+			case Some(expression: Expression) => Some(expression).get
+			case None => return None
+		}
+		Some(PrefixExpression(operator, expression))
 	}
 
 }
