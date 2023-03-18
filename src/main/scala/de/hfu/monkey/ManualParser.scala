@@ -33,7 +33,7 @@ case class ManualParser(lexer: Lexer) {
 		TokenType.MINUS -> (() => parsePrefixExpression: Option[Node]),
 		TokenType.LPAREN -> (() => parseGroupedExpression: Option[Node]),
 		TokenType.IF -> (() => parseIfExpression: Option[Node]),
-		//TokenType.FUNCTION -> (() => parseFunctionLiteral: Option[Node]),
+		TokenType.FUNCTION -> (() => parseFunctionLiteral: Option[Node]),
 	)
 
 	private val infixParseFunctions: Map[TokenType, Expression => Expression] = Map(
@@ -227,6 +227,46 @@ case class ManualParser(lexer: Lexer) {
 			advanceTokens()
 		}
 		Some(BlockStatement(statements.toList))
+	}
+
+	private def parseFunctionLiteral: Option[FunctionLiteral] = {
+		if (!expectPeek(TokenType.LPAREN))
+			return None
+
+		val parameters: List[Identifier] = parseFunctionParameters match {
+			case Some(parameters: List[Identifier]) => Some(parameters).get
+			case _ => return None
+		}
+
+		if (!expectPeek(TokenType.LBRACE))
+			return None
+
+		val body: BlockStatement = parseBlockStatement match {
+			case Some(blockStatement: BlockStatement) => Some(blockStatement).get
+			case None => return None
+		}
+
+		Some(FunctionLiteral(parameters, body))
+	}
+
+	private def parseFunctionParameters: Option[List[Identifier]] = {
+		val parameters: ListBuffer[Identifier] = ListBuffer[Identifier]()
+		if (peekToken.get.tokenType == TokenType.RPAREN) {
+			advanceTokens()
+			return Some(parameters.toList)
+		}
+		advanceTokens()
+		parameters += Identifier(currentToken.get.literal)
+		while (peekToken.get.tokenType == TokenType.COMMA) {
+			advanceTokens()
+			advanceTokens()
+			parameters += Identifier(currentToken.get.literal)
+		}
+		if (expectPeek(TokenType.RPAREN)) {
+			Some(parameters.toList)
+		} else {
+			None
+		}
 	}
 
 	private def parsePrefixExpression: Option[PrefixExpression] = {
