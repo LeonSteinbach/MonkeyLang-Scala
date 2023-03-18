@@ -36,8 +36,15 @@ case class ManualParser(lexer: Lexer) {
 		TokenType.FUNCTION -> (() => parseFunctionLiteral: Option[Node]),
 	)
 
-	private val infixParseFunctions: Map[TokenType, Expression => Expression] = Map(
-
+	private val infixParseFunctions: Map[TokenType, Expression => Option[Node]] = Map(
+		TokenType.PLUS -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
+		TokenType.MINUS -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
+		TokenType.ASTERIX -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
+		TokenType.SLASH -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
+		TokenType.EQ -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
+		TokenType.NEQ -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
+		TokenType.LT -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
+		TokenType.GT -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
 	)
 
 	advanceTokens()
@@ -149,7 +156,10 @@ case class ManualParser(lexer: Lexer) {
 				case _ => return Some(leftExpression)
 			}
 			advanceTokens()
-			leftExpression = parseInfix(leftExpression)
+			leftExpression = parseInfix(Some(leftExpression).get) match {
+				case Some(expression: Expression) => Some(expression).get
+				case _ => return None
+			}
 		}
 		Some(leftExpression)
 	}
@@ -277,6 +287,17 @@ case class ManualParser(lexer: Lexer) {
 			case None => return None
 		}
 		Some(PrefixExpression(operator, expression))
+	}
+
+	private def parseInfixExpression(leftExpression: Expression): Option[InfixExpression] = {
+		val operator: String = currentToken.get.literal
+		val precedence: Precedence = precedences.getOrElse(currentToken.get.tokenType, Precedence.LOWEST)
+		advanceTokens()
+		val rightExpression: Expression = parseExpression(precedence) match {
+			case Some(rightExpression: Expression) => Some(rightExpression).get
+			case None => return None
+		}
+		Some(InfixExpression(operator, leftExpression, rightExpression))
 	}
 
 }
