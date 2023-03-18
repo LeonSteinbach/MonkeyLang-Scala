@@ -4,8 +4,8 @@ import java.io.StringReader
 
 object Main extends App {
 
-	/*
-	private val lexer: Lexer = Lexer("; (")
+/*
+	private val lexer: Lexer = Lexer("if (true) { 1; } else { 2; };")
 	var token: Option[Token] = None
 	private val startTime1 = System.currentTimeMillis()
 	while (token.forall(_.tokenType != TokenType.EOF)) {
@@ -14,9 +14,9 @@ object Main extends App {
 	}
 	private val endTime1 = System.currentTimeMillis()
 	println(s"Lexer [ms]: ${endTime1 - startTime1}")
-	*/
+*/
 
-	private val lexer: Lexer = Lexer("let foo = bar; return 0;")
+	private val lexer: Lexer = Lexer("if (true) { 1; return 2; } else { foo; };")
 	private val parser: ManualParser = ManualParser(lexer)
 	private val parsed: Program = parser.parseProgram()
 	println("\n" + parsed.toString + "\n")

@@ -29,6 +29,8 @@ case class ManualParser(lexer: Lexer) {
 		TokenType.INT -> (() => parseIntegerLiteral: Option[Node]),
 		TokenType.TRUE -> (() => parseBooleanLiteral: Option[Node]),
 		TokenType.FALSE -> (() => parseBooleanLiteral: Option[Node]),
+		TokenType.LPAREN -> (() => parseGroupedExpression: Option[Node]),
+		TokenType.IF -> (() => parseIfExpression: Option[Node]),
 	)
 
 	private val infixParseFunctions: Map[TokenType, Expression => Expression] = Map(
@@ -129,21 +131,24 @@ case class ManualParser(lexer: Lexer) {
 	private def parseExpression(precedence: Precedence): Option[Expression] = {
 		val parsePrefix = prefixParseFunctions.get(currentToken.get.tokenType) match {
 			case Some(function) => function
-			case None =>
+			case _ =>
 				noPrefixParseFunctionError(currentToken.get.tokenType)
 				return None
 		}
-		var leftExpression: Option[Expression] = parsePrefix().asInstanceOf[Option[Expression]]
+		var leftExpression: Expression = parsePrefix() match {
+			case Some(expression: Expression) => Some(expression).get
+			case _ => return None
+		}
 
-		while (peekToken.get.tokenType != TokenType.SEMICOLON && precedence.ordinal < peekPrecedence.ordinal) {
+		while (peekToken.isDefined && peekToken.get.tokenType != TokenType.SEMICOLON && precedence.ordinal < peekPrecedence.ordinal) {
 			val parseInfix = infixParseFunctions.get(peekToken.get.tokenType) match {
 				case Some(function) => function
-				case None => return leftExpression
+				case _ => return Some(leftExpression)
 			}
 			advanceTokens()
-			leftExpression = Some(parseInfix(leftExpression.get))
+			leftExpression = parseInfix(leftExpression)
 		}
-		leftExpression
+		Some(leftExpression)
 	}
 
 	private def parseIdentifier: Option[Identifier] = Some(Identifier(currentToken.get.literal))
@@ -158,5 +163,67 @@ case class ManualParser(lexer: Lexer) {
 	}
 
 	private def parseBooleanLiteral: Option[BooleanLiteral] = Some(BooleanLiteral(currentToken.get.tokenType == TokenType.TRUE))
+
+	private def parseGroupedExpression: Option[Expression] = {
+		advanceTokens()
+		val expression: Expression = parseExpression(Precedence.LOWEST) match {
+			case Some(expression: Expression) => Some(expression).get
+			case None => return None
+		}
+		if (expectPeek(TokenType.RPAREN)) {
+			Some(expression)
+		} else {
+			None
+		}
+	}
+
+	private def parseIfExpression: Option[Expression] = {
+		if (!expectPeek(TokenType.LPAREN))
+			return None
+
+		advanceTokens()
+		val condition: Expression = parseExpression(Precedence.LOWEST) match {
+			case Some(expression: Expression) => Some(expression).get
+			case None => return None
+		}
+
+		if (!expectPeek(TokenType.RPAREN))
+			return None
+
+		if (!expectPeek(TokenType.LBRACE))
+			return None
+
+		val consequence: BlockStatement = parseBlockStatement match {
+			case Some(blockStatement: BlockStatement) => Some(blockStatement).get
+			case None => return None
+		}
+
+		if (peekToken.get.tokenType != TokenType.ELSE)
+			return Some(IfExpression(condition, consequence, BlockStatement(List[Statement]())))
+
+		advanceTokens()
+		if (!expectPeek(TokenType.LBRACE))
+			return None
+
+		val alternative: BlockStatement = parseBlockStatement match {
+			case Some(blockStatement: BlockStatement) => Some(blockStatement).get
+			case None => return None
+		}
+
+		Some(IfExpression(condition, consequence, alternative))
+	}
+
+	private def parseBlockStatement: Option[BlockStatement] = {
+		advanceTokens()
+		val statements = ListBuffer[Statement]()
+		while (currentToken.get.tokenType != TokenType.RBRACE && currentToken.get.tokenType != TokenType.EOF) {
+			parseStatement match {
+				case Some(statement) => statements += statement
+				case _ =>
+			}
+			advanceTokens()
+		}
+		Some(BlockStatement(statements.toList))
+	}
 
 }
