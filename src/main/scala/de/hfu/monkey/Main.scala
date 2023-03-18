@@ -16,7 +16,7 @@ object Main extends App {
 	println(s"Lexer [ms]: ${endTime1 - startTime1}")
 */
 
-	private val lexer: Lexer = Lexer("1 * (2 + 3)")
+	private val lexer: Lexer = Lexer("foo(1, bar, fn(a, b) { a+b; });")
 	private val parser: ManualParser = ManualParser(lexer)
 	private val parsed: Program = parser.parseProgram()
 	println("\n" + parsed.toString + "\n")

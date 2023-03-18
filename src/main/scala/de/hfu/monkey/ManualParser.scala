@@ -37,6 +37,7 @@ case class ManualParser(lexer: Lexer) {
 	)
 
 	private val infixParseFunctions: Map[TokenType, Expression => Option[Node]] = Map(
+		TokenType.LPAREN -> ((expression: Expression) => parseCallExpression(expression): Option[Node]),
 		TokenType.PLUS -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
 		TokenType.MINUS -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
 		TokenType.ASTERIX -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
@@ -298,6 +299,40 @@ case class ManualParser(lexer: Lexer) {
 			case None => return None
 		}
 		Some(InfixExpression(operator, leftExpression, rightExpression))
+	}
+
+	private def parseCallExpression(function: Expression): Option[CallExpression] = {
+		val arguments: List[Expression] = parseExpressionList(TokenType.RPAREN) match {
+			case Some(arguments: List[Expression]) => arguments
+			case None => return None
+		}
+		Some(CallExpression(function, arguments))
+	}
+
+	private def parseExpressionList(end: TokenType): Option[List[Expression]] = {
+		val expressions: ListBuffer[Expression] = ListBuffer[Expression]()
+		if (peekToken.get.tokenType == end) {
+			advanceTokens()
+			return Some(expressions.toList)
+		}
+		advanceTokens()
+		parseExpression(Precedence.LOWEST) match
+			case Some(expression: Expression) => expressions += Some(expression).get
+			case _ =>
+
+		while (peekToken.get.tokenType == TokenType.COMMA) {
+			advanceTokens()
+			advanceTokens()
+			parseExpression(Precedence.LOWEST) match
+				case Some(expression: Expression) => expressions += Some(expression).get
+				case _ => return None
+		}
+
+		if (expectPeek(end)) {
+			Some(expressions.toList)
+		} else {
+			None
+		}
 	}
 
 }
