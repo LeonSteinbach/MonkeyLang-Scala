@@ -45,17 +45,17 @@ case class Lexer(private val input: String) {
 	private def getIdentifier: Token = {
 		currentCharacter match {
 			case Some(c) if c.toChar.isLetter =>
-				val literal = readIdentifierOrNumber(_.isLetterOrDigit)
+				val literal = currentCharacter.get.toChar.toString + readIdentifierOrNumber(_.isLetterOrDigit)
 				Token(Token.lookupIdent(literal), literal)
 			case Some(c) if c.toChar.isDigit =>
-				val literal = readIdentifierOrNumber(_.isDigit)
+				val literal = currentCharacter.get.toChar.toString + readIdentifierOrNumber(_.isLetterOrDigit)
 				if (literal.length > 1 && literal.startsWith("0"))
 					Token(TokenType.ILLEGAL, literal)
 				else
 					Token(TokenType.INT, literal)
-			case Some(c) =>
+			case Some(c) if !c.toChar.isWhitespace =>
 				Token(TokenType.ILLEGAL, c.toChar.toString)
-			case None =>
+			case _ =>
 				Token(TokenType.ILLEGAL, "")
 		}
 	}
@@ -74,7 +74,7 @@ case class Lexer(private val input: String) {
 
 	@tailrec
 	private def readIdentifierOrNumber(condition: Char => Boolean, acc: String = ""): String = {
-		currentCharacter match {
+		peekCharacter() match {
 			case Some(c) if condition(c.toChar) =>
 				readCharacter()
 				readIdentifierOrNumber(condition, acc + c.toChar)
