@@ -1,8 +1,12 @@
-package de.hfu.monkey
+package de.hfu.monkey.Parser
+
+import de.hfu.monkey.*
 
 import scala.util.parsing.combinator.RegexParsers
 
-class CombinatorParser extends RegexParsers {
+case class CombinatorParser() extends Parser.Parser, RegexParsers {
+
+	override def errors: Seq[String] = Seq[String]()
 
 	private def identifier: Parser[Identifier] = not("let" | "return" | "fn" | "true" | "false") ~> """[a-zA-Z_]\w*\b""".r ^^ {
 		name => Identifier(name)
@@ -72,8 +76,11 @@ class CombinatorParser extends RegexParsers {
 
 	private def statement: Parser[Statement] = letStatement | returnStatement | expressionStatement | blockStatement
 
-	def program: Parser[Program] = rep(statement) ^^ {
+	private def program: Parser[Program] = rep(statement) ^^ {
 		statements => Program(statements)
 	}
 
+	override def parse(input: String): Program = {
+		parseAll(program, input).get
+	}
 }

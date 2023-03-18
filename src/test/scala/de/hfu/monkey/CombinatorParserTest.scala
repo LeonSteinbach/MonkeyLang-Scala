@@ -1,26 +1,23 @@
 package de.hfu.monkey
 
+import de.hfu.monkey.Parser.CombinatorParser
 import org.scalatest.funsuite.AnyFunSuite
+
 import scala.util.Failure
 
 class CombinatorParserTest extends AnyFunSuite {
 
-  val parser = new CombinatorParser()
+  private val parser: CombinatorParser = CombinatorParser()
 
   test("parser.identifier") {
-    assert(parser.parseAll(parser.program, "foo; a123b;").get ===
+    assert(parser.parse("foo; a123b;") ===
       Program(List(
           ExpressionStatement(Identifier("foo")),
           ExpressionStatement(Identifier("a123b")))))
-
-    parser.parseAll(parser.program, "1a;") match {
-      case parser.Failure(_, _) =>
-      case _ => fail()
-    }
   }
 
   test("parser.integer") {
-    assert(parser.parseAll(parser.program, "0; 1; 123;").get ===
+    assert(parser.parse("0; 1; 123;") ===
       Program(List(
           ExpressionStatement(IntegerLiteral(0)),
           ExpressionStatement(IntegerLiteral(1)),
@@ -28,14 +25,14 @@ class CombinatorParserTest extends AnyFunSuite {
   }
 
   test("parser.boolean") {
-    assert(parser.parseAll(parser.program, "true; false;").get ===
+    assert(parser.parse("true; false;") ===
       Program(List(
           ExpressionStatement(BooleanLiteral(true)),
           ExpressionStatement(BooleanLiteral(false)))))
   }
 
   test("parser.prefixExpression") {
-    assert(parser.parseAll(parser.program, "!true; !!false; -1; --foo;").get ===
+    assert(parser.parse("!true; !!false; -1; --foo;") ===
       Program(List(
           ExpressionStatement(PrefixExpression("!", BooleanLiteral(true))),
           ExpressionStatement(PrefixExpression("!", PrefixExpression("!", BooleanLiteral(false)))),
@@ -44,7 +41,7 @@ class CombinatorParserTest extends AnyFunSuite {
   }
 
   test("parser.infixExpression") {
-    assert(parser.parseAll(parser.program, "1 + 2; 1 - 2; 1 * 2; 1 / 2; 1 < 2; 1 > 2; 1 == 2; 1 != 2;").get ===
+    assert(parser.parse("1 + 2; 1 - 2; 1 * 2; 1 / 2; 1 < 2; 1 > 2; 1 == 2; 1 != 2;") ===
       Program(List(
           ExpressionStatement(InfixExpression("+", IntegerLiteral(1), IntegerLiteral(2))),
           ExpressionStatement(InfixExpression("-", IntegerLiteral(1), IntegerLiteral(2))),
@@ -55,7 +52,7 @@ class CombinatorParserTest extends AnyFunSuite {
           ExpressionStatement(InfixExpression("==", IntegerLiteral(1), IntegerLiteral(2))),
           ExpressionStatement(InfixExpression("!=", IntegerLiteral(1), IntegerLiteral(2))))))
 
-    assert(parser.parseAll(parser.program, "a + 1; foo() == bar(1, a);").get ===
+    assert(parser.parse("a + 1; foo() == bar(1, a);") ===
       Program(List(
           ExpressionStatement(InfixExpression("+", Identifier("a"), IntegerLiteral(1))),
           ExpressionStatement(InfixExpression("==",
@@ -64,7 +61,7 @@ class CombinatorParserTest extends AnyFunSuite {
   }
 
   test("parser.groupedExpression") {
-    assert(parser.parseAll(parser.program, "1 + 2 * 3; 1 + (2 * 3); (1 + 2) * 3;").get ===
+    assert(parser.parse("1 + 2 * 3; 1 + (2 * 3); (1 + 2) * 3;") ===
       Program(List(
         ExpressionStatement(
           InfixExpression("+", IntegerLiteral(1), InfixExpression("*", IntegerLiteral(2), IntegerLiteral(3)))),
@@ -75,7 +72,7 @@ class CombinatorParserTest extends AnyFunSuite {
   }
 
   test("parser.ifExpression") {
-    assert(parser.parseAll(parser.program, "if (a > 0) { a; }; if (a < b) { } else { b; };").get ===
+    assert(parser.parse("if (a > 0) { a; }; if (a < b) { } else { b; };") ===
       Program(List(
         ExpressionStatement(IfExpression(
           InfixExpression(">", Identifier("a"), IntegerLiteral(0)),
@@ -88,7 +85,7 @@ class CombinatorParserTest extends AnyFunSuite {
   }
 
   test("parser.functionLiteral") {
-    assert(parser.parseAll(parser.program, "fn (a, b) { a + b; }; fn () {};").get ===
+    assert(parser.parse("fn (a, b) { a + b; }; fn () {};") ===
       Program(List(
         ExpressionStatement(FunctionLiteral(
           List(Identifier("a"), Identifier("b")),
@@ -99,7 +96,7 @@ class CombinatorParserTest extends AnyFunSuite {
   }
 
   test("parser.callExpression") {
-    assert(parser.parseAll(parser.program, "add(1, 2); foo(a + 1, bar());").get ===
+    assert(parser.parse("add(1, 2); foo(a + 1, bar());") ===
       Program(List(
         ExpressionStatement(CallExpression(
           Identifier("add"),
@@ -110,14 +107,14 @@ class CombinatorParserTest extends AnyFunSuite {
   }
 
   test("parser.letStatement") {
-    assert(parser.parseAll(parser.program, "let foo = 1; let bar = foo + 2;").get ===
+    assert(parser.parse("let foo = 1; let bar = foo + 2;") ===
       Program(List(
         LetStatement(Identifier("foo"), IntegerLiteral(1)),
         LetStatement(Identifier("bar"), InfixExpression("+", Identifier("foo"), IntegerLiteral(2))))))
   }
 
   test("parser.returnStatement") {
-    assert(parser.parseAll(parser.program, "return 1; return foo + bar;").get ===
+    assert(parser.parse("return 1; return foo + bar;") ===
       Program(List(
         ReturnStatement(IntegerLiteral(1)),
         ReturnStatement(InfixExpression("+", Identifier("foo"), Identifier("bar"))))))

@@ -1,4 +1,6 @@
-package de.hfu.monkey
+package de.hfu.monkey.Parser
+
+import de.hfu.monkey.*
 
 import scala.collection.mutable.ListBuffer
 
@@ -6,11 +8,13 @@ enum Precedence {
 	case LOWEST, EQUALS, LESSGREATER, SUM, PRODUCT, CALL
 }
 
-case class ManualParser(lexer: Lexer) {
+case class ManualParser() extends Parser.Parser {
 
+	private var lexer: Option[Lexer] = None
 	private var currentToken: Option[Token] = None
 	private var peekToken: Option[Token] = None
-	var errors: Seq[String] = Seq[String]()
+	private var errorList: Seq[String] = Seq[String]()
+	override def errors: Seq[String] = errorList
 
 	private val precedences: Map[TokenType, Precedence] = Map(
 		TokenType.EQ -> Precedence.EQUALS,
@@ -48,9 +52,7 @@ case class ManualParser(lexer: Lexer) {
 		TokenType.GT -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
 	)
 
-	advanceTokens()
-
-	def parseProgram(): Program = {
+	private def parseProgram: Program = {
 		val statements = ListBuffer[Statement]()
 		advanceTokens()
 
@@ -66,7 +68,7 @@ case class ManualParser(lexer: Lexer) {
 
 	private def advanceTokens(): Unit = {
 		currentToken = peekToken
-		peekToken = Some(lexer.nextToken())
+		peekToken = Some(lexer.get.nextToken())
 	}
 
 	private def expectPeek(tokenType: TokenType): Boolean = {
@@ -83,15 +85,15 @@ case class ManualParser(lexer: Lexer) {
 	private def peekPrecedence: Precedence = precedences.getOrElse(peekToken.get.tokenType, Precedence.LOWEST)
 
 	private def peekError(tokenType: TokenType): Unit = {
-		errors = errors :+ s"Expected next token to be $tokenType, got ${peekToken.get.tokenType} instead."
+		errorList = errorList :+ s"Expected next token to be $tokenType, got ${peekToken.get.tokenType} instead."
 	}
 
 	private def noPrefixParseFunctionError(tokenType: TokenType): Unit = {
-		errors = errors :+ s"No prefix parse function for $tokenType."
+		errorList = errorList :+ s"No prefix parse function for $tokenType."
 	}
 
 	private def integerParseError(int: String): Unit = {
-		errors = errors :+ s"Could not parse $int as integer."
+		errorList = errorList :+ s"Could not parse $int as integer."
 	}
 
 	private def parseStatement: Option[Statement] = {
@@ -335,4 +337,9 @@ case class ManualParser(lexer: Lexer) {
 		}
 	}
 
+	override def parse(input: String): Program = {
+		lexer = Some(Lexer(input))
+		advanceTokens()
+		parseProgram
+	}
 }
