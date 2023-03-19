@@ -25,6 +25,7 @@ object Evaluator {
 		case Some(expressionStatement: ExpressionStatement) => evaluate(Some(expressionStatement.expression), environment)
 		case Some(integerLiteral: IntegerLiteral) => IntegerObject(integerLiteral.value)
 		case Some(booleanLiteral: BooleanLiteral) => BooleanObject(booleanLiteral.value)
+		case Some(stringLiteral: StringLiteral) => StringObject(stringLiteral.value)
 		case Some(prefixExpression: PrefixExpression) => evaluatePrefixExpression(prefixExpression.operator, evaluate(Some(prefixExpression.value), environment))
 		case Some(infixExpression: InfixExpression) =>
 			val infixLeftValue: Object = evaluate(Some(infixExpression.left), environment)
@@ -73,6 +74,7 @@ object Evaluator {
 	private def evaluateInfixExpression(operator: String, left: Object, right: Object): Object = (left, operator, right) match {
 		case (left: Object, opr: String, right: Object) if left.`type`() != right.`type`() => ErrorObject(s"type mismatch: ${left.`type`()} $opr ${right.`type`()}")
 		case (left: IntegerObject, operator: String, right: IntegerObject) => evaluateIntegerInfixExpression(operator, left, right)
+		case (left: StringObject, operator: String, right: StringObject) => evaluateStringInfixExpression(operator, left, right)
 		case (left: BooleanObject, "==", right: BooleanObject) => if (left.value == right.value) TRUE else FALSE
 		case (left: BooleanObject, "!=", right: BooleanObject) => if (left.value != right.value) TRUE else FALSE
 		case _ => ErrorObject(s"unknown operator: ${left.`type`()} $operator ${right.`type`()}")
@@ -87,6 +89,11 @@ object Evaluator {
 		case ">" => if (left.value > right.value) TRUE else FALSE
 		case "==" => if (left.value == right.value) TRUE else FALSE
 		case "!=" => if (left.value != right.value) TRUE else FALSE
+		case _ => ErrorObject(s"unknown operator: ${left.`type`()} $operator ${right.`type`()}")
+	}
+
+	private def evaluateStringInfixExpression(operator: String, left: StringObject, right: StringObject): Object = operator match {
+		case "+" => StringObject(left.value + right.value)
 		case _ => ErrorObject(s"unknown operator: ${left.`type`()} $operator ${right.`type`()}")
 	}
 

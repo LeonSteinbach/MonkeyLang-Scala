@@ -2,19 +2,20 @@ package de.hfu.monkey.Parser
 
 import de.hfu.monkey.*
 
-import scala.util.parsing.combinator.RegexParsers
+import scala.util.matching.Regex
+import scala.util.parsing.combinator.{JavaTokenParsers, RegexParsers}
 
-case class CombinatorParser() extends Parser.Parser, RegexParsers {
+case class CombinatorParser() extends Parser.Parser, JavaTokenParsers {
 
 	override def errors: Seq[String] = Seq[String]()
 
 	private def identifier: Parser[Identifier] = not("let" | "return" | "fn" | "true" | "false") ~> """[a-zA-Z_]\w*\b""".r ^^ { name => Identifier(name) }
 
-	private def integer: Parser[IntegerLiteral] = """\d+""".r ^^ { value => IntegerLiteral(value.toInt) }
+	private def integer: Parser[IntegerLiteral] = wholeNumber ^^ { value => IntegerLiteral(value.toInt) }
 
 	private def boolean: Parser[BooleanLiteral] = ("true" | "false") ^^ { value => BooleanLiteral(value.toBoolean) }
 
-	private def string: Parser[StringLiteral] = "\"" ~> """\w*""".r <~ "\"" ^^ { value => StringLiteral(value) }
+	private def string: Parser[StringLiteral] = stringLiteral ^^ { value => StringLiteral(value.substring(1, value.length - 1) ) }
 
 	private def value: Parser[Expression] = identifier | integer | boolean | string
 
