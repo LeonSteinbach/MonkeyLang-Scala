@@ -125,11 +125,16 @@ object Evaluator {
 	}
 
 	private def evaluateIdentifier(identifier: Identifier, environment: Environment): Object = {
-		val result = environment.get(identifier.name)
-		if (!result._2)
-			ErrorObject(s"identifier not found: ${identifier.name}")
-		else
-			result._1.getOrElse(NULL)
+		val (result, ok) = environment.get(identifier.name)
+		if (ok) {
+			result.getOrElse(NULL)
+		} else {
+			val maybeBuiltin = Builtins.builtins.get(identifier.name)
+			maybeBuiltin match {
+				case Some(builtinObject: BuiltinObject) => Some(builtinObject).get
+				case None => ErrorObject(s"identifier not found: ${identifier.name}")
+			}
+		}
 	}
 
 	private def evaluateCallExpression(callExpression: CallExpression, environment: Environment): Object = {
@@ -138,7 +143,7 @@ object Evaluator {
 			callFunction
 		else
 			val callArguments: List[Object] = evaluateExpressions(Some(callExpression.arguments), environment)
-			if (callArguments.length == 1 && isError(callArguments.head)) callArguments.head else applyFunction(callFunction.asInstanceOf[FunctionObject], callArguments)
+			if (callArguments.length == 1 && isError(callArguments.head)) callArguments.head else applyFunction(callFunction, callArguments)
 	}
 
 	private def evaluateExpressions(expressions: Option[List[Expression]], environment: Environment): List[Object] = returning {
@@ -160,15 +165,16 @@ object Evaluator {
 		result.toList
 	}
 
-	private def applyFunction(function: FunctionObject, arguments: List[Object]): Object = {
-		function.`type`() match {
-			case ObjectType.FUNCTION =>
-				val extendedEnvironment = extendFunctionEnvironment(function, arguments)
-				val evaluated = function.body match {
+	private def applyFunction(function: Object, arguments: List[Object]): Object = {
+		function match {
+			case functionObject: FunctionObject =>
+				val extendedEnvironment = extendFunctionEnvironment(functionObject, arguments)
+				val evaluated = functionObject.body match {
 					case Some(body) => evaluate(Some(body), extendedEnvironment)
 					case _ => return NULL
 				}
 				unwrapReturnValue(evaluated)
+			case builtinObject: BuiltinObject => builtinObject.builtinFunction(arguments.toArray)
 			case _ => ErrorObject(s"not a function: ${function.`type`()}")
 		}
 	}

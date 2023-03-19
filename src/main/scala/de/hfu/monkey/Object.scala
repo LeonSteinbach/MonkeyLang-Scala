@@ -2,8 +2,10 @@ package de.hfu.monkey
 
 object ObjectType extends Enumeration {
 	type ObjectType = Value
-	val INTEGER, BOOLEAN, STRING, NULL, RETURN, ERROR, FUNCTION = Value
+	val INTEGER, BOOLEAN, STRING, NULL, RETURN, ERROR, FUNCTION, BUILTIN = Value
 }
+
+type BuiltinFunction = Array[Object] => Object
 
 trait Object {
 	def `type`(): ObjectType.Value
@@ -43,4 +45,9 @@ case class ErrorObject(message: String) extends Object {
 case class FunctionObject(parameters: Option[List[Identifier]] = None, body: Option[BlockStatement] = None, environment: Environment) extends Object {
 	override def toString: String = s"fn(${parameters.map(_.mkString(", ")).getOrElse("")}) ${body.getOrElse("")}"
 	def `type`(): ObjectType.Value = ObjectType.FUNCTION
+}
+
+case class BuiltinObject(builtinFunction: BuiltinFunction) extends Object {
+	override def toString: String = "builtin function"
+	def `type`(): ObjectType.Value = ObjectType.BUILTIN
 }
