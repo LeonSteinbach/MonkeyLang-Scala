@@ -10,8 +10,9 @@ case class Config(
 	evaluator: String = "interpreter",
 	evaluate: Boolean = true,
 	compareParsers: Boolean = false,
+	nested: Boolean = false,
 	iterations: Int = 10000,
-	steps: Int = 100,
+	steps: Int = 10,
 	timingsParserFilename: Option[String] = None
 )
 
@@ -44,7 +45,10 @@ object Main {
 					.children(
 						opt[String]("file-parser")
 							.action((x, c) => c.copy(timingsParserFilename = Some(x)))
-							.text("File to write parser timings comparison")
+							.text("File to write parser timings comparison"),
+						opt[Unit]("nested")
+							.action((_, c) => c.copy(nested = true))
+							.text("Use nested function calls instead of linear append")
 					)
 			)
 		}
@@ -53,7 +57,7 @@ object Main {
 			case Some(config) =>
 				val parser = if (config.parser == "manual") ManualParser() else CombinatorParser()
 				if (config.compareParsers) {
-					compareParsers(config.iterations, config.steps, config.timingsParserFilename)
+					compareParsers(config.iterations, config.steps, config.nested, config.timingsParserFilename)
 				} else {
 					println(s"Using ${config.parser} parser\n")
 					printResult(parser, config.evaluator, config.evaluate)
@@ -101,39 +105,38 @@ object Main {
 		parser.errors.foreach(error => println(error))
 	}
 
-	private def compareParsers(iterations: Int, steps: Int, filename: Option[String]): Unit = {
+	private def compareParsers(iterations: Int, steps: Int, nested: Boolean, filename: Option[String]): Unit = {
 
-		val out = new java.io.PrintStream(System.out, true)
+		val parserInput: String = if (nested) "foo + bar(" else "let foo = fn(a, b) { let bar = a + b; return bar * bar; }; let x = foo(foo(1, 2), 3); if (-x > 0 == true == !false) { (0 + 1) * 2; } else { x; };"
 
-		val parserInput: String = "let foo = fn(a, b) { let bar = a + b; return bar * bar; }; let x = foo(foo(1, 2), 3); if (-x > 0 == true == !false) { (0 + 1) * 2; } else { x; };"
-
-		val printStringManual = new StringBuilder("# Iterations Duration\n# First data block (index 0)\n")
-		val printStringCombinators = new StringBuilder("\n\n# Iterations Duration\n# Second data block (index 1)\n")
+		val printString = new StringBuilder("# Iterations\tManual\tCombinators\n")
 
 		val parserManual: Parser.Parser = Parser.ManualParser()
 		val parserCombinator: Parser.Parser = Parser.CombinatorParser()
 
 		for (multiply <- 0.to(iterations, steps)) {
+			val finalInput = new StringBuilder("")
+			if (nested) {
+				finalInput.append(parserInput * multiply + ")" * multiply + (if (multiply > 0) ";" else ""))
+			} else {
+				finalInput.append(parserInput * multiply)
+			}
+
 			val startTime1 = System.currentTimeMillis()
-			parserManual.parse(parserInput * multiply)
+			parserManual.parse(finalInput.toString())
 			val endTime1 = System.currentTimeMillis()
 
 			val startTime2 = System.currentTimeMillis()
-			parserCombinator.parse(parserInput * multiply)
+			parserCombinator.parse(finalInput.toString())
 			val endTime2 = System.currentTimeMillis()
 
-			printStringManual.append(s"$multiply ${endTime1 - startTime1}\n")
-			//printStringCombinators.append(s"$multiply 1\n")
-			printStringCombinators.append(s"$multiply ${endTime2 - startTime2}\n")
-			out.println(s"[$multiply/$iterations]")
+			printString.append(s"$multiply\t${endTime1 - startTime1}\t${endTime2 - startTime2}\n")
+			print(s"[$multiply/$iterations]\r")
 		}
-
-		println(printStringManual.toString() + "\n\n")
-		println(printStringCombinators.toString())
 
 		filename match {
 			case Some(filename: String) =>
-				val finalString = printStringManual.toString() + printStringCombinators.toString()
+				val finalString = printString.toString()
 				writeFile(Some(filename).get, finalString)
 			case _ =>
 		}
