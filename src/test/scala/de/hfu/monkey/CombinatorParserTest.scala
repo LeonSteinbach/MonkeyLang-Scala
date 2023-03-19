@@ -31,6 +31,13 @@ class CombinatorParserTest extends AnyFunSuite {
           ExpressionStatement(BooleanLiteral(false)))))
   }
 
+    test("parser.string") {
+        assert(parser.parse("\"hello\"; \"\";") ===
+            Program(List(
+                ExpressionStatement(StringLiteral("hello")),
+                ExpressionStatement(StringLiteral("")))))
+    }
+
   test("parser.prefixExpression") {
     assert(parser.parse("!true; !!false; -1; --foo;") ===
       Program(List(

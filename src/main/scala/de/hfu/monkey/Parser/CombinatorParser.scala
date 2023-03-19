@@ -8,20 +8,15 @@ case class CombinatorParser() extends Parser.Parser, RegexParsers {
 
 	override def errors: Seq[String] = Seq[String]()
 
-	private def identifier: Parser[Identifier] = not("let" | "return" | "fn" | "true" | "false") ~> """[a-zA-Z_]\w*\b""".r ^^ {
-		name => Identifier(name)
-	}
+	private def identifier: Parser[Identifier] = not("let" | "return" | "fn" | "true" | "false") ~> """[a-zA-Z_]\w*\b""".r ^^ { name => Identifier(name) }
 
-	private def integer: Parser[IntegerLiteral] =
-		"""\d+""".r ^^ {
-			value => IntegerLiteral(value.toInt)
-		}
+	private def integer: Parser[IntegerLiteral] = """\d+""".r ^^ { value => IntegerLiteral(value.toInt) }
 
-	private def boolean: Parser[BooleanLiteral] = ("true" | "false") ^^ {
-		value => BooleanLiteral(value.toBoolean)
-	}
+	private def boolean: Parser[BooleanLiteral] = ("true" | "false") ^^ { value => BooleanLiteral(value.toBoolean) }
 
-	private def value: Parser[Expression] = identifier | integer | boolean
+	private def string: Parser[StringLiteral] = "\"" ~> """\w*""".r <~ "\"" ^^ { value => StringLiteral(value) }
+
+	private def value: Parser[Expression] = identifier | integer | boolean | string
 
 	private def binaryExpression(operatorParser: Parser[String], operandParser: Parser[Expression]): Parser[Expression] = {
 		operandParser ~ rep(operatorParser ~ operandParser) ^^ {
@@ -62,8 +57,7 @@ case class CombinatorParser() extends Parser.Parser, RegexParsers {
 	}
 
 	private def ifExpression: Parser[Expression] = "if" ~> ("(" ~> expression <~ ")") ~ blockStatement ~ opt("else" ~> blockStatement) ^^ {
-		case condition ~ consequence ~ Some(alternative) => IfExpression(condition, consequence, alternative)
-		case condition ~ consequence ~ None => IfExpression(condition, consequence, BlockStatement(Nil))
+		case condition ~ consequence ~ alternative => IfExpression(condition, consequence, alternative.getOrElse(BlockStatement(Nil)))
 	}
 
 	private def functionLiteral: Parser[Expression] = "fn" ~> ("(" ~> repsep(identifier, ",") <~ ")") ~ blockStatement ^^ {
@@ -76,11 +70,7 @@ case class CombinatorParser() extends Parser.Parser, RegexParsers {
 
 	private def statement: Parser[Statement] = letStatement | returnStatement | expressionStatement | blockStatement
 
-	private def program: Parser[Program] = rep(statement) ^^ {
-		statements => Program(statements)
-	}
+	private def program: Parser[Program] = rep(statement) ^^ { statements => Program(statements) }
 
-	override def parse(input: String): Program = {
-		parseAll(program, input).get
-	}
+	override def parse(input: String): Program = parseAll(program, input).get
 }

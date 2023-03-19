@@ -79,12 +79,13 @@ object Main {
 	}
 
 	private def printResult(parser: Parser.Parser, evaluator: String, evaluate: Boolean): Unit = {
-		val input = "let foo = fn(a, b) { let bar = a + b; return bar * bar; }; let x = foo(foo(1, 2), 3); if (-x > 0 == true == !false) { (0 + 1) * 2; } else { x; };"
+		val input = "\"hello\";"
 		var printString: String = ""
 
 		val startTime1 = System.currentTimeMillis()
 		val parsed: Program = parser.parse(input)
 		val endTime1 = System.currentTimeMillis()
+		printString += s"Parsed result:    $parsed\n"
 		printString += s"Parser [ms]:      ${endTime1 - startTime1}"
 
 		if (evaluate) {
