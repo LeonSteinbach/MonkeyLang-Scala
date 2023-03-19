@@ -38,6 +38,13 @@ class CombinatorParserTest extends AnyFunSuite {
                 ExpressionStatement(StringLiteral("")))))
     }
 
+    test("parser.array") {
+        assert(parser.parse("[0, \"a\", !true, foo]; [];") ===
+            Program(List(
+                ExpressionStatement(ArrayLiteral(List(IntegerLiteral(0), StringLiteral("a"), PrefixExpression("!", BooleanLiteral(true)), Identifier("foo")))),
+                ExpressionStatement(ArrayLiteral(List())))))
+    }
+
   test("parser.prefixExpression") {
     assert(parser.parse("!true; !!false; -1; --foo;") ===
       Program(List(

@@ -2,7 +2,7 @@ package de.hfu.monkey
 
 object ObjectType extends Enumeration {
 	type ObjectType = Value
-	val INTEGER, BOOLEAN, STRING, NULL, RETURN, ERROR, FUNCTION, BUILTIN = Value
+	val INTEGER, BOOLEAN, STRING, ARRAY, NULL, RETURN, ERROR, FUNCTION, BUILTIN = Value
 }
 
 type BuiltinFunction = Array[Object] => Object
@@ -25,6 +25,11 @@ case class BooleanObject(value: Boolean) extends Object {
 case class StringObject(value: String) extends Object {
 	override def toString: String = value
 	def `type`(): ObjectType.Value = ObjectType.STRING
+}
+
+case class ArrayObject(elements: List[Object]) extends Object {
+	override def toString: String = s"[${elements.mkString(", ")}]"
+	def `type`(): ObjectType.Value = ObjectType.ARRAY
 }
 
 case object NullObject extends Object {

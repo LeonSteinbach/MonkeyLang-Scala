@@ -17,7 +17,9 @@ case class CombinatorParser() extends Parser.Parser, JavaTokenParsers {
 
 	private def string: Parser[StringLiteral] = stringLiteral ^^ { value => StringLiteral(value.substring(1, value.length - 1) ) }
 
-	private def value: Parser[Expression] = identifier | integer | boolean | string
+	private def array: Parser[ArrayLiteral] = "[" ~> repsep(expression, ",") <~ "]" ^^ { elements => ArrayLiteral(elements) }
+
+	private def value: Parser[Expression] = identifier | integer | boolean | string | array
 
 	private def binaryExpression(operatorParser: Parser[String], operandParser: Parser[Expression]): Parser[Expression] = {
 		operandParser ~ rep(operatorParser ~ operandParser) ^^ {

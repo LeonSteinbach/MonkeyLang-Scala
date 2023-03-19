@@ -35,6 +35,8 @@ case class Lexer(private val input: String) {
 			case Some(',') => Token(TokenType.COMMA, currentCharacter.get.toChar.toString)
 			case Some('{') => Token(TokenType.LBRACE, currentCharacter.get.toChar.toString)
 			case Some('}') => Token(TokenType.RBRACE, currentCharacter.get.toChar.toString)
+			case Some('[') => Token(TokenType.LBRACKET, currentCharacter.get.toChar.toString)
+			case Some(']') => Token(TokenType.RBRACKET, currentCharacter.get.toChar.toString)
 			case Some('"') => Token(TokenType.STRING, readString())
 			case Some(-1) => Token(TokenType.EOF, "")
 			case _ => getIdentifier

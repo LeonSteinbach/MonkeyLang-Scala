@@ -26,6 +26,9 @@ object Evaluator {
 		case Some(integerLiteral: IntegerLiteral) => IntegerObject(integerLiteral.value)
 		case Some(booleanLiteral: BooleanLiteral) => BooleanObject(booleanLiteral.value)
 		case Some(stringLiteral: StringLiteral) => StringObject(stringLiteral.value)
+		case Some(arrayLiteral: ArrayLiteral) =>
+			val elements: List[Object] = evaluateExpressions(Some(arrayLiteral.elements), environment)
+			if (elements.length == 1 && isError(elements.head)) elements.head else ArrayObject(elements)
 		case Some(prefixExpression: PrefixExpression) => evaluatePrefixExpression(prefixExpression.operator, evaluate(Some(prefixExpression.value), environment))
 		case Some(infixExpression: InfixExpression) =>
 			val infixLeftValue: Object = evaluate(Some(infixExpression.left), environment)
