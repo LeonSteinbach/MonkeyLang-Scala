@@ -3,11 +3,16 @@ package de.hfu.monkey
 import de.hfu.monkey.Parser.{CombinatorParser, ManualParser}
 import scopt.OParser
 
+import java.io.{BufferedWriter, File, FileWriter}
+
 case class Config(
 	parser: String = "manual",
 	evaluator: String = "interpreter",
 	evaluate: Boolean = true,
-	compare: Boolean = false
+	compareParsers: Boolean = false,
+	iterations: Int = 10000,
+	steps: Int = 100,
+	timingsParserFilename: Option[String] = None
 )
 
 object Main {
@@ -27,21 +32,31 @@ object Main {
 				opt[Unit]("no-evaluate")
 					.action((_, c) => c.copy(evaluate = false))
 					.text("Do not evaluate the input program"),
-				opt[Unit]("compare")
-					.action((_, c) => c.copy(compare = true))
-					.text("Compare the different implementations by timing them")
+				opt[Int]("iterations")
+					.action((x, c) => c.copy(iterations = x))
+					.text("Number of iterations (length of the parsed text)"),
+				opt[Int]("steps")
+					.action((x, c) => c.copy(steps = x))
+					.text("Number of steps to take"),
+				opt[Unit]("compareParsers")
+					.action((_, c) => c.copy(compareParsers = true))
+					.text("Compare the different parser implementations by timing them")
+					.children(
+						opt[String]("file-parser")
+							.action((x, c) => c.copy(timingsParserFilename = Some(x)))
+							.text("File to write parser timings comparison")
+					)
 			)
 		}
 
 		OParser.parse(parser, args, Config()) match {
 			case Some(config) =>
 				val parser = if (config.parser == "manual") ManualParser() else CombinatorParser()
-				val input = "let foo = fn(a, b) { return a + b * 2; }; foo(4, 5);" * 10000
-				if (config.compare) {
-					// Compare timings
+				if (config.compareParsers) {
+					compareParsers(config.iterations, config.steps, config.timingsParserFilename)
 				} else {
 					println(s"Using ${config.parser} parser\n")
-					printResult(input, parser, config.evaluator, config.evaluate)
+					printResult(parser, config.evaluator, config.evaluate)
 				}
 			case _ =>
 		}
@@ -59,7 +74,8 @@ object Main {
 		*/
 	}
 
-	private def printResult(input: String, parser: Parser.Parser, evaluator: String, evaluate: Boolean): Unit = {
+	private def printResult(parser: Parser.Parser, evaluator: String, evaluate: Boolean): Unit = {
+		val input = "let foo = fn(a, b) { let bar = a + b; return bar * bar; }; let x = foo(foo(1, 2), 3); if (-x > 0 == true == !false) { (0 + 1) * 2; } else { x; };"
 		var printString: String = ""
 
 		val startTime1 = System.currentTimeMillis()
@@ -83,5 +99,51 @@ object Main {
 		println(printString)
 
 		parser.errors.foreach(error => println(error))
+	}
+
+	private def compareParsers(iterations: Int, steps: Int, filename: Option[String]): Unit = {
+
+		val out = new java.io.PrintStream(System.out, true)
+
+		val parserInput: String = "let foo = fn(a, b) { let bar = a + b; return bar * bar; }; let x = foo(foo(1, 2), 3); if (-x > 0 == true == !false) { (0 + 1) * 2; } else { x; };"
+
+		val printStringManual = new StringBuilder("# Iterations Duration\n# First data block (index 0)\n")
+		val printStringCombinators = new StringBuilder("\n\n# Iterations Duration\n# Second data block (index 1)\n")
+
+		val parserManual: Parser.Parser = Parser.ManualParser()
+		val parserCombinator: Parser.Parser = Parser.CombinatorParser()
+
+		for (multiply <- 0.to(iterations, steps)) {
+			val startTime1 = System.currentTimeMillis()
+			parserManual.parse(parserInput * multiply)
+			val endTime1 = System.currentTimeMillis()
+
+			val startTime2 = System.currentTimeMillis()
+			parserCombinator.parse(parserInput * multiply)
+			val endTime2 = System.currentTimeMillis()
+
+			printStringManual.append(s"$multiply ${endTime1 - startTime1}\n")
+			//printStringCombinators.append(s"$multiply 1\n")
+			printStringCombinators.append(s"$multiply ${endTime2 - startTime2}\n")
+			out.println(s"[$multiply/$iterations]")
+		}
+
+		println(printStringManual.toString() + "\n\n")
+		println(printStringCombinators.toString())
+
+		filename match {
+			case Some(filename: String) =>
+				val finalString = printStringManual.toString() + printStringCombinators.toString()
+				writeFile(Some(filename).get, finalString)
+			case _ =>
+		}
+
+	}
+
+	private def writeFile(filename: String, s: String): Unit = {
+		val file = new File(filename)
+		val bufferedWriter = new BufferedWriter(new FileWriter(file))
+		bufferedWriter.write(s)
+		bufferedWriter.close()
 	}
 }
