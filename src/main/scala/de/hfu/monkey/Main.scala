@@ -65,21 +65,21 @@ object Main {
 			case _ =>
 		}
 
-		/*
-		private val lexer: Lexer = Lexer("if (true) { 1; } else { 2; };")
+/*
+		val lexer: Lexer = Lexer("\"hallo\";")
 		var token: Option[Token] = None
-		private val startTime1 = System.currentTimeMillis()
+		val startTime1 = System.currentTimeMillis()
 		while (token.forall(_.tokenType != TokenType.EOF)) {
 			token = Some(lexer.nextToken())
 			println(token.getOrElse(Token(TokenType.ILLEGAL, "")))
 		}
-		private val endTime1 = System.currentTimeMillis()
+		val endTime1 = System.currentTimeMillis()
 		println(s"Lexer [ms]: ${endTime1 - startTime1}")
-		*/
+*/
 	}
 
 	private def printResult(parser: Parser.Parser, evaluator: String, evaluate: Boolean): Unit = {
-		val input = "len(\"123 \");"
+		val input = "len(\"123\");"
 		var printString: String = ""
 
 		val startTime1 = System.currentTimeMillis()

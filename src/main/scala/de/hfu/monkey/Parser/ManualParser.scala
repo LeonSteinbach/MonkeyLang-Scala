@@ -33,6 +33,7 @@ case class ManualParser() extends Parser.Parser {
 		TokenType.INT -> (() => parseIntegerLiteral: Option[Node]),
 		TokenType.TRUE -> (() => parseBooleanLiteral: Option[Node]),
 		TokenType.FALSE -> (() => parseBooleanLiteral: Option[Node]),
+		TokenType.STRING -> (() => parseStringLiteral: Option[Node]),
 		TokenType.BANG -> (() => parsePrefixExpression: Option[Node]),
 		TokenType.MINUS -> (() => parsePrefixExpression: Option[Node]),
 		TokenType.LPAREN -> (() => parseGroupedExpression: Option[Node]),
@@ -179,6 +180,8 @@ case class ManualParser() extends Parser.Parser {
 	}
 
 	private def parseBooleanLiteral: Option[BooleanLiteral] = Some(BooleanLiteral(currentToken.get.tokenType == TokenType.TRUE))
+
+	private def parseStringLiteral: Option[StringLiteral] = Some(StringLiteral(currentToken.get.literal))
 
 	private def parseGroupedExpression: Option[Expression] = {
 		advanceTokens()

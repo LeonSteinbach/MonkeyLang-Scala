@@ -159,7 +159,7 @@ object Evaluator {
 						result += evaluated
 					}
 				}
-			case None => // do nothing
+			case None =>
 		}
 
 		result.toList

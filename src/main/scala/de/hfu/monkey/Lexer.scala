@@ -35,6 +35,7 @@ case class Lexer(private val input: String) {
 			case Some(',') => Token(TokenType.COMMA, currentCharacter.get.toChar.toString)
 			case Some('{') => Token(TokenType.LBRACE, currentCharacter.get.toChar.toString)
 			case Some('}') => Token(TokenType.RBRACE, currentCharacter.get.toChar.toString)
+			case Some('"') => Token(TokenType.STRING, readString())
 			case Some(-1) => Token(TokenType.EOF, "")
 			case _ => getIdentifier
 		}
@@ -42,13 +43,29 @@ case class Lexer(private val input: String) {
 		token
 	}
 
+	@tailrec
+	private def readString(oldPosition: Int = position + 1, found: Boolean = false): String = {
+		if (currentCharacter.get == -1) {
+			throw new NoSuchElementException("Unexpected end of input")
+		} else if (found && currentCharacter.get == '"') {
+			input.substring(oldPosition, position)
+		} else {
+			readCharacter()
+			if (currentCharacter.get == '"') {
+				readString(oldPosition, true)
+			} else {
+				readString(oldPosition, found)
+			}
+		}
+	}
+
 	private def getIdentifier: Token = {
 		currentCharacter match {
 			case Some(c) if c.toChar.isLetter =>
-				val literal = currentCharacter.get.toChar.toString + readIdentifierOrNumber(_.isLetterOrDigit)
+				val literal = currentCharacter.get.toChar.toString + readWord(_.isLetterOrDigit)
 				Token(Token.lookupIdent(literal), literal)
 			case Some(c) if c.toChar.isDigit =>
-				val literal = currentCharacter.get.toChar.toString + readIdentifierOrNumber(_.isLetterOrDigit)
+				val literal = currentCharacter.get.toChar.toString + readWord(_.isLetterOrDigit)
 				if (literal.length > 1 && literal.startsWith("0"))
 					Token(TokenType.ILLEGAL, literal)
 				else
@@ -73,11 +90,11 @@ case class Lexer(private val input: String) {
 	}
 
 	@tailrec
-	private def readIdentifierOrNumber(condition: Char => Boolean, acc: String = ""): String = {
+	private def readWord(condition: Char => Boolean, acc: String = ""): String = {
 		peekCharacter() match {
 			case Some(c) if condition(c.toChar) =>
 				readCharacter()
-				readIdentifierOrNumber(condition, acc + c.toChar)
+				readWord(condition, acc + c.toChar)
 			case _ =>
 				acc
 		}
