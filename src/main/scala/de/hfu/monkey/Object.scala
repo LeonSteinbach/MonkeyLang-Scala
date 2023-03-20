@@ -2,7 +2,7 @@ package de.hfu.monkey
 
 object ObjectType extends Enumeration {
 	type ObjectType = Value
-	val INTEGER, BOOLEAN, STRING, ARRAY, NULL, RETURN, ERROR, FUNCTION, BUILTIN = Value
+	val INTEGER, BOOLEAN, STRING, ARRAY, HASH, NULL, RETURN, ERROR, FUNCTION, BUILTIN = Value
 }
 
 type BuiltinFunction = Array[Object] => Object
@@ -12,24 +12,43 @@ trait Object {
 	override def toString: String
 }
 
-case class IntegerObject(value: Int) extends Object {
+case class IntegerObject(value: Int) extends Object with Hashable {
 	override def toString: String = value.toString
 	def `type`(): ObjectType.Value = ObjectType.INTEGER
+
+	override def hashKey: HashKey = HashKey(value.hashCode())
 }
 
-case class BooleanObject(value: Boolean) extends Object {
+case class BooleanObject(value: Boolean) extends Object with Hashable {
 	override def toString: String = value.toString
 	def `type`(): ObjectType.Value = ObjectType.BOOLEAN
+
+	override def hashKey: HashKey = HashKey(value.hashCode())
 }
 
-case class StringObject(value: String) extends Object {
+case class StringObject(value: String) extends Object with Hashable {
 	override def toString: String = value
 	def `type`(): ObjectType.Value = ObjectType.STRING
+
+	override def hashKey: HashKey = HashKey(value.hashCode)
 }
 
 case class ArrayObject(elements: List[Object]) extends Object {
 	override def toString: String = s"[${elements.mkString(", ")}]"
 	def `type`(): ObjectType.Value = ObjectType.ARRAY
+}
+
+class HashKey(value: Int)
+
+case class HashPair(key: Object, value: Object)
+
+trait Hashable extends Object {
+	def hashKey: HashKey
+}
+
+case class HashObject(pairs: Map[HashKey, HashPair]) extends Object {
+	override def toString: String = s"{${pairs.values.map(pair => s"${pair.key.toString}: ${pair.value.toString}").mkString(", ")}}"
+	def `type`(): ObjectType.Value = ObjectType.HASH
 }
 
 case object NullObject extends Object {

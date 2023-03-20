@@ -2,6 +2,7 @@ package de.hfu.monkey.Parser
 
 import de.hfu.monkey.*
 
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 enum Precedence {
@@ -36,6 +37,7 @@ case class ManualParser() extends Parser.Parser {
 		TokenType.FALSE -> (() => parseBooleanLiteral: Option[Node]),
 		TokenType.STRING -> (() => parseStringLiteral: Option[Node]),
 		TokenType.LBRACKET -> (() => parseArrayLiteral: Option[Node]),
+		TokenType.LBRACE -> (() => parseHashLiteral: Option[Node]),
 		TokenType.BANG -> (() => parsePrefixExpression: Option[Node]),
 		TokenType.MINUS -> (() => parsePrefixExpression: Option[Node]),
 		TokenType.LPAREN -> (() => parseGroupedExpression: Option[Node]),
@@ -187,6 +189,35 @@ case class ManualParser() extends Parser.Parser {
 	private def parseStringLiteral: Option[StringLiteral] = Some(StringLiteral(currentToken.get.literal))
 
 	private def parseArrayLiteral: Option[ArrayLiteral] = Some(ArrayLiteral(parseExpressionList(TokenType.RBRACKET).getOrElse(List[Expression]())))
+
+	private def parseHashLiteral: Option[HashLiteral] = {
+		var pairs = mutable.HashMap.empty[Expression, Expression]
+
+		while (peekToken.get.tokenType != TokenType.RBRACE) {
+			advanceTokens()
+			val key: Expression = parseExpression(Precedence.LOWEST) match {
+				case Some(key: Expression) => Some(key).get
+				case None => return None
+			}
+
+			if (!expectPeek(TokenType.COLON))
+				return None
+			advanceTokens()
+
+			val value: Expression = parseExpression(Precedence.LOWEST) match {
+				case Some(value: Expression) => Some(value).get
+				case None => return None
+			}
+
+			pairs += (key -> value)
+
+			if (peekToken.get.tokenType != TokenType.RBRACE && !expectPeek(TokenType.COMMA))
+				return None
+		}
+		if (!expectPeek(TokenType.RBRACE))
+			return None
+		Some(HashLiteral(pairs.toMap))
+	}
 
 	private def parseGroupedExpression: Option[Expression] = {
 		advanceTokens()

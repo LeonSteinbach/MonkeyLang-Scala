@@ -29,6 +29,7 @@ case class Lexer(private val input: String) {
 			case Some('/') => Token(TokenType.SLASH, currentCharacter.get.toChar.toString)
 			case Some('<') => Token(TokenType.LT, currentCharacter.get.toChar.toString)
 			case Some('>') => Token(TokenType.GT, currentCharacter.get.toChar.toString)
+			case Some(':') => Token(TokenType.COLON, currentCharacter.get.toChar.toString)
 			case Some(';') => Token(TokenType.SEMICOLON, currentCharacter.get.toChar.toString)
 			case Some('(') => Token(TokenType.LPAREN, currentCharacter.get.toChar.toString)
 			case Some(')') => Token(TokenType.RPAREN, currentCharacter.get.toChar.toString)

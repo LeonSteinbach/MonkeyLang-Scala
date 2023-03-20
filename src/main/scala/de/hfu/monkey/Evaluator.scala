@@ -1,5 +1,6 @@
 package de.hfu.monkey
 
+import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonLocalReturns.*
 
@@ -29,6 +30,7 @@ object Evaluator {
 		case Some(arrayLiteral: ArrayLiteral) =>
 			val elements: List[Object] = evaluateExpressions(Some(arrayLiteral.elements), environment)
 			if (elements.length == 1 && isError(elements.head)) elements.head else ArrayObject(elements)
+		case Some(hashLiteral: HashLiteral) => evaluateHashLiteral(hashLiteral, environment)
 		case Some(prefixExpression: PrefixExpression) => evaluatePrefixExpression(prefixExpression.operator, evaluate(Some(prefixExpression.value), environment))
 		case Some(infixExpression: InfixExpression) =>
 			val infixLeftValue: Object = evaluate(Some(infixExpression.left), environment)
@@ -100,6 +102,27 @@ object Evaluator {
 		case "+" => StringObject(left.value + right.value)
 		case _ => ErrorObject(s"unknown operator: ${left.`type`()} $operator ${right.`type`()}")
 	}
+
+	private def evaluateHashLiteral(hashLiteral: HashLiteral, environment: Environment): Object = returning {
+		val pairs = mutable.HashMap.empty[HashKey, HashPair]
+		hashLiteral.pairs.foreach { (keyNode, valueNode) =>
+			val key = evaluate(Some(keyNode), environment)
+			if (isError(key)) {
+				throwReturn(key)
+			}
+			key match {
+				case hashable: Hashable =>
+					val value = evaluate(Some(valueNode), environment)
+					if (isError(value)) {
+						throwReturn(value)
+					}
+					pairs += (hashable.hashKey -> HashPair(hashable, value))
+				case _ => throwReturn(ErrorObject(s"unusable as a hash key: ${key.`type`()}"))
+			}
+		}
+		HashObject(pairs.toMap)
+	}
+
 
 	private def evaluateIfExpression(ifExpression: IfExpression, environment: Environment): Object = {
 		val condition: Object = evaluate(Some(ifExpression.condition), environment)
