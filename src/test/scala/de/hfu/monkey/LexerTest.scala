@@ -38,6 +38,13 @@ class LexerTest extends AnyFunSuite {
 		assert(lexer.nextToken() === Token(TokenType.EOF, ""))
 	}
 
+	test("lexer.string") {
+		val lexer: Lexer = Lexer("\"hello\"")
+
+		assert(lexer.nextToken() === Token(TokenType.STRING, "hello"))
+		assert(lexer.nextToken() === Token(TokenType.EOF, ""))
+	}
+
 	test("lexer.singleCharacter") {
 		val lexer: Lexer = Lexer(";(){},=!+-*/<>")
 
