@@ -125,4 +125,22 @@ class EvaluatorTest extends AnyFunSuite {
 		assert(evaluated == IntegerObject(3))
 	}
 
+	test("evaluator.array") {
+		var parsed = parser.parse("let foo = [1, \"a\", 1+2, \"b\"]; foo[1];")
+		var evaluated = Evaluator.evaluateProgram(parsed, new Environment)
+		assert(evaluated == StringObject("a"))
+
+		parsed = parser.parse("[1, 2, 3][1];")
+		evaluated = Evaluator.evaluateProgram(parsed, new Environment)
+		assert(evaluated == IntegerObject(2))
+
+		parsed = parser.parse("let a = [[1, 2], 3]; a[0][1] + a[1];")
+		evaluated = Evaluator.evaluateProgram(parsed, new Environment)
+		assert(evaluated == IntegerObject(5))
+
+		parsed = parser.parse("[][1];")
+		evaluated = Evaluator.evaluateProgram(parsed, new Environment)
+		assert(evaluated == NullObject)
+	}
+
 }

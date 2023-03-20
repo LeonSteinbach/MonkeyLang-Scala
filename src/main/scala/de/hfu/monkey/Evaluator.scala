@@ -46,8 +46,9 @@ object Evaluator {
 		case Some(returnStatement: ReturnStatement) => evaluateReturnStatement(returnStatement, environment)
 		case Some(letStatement: LetStatement) => evaluateLetStatement(letStatement, environment)
 		case Some(identifier: Identifier) => evaluateIdentifier(identifier, environment)
-		case Some(functionLiteral: FunctionLiteral) => FunctionObject(Some(functionLiteral.parameters), Some(functionLiteral.body), environment)
+		case Some(functionLiteral: FunctionLiteral) => evaluateFunctionLiteral(functionLiteral, environment)
 		case Some(callExpression: CallExpression) => evaluateCallExpression(callExpression, environment)
+		case Some(indexExpression: IndexExpression) => evaluateIndexExpression(indexExpression, environment)
 		case _ => NULL
 	}
 
@@ -113,12 +114,12 @@ object Evaluator {
 	}
 
 	private def evaluateReturnStatement(returnStatement: ReturnStatement, environment: Environment): Object = {
-		val returnValue = evaluate(Some(returnStatement.value), environment)
+		val returnValue: Object = evaluate(Some(returnStatement.value), environment)
 		if (isError(returnValue)) returnValue else ReturnObject(Option(returnValue))
 	}
 
 	private def evaluateLetStatement(letStatement: LetStatement, environment: Environment): Object = {
-		val letValue = evaluate(Some(letStatement.value), environment)
+		val letValue: Object = evaluate(Some(letStatement.value), environment)
 		if (isError(letValue))
 			letValue
 		else {
@@ -128,7 +129,7 @@ object Evaluator {
 	}
 
 	private def evaluateIdentifier(identifier: Identifier, environment: Environment): Object = {
-		val (result, ok) = environment.get(identifier.name)
+		val (result: Option[Object], ok: Boolean) = environment.get(identifier.name)
 		if (ok) {
 			result.getOrElse(NULL)
 		} else {
@@ -140,8 +141,12 @@ object Evaluator {
 		}
 	}
 
+	private def evaluateFunctionLiteral(functionLiteral: FunctionLiteral, environment: Environment): Object = {
+		FunctionObject(Some(functionLiteral.parameters), Some(functionLiteral.body), environment)
+	}
+
 	private def evaluateCallExpression(callExpression: CallExpression, environment: Environment): Object = {
-		val callFunction = evaluate(Some(callExpression.function), environment)
+		val callFunction: Object = evaluate(Some(callExpression.function), environment)
 		if (isError(callFunction))
 			callFunction
 		else
@@ -149,8 +154,22 @@ object Evaluator {
 			if (callArguments.length == 1 && isError(callArguments.head)) callArguments.head else applyFunction(callFunction, callArguments)
 	}
 
+	private def evaluateIndexExpression(indexExpression: IndexExpression, environment: Environment): Object = {
+		val left: Object = evaluate(Some(indexExpression.left), environment)
+		if (isError(left))
+			left
+		else
+			val index: Object = evaluate(Some(indexExpression.index), environment)
+			if (isError(index))
+				index
+			else
+				val idx: Int = index.asInstanceOf[IntegerObject].value
+				val elements: List[Object] = left.asInstanceOf[ArrayObject].elements
+				if (idx < 0 || idx > elements.length - 1) NULL else elements(idx)
+	}
+
 	private def evaluateExpressions(expressions: Option[List[Expression]], environment: Environment): List[Object] = returning {
-		val result = ListBuffer.empty[Object]
+		val result: ListBuffer[Object] = ListBuffer.empty[Object]
 
 		expressions match {
 			case Some(exps) =>

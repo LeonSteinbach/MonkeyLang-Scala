@@ -35,13 +35,23 @@ case class CombinatorParser() extends Parser.Parser, JavaTokenParsers {
 
 	private def factor: Parser[Expression] = ifExpression | functionLiteral | callExpression | unaryExpression | value | "(" ~> expression <~ ")"
 
-	private def multiplicativeExpression: Parser[Expression] = binaryExpression("*" | "/", factor)
+	private def indexExpression(operandParser: Parser[Expression]): Parser[Expression] = {
+		operandParser ~ rep("[" ~> expression <~ "]") ^^ {
+			case expression ~ list => (list foldLeft expression) {
+				case (left, right) => IndexExpression(left, right)
+			}
+		}
+	}
+
+	private def multiplicativeExpression: Parser[Expression] = binaryExpression("*" | "/", indexExpression(factor))
 
 	private def additiveExpression: Parser[Expression] = binaryExpression("+" | "-", multiplicativeExpression)
 
 	private def comparativeExpression: Parser[Expression] = binaryExpression("<" | ">", additiveExpression)
 
-	private def expression: Parser[Expression] = binaryExpression("==" | "!=", comparativeExpression)
+	private def equalityExpression: Parser[Expression] = binaryExpression("==" | "!=", comparativeExpression)
+
+	private def expression: Parser[Expression] = equalityExpression
 
 	private def expressionStatement: Parser[ExpressionStatement] = expression <~ ";" ^^ {
 		expression => ExpressionStatement(expression)
@@ -55,21 +65,25 @@ case class CombinatorParser() extends Parser.Parser, JavaTokenParsers {
 		value => ReturnStatement(value)
 	}
 
-	private def blockStatement = "{" ~> rep(statement) <~ "}" ^^ {
+	private def blockStatement: Parser[BlockStatement] = "{" ~> rep(statement) <~ "}" ^^ {
 		statements => BlockStatement(statements)
 	}
 
-	private def ifExpression: Parser[Expression] = "if" ~> ("(" ~> expression <~ ")") ~ blockStatement ~ opt("else" ~> blockStatement) ^^ {
+	private def ifExpression: Parser[IfExpression] = "if" ~> ("(" ~> expression <~ ")") ~ blockStatement ~ opt("else" ~> blockStatement) ^^ {
 		case condition ~ consequence ~ alternative => IfExpression(condition, consequence, alternative.getOrElse(BlockStatement(Nil)))
 	}
 
-	private def functionLiteral: Parser[Expression] = "fn" ~> ("(" ~> repsep(identifier, ",") <~ ")") ~ blockStatement ^^ {
+	private def functionLiteral: Parser[FunctionLiteral] = "fn" ~> ("(" ~> repsep(identifier, ",") <~ ")") ~ blockStatement ^^ {
 		case parameters ~ body => FunctionLiteral(parameters, body)
 	}
 
-	private def callExpression: Parser[Expression] = identifier ~ ("(" ~> repsep(expression, ",") <~ ")") ^^ {
+	private def callExpression: Parser[CallExpression] = identifier ~ ("(" ~> repsep(expression, ",") <~ ")") ^^ {
 		case function ~ arguments => CallExpression(function, arguments)
 	}
+
+	//private def indexExpression: Parser[Expression] = (ifExpression | functionLiteral | callExpression | unaryExpression | value | "(" ~> expression <~ ")") ~ ("[" ~> expression <~ "]") ^^ {
+	//	case left ~ right => IndexExpression(left, right)
+	//}
 
 	private def statement: Parser[Statement] = letStatement | returnStatement | expressionStatement | blockStatement
 

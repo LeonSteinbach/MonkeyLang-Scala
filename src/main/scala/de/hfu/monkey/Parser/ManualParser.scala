@@ -5,7 +5,7 @@ import de.hfu.monkey.*
 import scala.collection.mutable.ListBuffer
 
 enum Precedence {
-	case LOWEST, EQUALS, LESSGREATER, SUM, PRODUCT, CALL
+	case LOWEST, EQUALS, LESSGREATER, SUM, PRODUCT, CALL, INDEX
 }
 
 case class ManualParser() extends Parser.Parser {
@@ -25,7 +25,8 @@ case class ManualParser() extends Parser.Parser {
 		TokenType.MINUS -> Precedence.SUM,
 		TokenType.ASTERIX -> Precedence.PRODUCT,
 		TokenType.SLASH -> Precedence.PRODUCT,
-		TokenType.LPAREN -> Precedence.CALL
+		TokenType.LPAREN -> Precedence.CALL,
+		TokenType.LBRACKET -> Precedence.INDEX
 	)
 
 	private val prefixParseFunctions: Map[TokenType, () => Option[Node]] = Map(
@@ -44,6 +45,7 @@ case class ManualParser() extends Parser.Parser {
 
 	private val infixParseFunctions: Map[TokenType, Expression => Option[Node]] = Map(
 		TokenType.LPAREN -> ((expression: Expression) => parseCallExpression(expression): Option[Node]),
+		TokenType.LBRACKET -> ((leftExpression: Expression) => parseIndexExpression(leftExpression): Option[Node]),
 		TokenType.PLUS -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
 		TokenType.MINUS -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
 		TokenType.ASTERIX -> ((leftExpression: Expression) => parseInfixExpression(leftExpression): Option[Node]),
@@ -302,19 +304,26 @@ case class ManualParser() extends Parser.Parser {
 		val operator: String = currentToken.get.literal
 		val precedence: Precedence = precedences.getOrElse(currentToken.get.tokenType, Precedence.LOWEST)
 		advanceTokens()
-		val rightExpression: Expression = parseExpression(precedence) match {
-			case Some(rightExpression: Expression) => Some(rightExpression).get
-			case None => return None
+		parseExpression(precedence) match {
+			case Some(rightExpression: Expression) => Some(InfixExpression(operator, leftExpression, Some(rightExpression).get))
+			case None => None
 		}
-		Some(InfixExpression(operator, leftExpression, rightExpression))
 	}
 
 	private def parseCallExpression(function: Expression): Option[CallExpression] = {
-		val arguments: List[Expression] = parseExpressionList(TokenType.RPAREN) match {
-			case Some(arguments: List[Expression]) => arguments
-			case None => return None
+		parseExpressionList(TokenType.RPAREN) match {
+			case Some(arguments: List[Expression]) => Some(CallExpression(function, Some(arguments).get))
+			case None => None
 		}
-		Some(CallExpression(function, arguments))
+	}
+
+	private def parseIndexExpression(left: Expression): Option[IndexExpression] = {
+		advanceTokens()
+		val indexExpression: Expression = parseExpression(Precedence.LOWEST) match {
+			case Some(indexExpression: Expression) => Some(indexExpression).get
+			case _ => return None
+		}
+		if (expectPeek(TokenType.RBRACKET)) Some(IndexExpression(left, indexExpression)) else None
 	}
 
 	private def parseExpressionList(end: TokenType): Option[List[Expression]] = {

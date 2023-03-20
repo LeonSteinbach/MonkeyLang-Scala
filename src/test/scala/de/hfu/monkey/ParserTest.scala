@@ -145,6 +145,17 @@ class ParserTest extends AnyFunSuite {
 					List(InfixExpression("+", Identifier("a"), IntegerLiteral(1)), CallExpression(Identifier("bar"), List())))))))
 	}
 
+	test("parser.indexExpression") {
+		val program: Program = parserCombinator.parse("foo[-1]; [2][0]; (foo + bar)[3]; a[0][1] + b[0];")
+		assert(parserManual.parse("foo[-1]; [2][0]; (foo + bar)[3]; a[0][1] + b[0];") === program)
+		assert(program ===
+			Program(List(
+				ExpressionStatement(IndexExpression(Identifier("foo"),PrefixExpression("-",IntegerLiteral(1)))),
+				ExpressionStatement(IndexExpression(ArrayLiteral(List(IntegerLiteral(2))),IntegerLiteral(0))),
+				ExpressionStatement(IndexExpression(InfixExpression("+",Identifier("foo"),Identifier("bar")),IntegerLiteral(3))),
+				ExpressionStatement(InfixExpression("+",IndexExpression(IndexExpression(Identifier("a"),IntegerLiteral(0)),IntegerLiteral(1)),IndexExpression(Identifier("b"),IntegerLiteral(0)))))))
+	}
+
 	test("parser.letStatement") {
 		val program: Program = parserCombinator.parse("let foo = 1; let bar = foo + 2;")
 		assert(parserManual.parse("let foo = 1; let bar = foo + 2;") === program)

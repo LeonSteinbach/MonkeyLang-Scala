@@ -46,13 +46,15 @@ class LexerTest extends AnyFunSuite {
 	}
 
 	test("lexer.singleCharacter") {
-		val lexer: Lexer = Lexer(";(){},=!+-*/<>")
+		val lexer: Lexer = Lexer(";(){}[],=!+-*/<>")
 
 		assert(lexer.nextToken() === Token(TokenType.SEMICOLON, ";"))
 		assert(lexer.nextToken() === Token(TokenType.LPAREN, "("))
 		assert(lexer.nextToken() === Token(TokenType.RPAREN, ")"))
 		assert(lexer.nextToken() === Token(TokenType.LBRACE, "{"))
 		assert(lexer.nextToken() === Token(TokenType.RBRACE, "}"))
+		assert(lexer.nextToken() === Token(TokenType.LBRACKET, "["))
+		assert(lexer.nextToken() === Token(TokenType.RBRACKET, "]"))
 		assert(lexer.nextToken() === Token(TokenType.COMMA, ","))
 		assert(lexer.nextToken() === Token(TokenType.ASSIGN, "="))
 		assert(lexer.nextToken() === Token(TokenType.BANG, "!"))

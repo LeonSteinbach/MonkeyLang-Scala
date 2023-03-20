@@ -16,6 +16,8 @@ case class BlockStatement(statements: List[Statement]) extends Statement
 case class IfExpression(condition: Expression, consequence: BlockStatement, alternative: BlockStatement) extends Expression
 case class FunctionLiteral(parameters: List[Identifier], body: BlockStatement) extends Expression
 case class CallExpression(function: Expression, arguments: List[Expression]) extends Expression
+case class IndexExpression(left: Expression, index: Expression) extends Expression
 case class ExpressionStatement(expression: Expression) extends Statement
 case class PrefixExpression(operator: String, value: Expression) extends Expression
 case class InfixExpression(operator: String, left: Expression, right: Expression) extends Expression
+case class NoOp() extends Expression
