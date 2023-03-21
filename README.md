@@ -75,22 +75,31 @@ versatility and flexibility for users when programming in MonkeyLang-Scala.
 
 ## Parser comparison
 
+The benchmarks below present a comparison between the manual parser (blue) and the parser using Scala parser combinators (red).
+The results demonstrate that as the text length increases linearly, the time required to parse the text also increases linearly.
+Consequently, both parsers exhibit a complexity of O(n).
+
+The manual parser is approximately 18 times faster than the parser employing Scala parser combinators.
+The spike observed between a text length multiplier of 0 and 100 can be attributed to overhead and typical compilation issues.
+
+It is noteworthy that the parser using Scala parser combinators experiences more significant fluctuations when dealing with nested function calls, as opposed to linearly increasing text. 
+
 <table>
 	<caption></caption>
 	<tr>
 		<td>
-			<img src="https://github.com/LeonSteinbach/MonkeyLang-Scala/blob/main/benchmarks/parser/timings-parser-append.png" alt="Image 1" width="300"/>
+			<img src="https://github.com/LeonSteinbach/MonkeyLang-Scala/blob/main/benchmarks/parser/timings-parser-append.png" alt="Image 1" width="100%"/>
 		</td>
 		<td>
-			<img src="https://github.com/LeonSteinbach/MonkeyLang-Scala/blob/main/benchmarks/parser/timings-parser-nested.png" alt="Image 2" width="300"/>
+			<img src="https://github.com/LeonSteinbach/MonkeyLang-Scala/blob/main/benchmarks/parser/timings-parser-nested.png" alt="Image 2" width="100%"/>
 		</td>
 	</tr>
 	<tr>
 		<td>
-			Duration in milliseconds for parsing linear increasing text
+			Duration [ms] for parsing linear increasing text
 		</td>
 		<td>
-			Duration in milliseconds for parsing increasingly nested function calls
+			Duration [ms] for parsing increasingly nested function calls
 		</td>
 	</tr>
 </table>
