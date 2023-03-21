@@ -31,12 +31,18 @@ In addition to the core language features, MonkeyLang-Scala also includes suppor
 <factor>                    ::= <if-expression>
                               | <function-literal>
                               | <call-expression>
+                              | <builtin-call-len>
+                              | <builtin-call-arrays>
+                              | <builtin-call-puts>
                               | <unary-expression>
                               | <value>
                               | "(" <expression> ")"
 
 <unary-expression>          ::= ("-" | "!") <factor>
 <call-expression>           ::= <identifier> "(" [<expression-list>] ")"
+<builtin-call-len>          ::= "len" "(" (<string> | <array>) ")"
+<builtin-call-arrays>       ::= ("first" | "last" | "tail") "(" <array> ")"
+<builtin-call-puts>         ::= "puts" "(" [<expression-list>] ")"
 <if-expression>             ::= "if" "(" <expression> ")" <block-statement> ["else" <block-statement>]
 <function-literal>          ::= "fn" "(" [<parameter-list>] ")" <block-statement>
 
