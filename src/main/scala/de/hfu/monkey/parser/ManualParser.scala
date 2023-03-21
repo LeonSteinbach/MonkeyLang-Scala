@@ -193,7 +193,7 @@ case class ManualParser() extends parser.Parser {
 	private def parseArrayLiteral: Option[ArrayLiteral] = Some(ArrayLiteral(parseExpressionList(TokenType.RBRACKET).getOrElse(List[Expression]())))
 
 	private def parseHashLiteral: Option[HashLiteral] = {
-		var pairs = mutable.HashMap.empty[Expression, Expression]
+		val pairs = mutable.HashMap.empty[Expression, Expression]
 
 		while (peekToken.get.tokenType != TokenType.RBRACE) {
 			advanceTokens()
