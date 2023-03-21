@@ -1,6 +1,6 @@
 package de.hfu.monkey
 
-import de.hfu.monkey.Parser.CombinatorParser
+import de.hfu.monkey.parser.CombinatorParser
 import de.hfu.monkey.evaluator.{BooleanObject, Environment, Evaluator, IntegerObject, NullObject, StringObject}
 import org.scalatest.funsuite.AnyFunSuite
 

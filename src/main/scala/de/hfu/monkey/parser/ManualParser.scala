@@ -1,7 +1,7 @@
-package de.hfu.monkey.Parser
+package de.hfu.monkey.parser
 
 import de.hfu.monkey.*
-import de.hfu.monkey.Ast.{ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, Statement, StringLiteral}
+import de.hfu.monkey.ast.{ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, Statement, StringLiteral}
 import de.hfu.monkey.lexer.{Lexer, Token, TokenType}
 
 import scala.collection.mutable
@@ -11,7 +11,7 @@ enum Precedence {
 	case LOWEST, EQUALS, LESSGREATER, SUM, PRODUCT, CALL, INDEX
 }
 
-case class ManualParser() extends Parser.Parser {
+case class ManualParser() extends parser.Parser {
 
 	private var lexer: Option[Lexer] = None
 	private var currentToken: Option[Token] = None

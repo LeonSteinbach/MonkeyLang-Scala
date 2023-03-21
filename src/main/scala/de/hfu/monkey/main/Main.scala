@@ -1,7 +1,7 @@
 package de.hfu.monkey.main
 
-import de.hfu.monkey.Ast.Program
-import de.hfu.monkey.Parser.{Parser, CombinatorParser, ManualParser}
+import de.hfu.monkey.ast.Program
+import de.hfu.monkey.parser.{Parser, CombinatorParser, ManualParser}
 import de.hfu.monkey.evaluator.*
 import scopt.OParser
 

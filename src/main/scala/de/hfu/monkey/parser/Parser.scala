@@ -1,6 +1,6 @@
-package de.hfu.monkey.Parser
+package de.hfu.monkey.parser
 
-import de.hfu.monkey.Ast.Program
+import de.hfu.monkey.ast.Program
 
 trait Parser {
 	def errors: Seq[String] = Seq()

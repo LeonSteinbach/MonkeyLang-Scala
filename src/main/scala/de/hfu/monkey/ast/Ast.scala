@@ -1,4 +1,4 @@
-package de.hfu.monkey.Ast
+package de.hfu.monkey.ast
 
 import de.hfu.monkey.*
 

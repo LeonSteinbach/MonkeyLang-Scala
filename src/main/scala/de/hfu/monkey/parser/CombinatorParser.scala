@@ -1,12 +1,12 @@
-package de.hfu.monkey.Parser
+package de.hfu.monkey.parser
 
 import de.hfu.monkey.*
-import de.hfu.monkey.Ast.{ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, Statement, StringLiteral}
+import de.hfu.monkey.ast.{ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, Statement, StringLiteral}
 
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.{JavaTokenParsers, RegexParsers}
 
-case class CombinatorParser() extends Parser.Parser, JavaTokenParsers {
+case class CombinatorParser() extends parser.Parser, JavaTokenParsers {
 
 	override def errors: Seq[String] = Seq[String]()
 
