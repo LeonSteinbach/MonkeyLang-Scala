@@ -56,6 +56,19 @@ class ParserTest extends AnyFunSuite {
 				ExpressionStatement(ArrayLiteral(List())))))
 	}
 
+	test("parser.hash") {
+		val program: Program = parserCombinator.parse("{ \"a\": 1, 2: \"b\", 3 + 4: 5, true: false }; {};")
+		assert(parserManual.parse("{ \"a\": 1, 2: \"b\", 3 + 4: 5, true: false }; {};") === program)
+		assert(program ===
+			Program(List(
+				ExpressionStatement(HashLiteral(Map(
+					StringLiteral("a") -> IntegerLiteral(1),
+					IntegerLiteral(2) -> StringLiteral("b"),
+					InfixExpression("+", IntegerLiteral(3), IntegerLiteral(4)) -> IntegerLiteral(5),
+					BooleanLiteral(true) -> BooleanLiteral(false)))),
+				ExpressionStatement(HashLiteral(Map())))))
+	}
+
 	test("parser.prefixExpression") {
 		val program: Program = parserCombinator.parse("!true; !!false; -1; --foo;")
 		assert(parserManual.parse("!true; !!false; -1; --foo;") === program)
@@ -146,14 +159,15 @@ class ParserTest extends AnyFunSuite {
 	}
 
 	test("parser.indexExpression") {
-		val program: Program = parserCombinator.parse("foo[-1]; [2][0]; (foo + bar)[3]; a[0][1] + b[0];")
-		assert(parserManual.parse("foo[-1]; [2][0]; (foo + bar)[3]; a[0][1] + b[0];") === program)
+		val program: Program = parserCombinator.parse("foo[-1]; [2][0]; (foo + bar)[3]; a[0][1] + b[0]; {\"a\": 1}[\"a\"];")
+		assert(parserManual.parse("foo[-1]; [2][0]; (foo + bar)[3]; a[0][1] + b[0]; {\"a\": 1}[\"a\"];") === program)
 		assert(program ===
 			Program(List(
 				ExpressionStatement(IndexExpression(Identifier("foo"),PrefixExpression("-",IntegerLiteral(1)))),
 				ExpressionStatement(IndexExpression(ArrayLiteral(List(IntegerLiteral(2))),IntegerLiteral(0))),
 				ExpressionStatement(IndexExpression(InfixExpression("+",Identifier("foo"),Identifier("bar")),IntegerLiteral(3))),
-				ExpressionStatement(InfixExpression("+",IndexExpression(IndexExpression(Identifier("a"),IntegerLiteral(0)),IntegerLiteral(1)),IndexExpression(Identifier("b"),IntegerLiteral(0)))))))
+				ExpressionStatement(InfixExpression("+",IndexExpression(IndexExpression(Identifier("a"),IntegerLiteral(0)),IntegerLiteral(1)),IndexExpression(Identifier("b"),IntegerLiteral(0)))),
+				ExpressionStatement(IndexExpression(HashLiteral(Map(StringLiteral("a") -> IntegerLiteral(1))), StringLiteral("a"))))))
 	}
 
 	test("parser.letStatement") {

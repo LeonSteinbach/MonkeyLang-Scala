@@ -198,7 +198,6 @@ object Evaluator {
 		}
 	}
 
-
 	private def evaluateExpressions(expressions: Option[List[Expression]], environment: Environment): List[Object] = returning {
 		val result: ListBuffer[Object] = ListBuffer.empty[Object]
 
