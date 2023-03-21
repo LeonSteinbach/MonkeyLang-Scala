@@ -61,7 +61,7 @@ versatility and flexibility for users when programming in MonkeyLang-Scala.
 <digit>                     ::= "0..9"
 <alpha>                     ::= "a..zA..Z"
 <bool>                      ::= "true" | "false"
-<string>                    ::= """ { <any-character> } """
+<string>                    ::= """ { <~any valid non-quotation-marks character> } """
 <array>                     ::= "[" [<expression-list>] "]"
 <hash>                      ::= "{" [<key-value-pairs>] "}"
 <key-value-pairs>           ::= <expression> ":" <expression> { "," <expression> ":" <expression> }
