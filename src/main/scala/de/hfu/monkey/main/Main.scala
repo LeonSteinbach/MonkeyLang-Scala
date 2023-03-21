@@ -81,7 +81,7 @@ object Main {
 	}
 
 	private def printResult(parser: Parser, evaluator: String, evaluate: Boolean): Unit = {
-		val input = "let a = {\"0\": 1, 1: 2, 2 + 3: 3, true: 6}; a[5];"
+		val input = "let a = {\"0\": 1, 1: 2, 2 + 3: 3, true: 6}; puts(\"hallo welt\"); a[5];"
 		var printString: String = ""
 
 		val startTime1 = System.currentTimeMillis()

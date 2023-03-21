@@ -11,7 +11,7 @@ import scala.util.control.NonLocalReturns.*
 object Evaluator {
 	private val TRUE: BooleanObject = BooleanObject(true)
 	private val FALSE: BooleanObject = BooleanObject(false)
-	private val NULL: NullObject.type = NullObject
+	val NULL: NullObject.type = NullObject
 
 	def evaluateProgram(program: Program, environment: Environment): Object = {
 		program.statements.foldLeft(NULL: Object) { (_, statement) =>

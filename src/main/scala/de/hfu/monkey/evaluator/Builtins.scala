@@ -71,6 +71,10 @@ object Builtins {
 						ErrorObject(s"argument to `push` not supported, got ${args(0).`type`()}")
 				}
 			}
+		}),
+		"puts" -> BuiltinObject((args: Array[Object]) => {
+			args.foreach { arg => println(arg) }
+			Evaluator.NULL
 		})
 	)
 }
