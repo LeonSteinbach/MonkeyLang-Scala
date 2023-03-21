@@ -178,18 +178,26 @@ object Evaluator {
 	}
 
 	private def evaluateIndexExpression(indexExpression: IndexExpression, environment: Environment): Object = {
-		val left: Object = evaluate(Some(indexExpression.left), environment)
-		if (isError(left))
-			left
-		else
-			val index: Object = evaluate(Some(indexExpression.index), environment)
-			if (isError(index))
-				index
-			else
-				val idx: Int = index.asInstanceOf[IntegerObject].value
-				val elements: List[Object] = left.asInstanceOf[ArrayObject].elements
+		val left = evaluate(Some(indexExpression.left), environment)
+		if (isError(left)) return left
+
+		val index = evaluate(Some(indexExpression.index), environment)
+		if (isError(index)) return index
+
+		(left, index) match {
+			case (arrayObject: ArrayObject, integerValue: IntegerObject) =>
+				val idx = integerValue.value
+				val elements = arrayObject.elements
 				if (idx < 0 || idx > elements.length - 1) NULL else elements(idx)
+
+			case (hashObject: HashObject, hashable: Hashable) =>
+				val hashKey = HashKey(hashable.hashKey.value)
+				hashObject.pairs.get(hashKey).map(_.value).getOrElse(NULL)
+
+			case _ => ErrorObject(s"index operator not supported: ${left.`type`()}")
+		}
 	}
+
 
 	private def evaluateExpressions(expressions: Option[List[Expression]], environment: Environment): List[Object] = returning {
 		val result: ListBuffer[Object] = ListBuffer.empty[Object]

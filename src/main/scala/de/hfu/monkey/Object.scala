@@ -38,7 +38,7 @@ case class ArrayObject(elements: List[Object]) extends Object {
 	def `type`(): ObjectType.Value = ObjectType.ARRAY
 }
 
-class HashKey(value: Int)
+case class HashKey(value: Int)
 
 case class HashPair(key: Object, value: Object)
 
