@@ -1,14 +1,19 @@
 # MonkeyLang-Scala
 
-This project implements an interpreter for the programming language Monkey, using Scala Parser Combinators. The project is part of a bachelor's thesis on "Developing an Interpreter for the Programming Language Monkey using Scala Parser Combinators".
+This project implements an interpreter for the programming language Monkey, using Scala Parser Combinators. The project
+is part of a bachelor's thesis on "Developing an Interpreter for the Programming Language Monkey using Scala Parser
+Combinators".
 
 # EBNF (Extended Backus-Naur form)
 
 The EBNF below describes the grammar for MonkeyLang-Scala, as it is defined in the books.
 
-It employs prioritized function calls to establish precedence for expressions, ensuring that the order of evaluation respects the rules of arithmetic and logic.
+It employs prioritized function calls to establish precedence for expressions, ensuring that the order of evaluation
+respects the rules of arithmetic and logic.
 
-In addition to the core language features, MonkeyLang-Scala also includes support for extended data structures from the original Monkey programming language. These data structures comprise Strings, Arrays, and Hashes, which provide more versatility and flexibility for users when programming in MonkeyLang-Scala.
+In addition to the core language features, MonkeyLang-Scala also includes support for extended data structures from the
+original Monkey programming language. These data structures comprise Strings, Arrays, and Hashes, which provide more
+versatility and flexibility for users when programming in MonkeyLang-Scala.
 
 ```
 <program>                   ::= <statement-list>
@@ -65,3 +70,28 @@ In addition to the core language features, MonkeyLang-Scala also includes suppor
 <expression-list>           ::= <expression> { "," <expression> }
 <parameter-list>            ::= <identifier> { "," <identifier> }
 ```
+
+# Benchmarks
+
+## Parser comparison
+
+<table>
+	<caption></caption>
+	<tr>
+		<td>
+			<img src="https://github.com/LeonSteinbach/MonkeyLang-Scala/blob/main/benchmarks/parser/timings-parser-append.png" alt="Image 1" width="300"/>
+		</td>
+		<td>
+			<img src="https://github.com/LeonSteinbach/MonkeyLang-Scala/blob/main/benchmarks/parser/timings-parser-nested.png" alt="Image 2" width="300"/>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			Duration in milliseconds for parsing linear increasing text
+		</td>
+		<td>
+			Duration in milliseconds for parsing increasingly nested function calls
+		</td>
+	</tr>
+</table>
+
