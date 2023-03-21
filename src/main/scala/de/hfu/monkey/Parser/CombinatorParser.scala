@@ -19,7 +19,14 @@ case class CombinatorParser() extends Parser.Parser, JavaTokenParsers {
 
 	private def array: Parser[ArrayLiteral] = "[" ~> repsep(expression, ",") <~ "]" ^^ { elements => ArrayLiteral(elements) }
 
-	private def value: Parser[Expression] = identifier | integer | boolean | string | array
+	private def hash: Parser[HashLiteral] = "{" ~> repsep((expression <~ ":") ~ expression, ",") <~ "}" ^^ { keyValuePairs =>
+		val pairs = keyValuePairs.map {
+			case key ~ value => (key, value)
+		}
+		HashLiteral(pairs.toMap)
+	}
+
+	private def value: Parser[Expression] = identifier | integer | boolean | string | array | hash
 
 	private def binaryExpression(operatorParser: Parser[String], operandParser: Parser[Expression]): Parser[Expression] = {
 		operandParser ~ rep(operatorParser ~ operandParser) ^^ {
