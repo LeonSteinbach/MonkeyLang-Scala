@@ -1,4 +1,4 @@
-package de.hfu.monkey
+package de.hfu.monkey.evaluator
 
 import scala.collection.mutable
 

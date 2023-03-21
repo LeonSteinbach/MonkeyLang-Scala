@@ -1,4 +1,4 @@
-package de.hfu.monkey
+package de.hfu.monkey.lexer
 
 import scala.annotation.tailrec
 

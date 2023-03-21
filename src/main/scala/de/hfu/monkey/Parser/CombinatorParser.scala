@@ -1,6 +1,7 @@
 package de.hfu.monkey.Parser
 
 import de.hfu.monkey.*
+import de.hfu.monkey.Ast.{ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, Statement, StringLiteral}
 
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.{JavaTokenParsers, RegexParsers}

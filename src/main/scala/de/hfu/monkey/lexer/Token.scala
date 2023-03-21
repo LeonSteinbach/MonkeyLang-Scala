@@ -1,4 +1,6 @@
-package de.hfu.monkey
+package de.hfu.monkey.lexer
+
+import de.hfu.monkey.lexer.TokenType
 
 enum TokenType {
 	case ILLEGAL, EOF, IDENT, INT, ASSIGN, PLUS, MINUS, BANG, ASTERIX, SLASH, LT, GT, COMMA, COLON, SEMICOLON,

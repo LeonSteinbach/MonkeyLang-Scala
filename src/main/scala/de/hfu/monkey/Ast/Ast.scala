@@ -1,4 +1,6 @@
-package de.hfu.monkey
+package de.hfu.monkey.Ast
+
+import de.hfu.monkey.*
 
 sealed trait Node
 sealed trait Statement extends Node

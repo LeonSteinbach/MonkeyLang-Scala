@@ -1,5 +1,6 @@
 package de.hfu.monkey
 
+import de.hfu.monkey.Ast.{ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, StringLiteral}
 import de.hfu.monkey.Parser.{CombinatorParser, ManualParser}
 import org.scalatest.funsuite.AnyFunSuite
 

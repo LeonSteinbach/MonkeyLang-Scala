@@ -1,6 +1,8 @@
-package de.hfu.monkey
+package de.hfu.monkey.main
 
-import de.hfu.monkey.Parser.{CombinatorParser, ManualParser}
+import de.hfu.monkey.Ast.Program
+import de.hfu.monkey.Parser.{Parser, CombinatorParser, ManualParser}
+import de.hfu.monkey.evaluator.*
 import scopt.OParser
 
 import java.io.{BufferedWriter, File, FileWriter}
@@ -21,7 +23,7 @@ object Main {
 
 		val builder = OParser.builder[Config]
 		val parser = {
-			import builder._
+			import builder.*
 			OParser.sequence(
 				opt[String]("parser")
 					.validate(x => if (x == "manual" || x == "combinator") success else failure("Parser must be 'manual' or 'combinator'"))
@@ -78,7 +80,7 @@ object Main {
 */
 	}
 
-	private def printResult(parser: Parser.Parser, evaluator: String, evaluate: Boolean): Unit = {
+	private def printResult(parser: Parser, evaluator: String, evaluate: Boolean): Unit = {
 		val input = "let a = {\"0\": 1, 1: 2, 2 + 3: 3, true: 6}; a[5];"
 		var printString: String = ""
 
@@ -112,8 +114,8 @@ object Main {
 
 		val printString = new StringBuilder("# Iterations\tManual\tCombinators\n")
 
-		val parserManual: Parser.Parser = Parser.ManualParser()
-		val parserCombinator: Parser.Parser = Parser.CombinatorParser()
+		val parserManual: Parser = ManualParser()
+		val parserCombinator: Parser = CombinatorParser()
 
 		for (multiply <- 0.to(iterations, steps)) {
 			val finalInput = new StringBuilder("")

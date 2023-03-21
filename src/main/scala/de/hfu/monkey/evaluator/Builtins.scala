@@ -1,4 +1,4 @@
-package de.hfu.monkey
+package de.hfu.monkey.evaluator
 
 object Builtins {
 	val builtins: Map[String, BuiltinObject] = Map(

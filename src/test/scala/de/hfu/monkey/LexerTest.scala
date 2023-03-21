@@ -1,6 +1,8 @@
 package de.hfu.monkey
 
+import de.hfu.monkey.lexer.{Lexer, Token, TokenType}
 import org.scalatest.funsuite.AnyFunSuite
+
 import scala.util.Failure
 
 class LexerTest extends AnyFunSuite {

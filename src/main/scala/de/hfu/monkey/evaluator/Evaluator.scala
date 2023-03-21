@@ -1,4 +1,8 @@
-package de.hfu.monkey
+package de.hfu.monkey.evaluator
+
+import de.hfu.monkey
+import de.hfu.monkey.Ast.*
+import de.hfu.monkey.*
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
