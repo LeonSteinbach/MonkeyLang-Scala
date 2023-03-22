@@ -88,10 +88,10 @@ It is noteworthy that the parser using Scala parser combinators experiences more
 	<caption></caption>
 	<tr>
 		<td>
-			<img src="https://github.com/LeonSteinbach/MonkeyLang-Scala/blob/main/benchmarks/parser/timings-parser-append.png" alt="Image 1" width="100%"/>
+			<img src="https://github.com/LeonSteinbach/MonkeyLang-Scala/blob/main/benchmarks/parser/timings-parser-append.png" alt="timings-parser-append" width="100%"/>
 		</td>
 		<td>
-			<img src="https://github.com/LeonSteinbach/MonkeyLang-Scala/blob/main/benchmarks/parser/timings-parser-nested.png" alt="Image 2" width="100%"/>
+			<img src="https://github.com/LeonSteinbach/MonkeyLang-Scala/blob/main/benchmarks/parser/timings-parser-nested.png" alt="timings-parser-nested" width="100%"/>
 		</td>
 	</tr>
 	<tr>
@@ -100,6 +100,27 @@ It is noteworthy that the parser using Scala parser combinators experiences more
 		</td>
 		<td>
 			Duration [ms] for parsing increasingly nested function calls
+		</td>
+	</tr>
+</table>
+
+## Evaluator comparison
+
+This benchmark presents a comparison between the tree-walking evaluator of MonkeyLang-Scala and other popular programming languages.
+Specifically, the benchmark measures the duration in milliseconds it takes to compute the Fibonacci number with n=35 using a recursive implementation.
+
+All benchmarks were performed on the same computer, an AMD Ryzen 5 5600x, to ensure consistency and fairness in the results.
+
+<table>
+	<caption></caption>
+	<tr>
+		<td>
+			<img src="https://github.com/LeonSteinbach/MonkeyLang-Scala/blob/main/benchmarks/evaluator/timings-evaluator-fib.png" alt="timings-evaluator-fib" width="100%"/>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			Recursive fibonacci performance [n=35]
 		</td>
 	</tr>
 </table>
