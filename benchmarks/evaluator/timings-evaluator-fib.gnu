@@ -1,12 +1,12 @@
 reset
 set size 1, 1
-#set term png size 1200, 800
-set term svg
+set term png size 1200, 800
+#set term svg
 set title "Recursive fibonacci performance [n=35]"
 set xlabel "Programming language"
 set ylabel "Duration [ms]"
-#set output "timings-evaluator-fib.png"
-set output "timings-evaluator-fib.svg"
+set output "timings-evaluator-fib.png"
+#set output "timings-evaluator-fib.svg"
 set style fill solid
 set boxwidth 0.5
 #set xtics rotate by -45

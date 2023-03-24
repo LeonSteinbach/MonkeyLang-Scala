@@ -118,9 +118,9 @@
 		<polygon fill = 'rgb(  0,   0,   0)' points = '113.59,422.40 162.15,422.40 162.15,106.63 113.59,106.63 '/>
 	</g>
 	<path stroke='rgb(  0,   0,   0)'  d='M113.59,422.40 L113.59,106.64 L162.14,106.64 L162.14,422.40 L113.59,422.40 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
-		<polygon fill = 'rgb(  0,   0,   0)' points = '210.69,422.40 259.25,422.40 259.25,399.23 210.69,399.23 '/>
+		<polygon fill = 'rgb(  0,   0,   0)' points = '210.69,422.40 259.25,422.40 259.25,384.24 210.69,384.24 '/>
 	</g>
-	<path stroke='rgb(  0,   0,   0)'  d='M210.69,422.40 L210.69,399.24 L259.24,399.24 L259.24,422.40 L210.69,422.40 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
+	<path stroke='rgb(  0,   0,   0)'  d='M210.69,422.40 L210.69,384.25 L259.24,384.25 L259.24,422.40 L210.69,422.40 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
 		<polygon fill = 'rgb(  0,   0,   0)' points = '307.79,422.40 356.35,422.40 356.35,421.28 307.79,421.28 '/>
 	</g>
 	<path stroke='rgb(  0,   0,   0)'  d='M307.79,422.40 L307.79,421.29 L356.34,421.29 L356.34,422.40 L307.79,422.40 Z  '/>	<g stroke='none' shape-rendering='crispEdges'>
@@ -136,8 +136,8 @@
 	<g transform="translate(137.86,102.64)" stroke="none" fill="black" font-family="Arial" font-size="12.00"  text-anchor="middle">
 		<text><tspan font-family="Arial" >12000</tspan></text>
 	</g>
-	<g transform="translate(234.96,395.25)" stroke="none" fill="black" font-family="Arial" font-size="12.00"  text-anchor="middle">
-		<text><tspan font-family="Arial" >880</tspan></text>
+	<g transform="translate(234.96,380.25)" stroke="none" fill="black" font-family="Arial" font-size="12.00"  text-anchor="middle">
+		<text><tspan font-family="Arial" >1450</tspan></text>
 	</g>
 	<g transform="translate(332.07,417.30)" stroke="none" fill="black" font-family="Arial" font-size="12.00"  text-anchor="middle">
 		<text><tspan font-family="Arial" >42</tspan></text>
