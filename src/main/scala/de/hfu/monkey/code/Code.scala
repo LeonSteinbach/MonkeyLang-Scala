@@ -14,7 +14,7 @@ object Opcode extends Enumeration {
 case class Definition(name: String, operandWidths: Array[Int])
 
 object Definition {
-	val definitions: Map[Opcode, Definition] = Map[Opcode, Definition](
+	private val definitions: Map[Opcode, Definition] = Map[Opcode, Definition](
 		OpConstant -> Definition("OpConstant", Array(2))
 	)
 

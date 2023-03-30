@@ -12,7 +12,7 @@ case class Config(
 	evaluator: String = "interpreter",
 	evaluate: Boolean = true,
 	compareParsers: Boolean = false,
-	nested: Boolean = false,
+	appendMode: String = "linear",
 	iterations: Int = 10000,
 	steps: Int = 10,
 	timingsParserFilename: Option[String] = None
@@ -29,28 +29,26 @@ object Main {
 					.validate(x => if (x == "manual" || x == "combinator") success else failure("Parser must be 'manual' or 'combinator'"))
 					.action((x, c) => c.copy(parser = x))
 					.text("Parser implementation (manual or combinator)"),
-				opt[String]("evaluator")
+				opt[String]("engine")
 					.action((x, c) => c.copy(evaluator = x))
-					.text("Evaluator implementation (interpreter or compiler)"),
-				opt[Unit]("no-evaluate")
-					.action((_, c) => c.copy(evaluate = false))
-					.text("Do not evaluate the input program"),
-				opt[Int]("iterations")
-					.action((x, c) => c.copy(iterations = x))
-					.text("Number of iterations (length of the parsed text)"),
-				opt[Int]("steps")
-					.action((x, c) => c.copy(steps = x))
-					.text("Number of steps to take"),
+					.text("Engine implementation (interpreter or compiler)"),
 				opt[Unit]("compareParsers")
 					.action((_, c) => c.copy(compareParsers = true))
 					.text("Compare the different parser implementations by timing them")
 					.children(
+						opt[Int]("iterations")
+							.action((x, c) => c.copy(iterations = x))
+							.text("Number of iterations (length of the parsed text)"),
+						opt[Int]("steps")
+							.action((x, c) => c.copy(steps = x))
+							.text("Number of steps to take"),
 						opt[String]("file-parser")
 							.action((x, c) => c.copy(timingsParserFilename = Some(x)))
 							.text("File to write parser timings comparison"),
-						opt[Unit]("nested")
-							.action((_, c) => c.copy(nested = true))
-							.text("Use nested function calls instead of linear append")
+						opt[String]("appendMode")
+							.action((x, c) => c.copy(appendMode = x))
+							.validate(x => if (x == "linear" || x == "nested") success else failure("Append mode must be 'linear' or 'nested'"))
+							.text("Append mode for building parsers (linear or nested)")
 					)
 			)
 		}
@@ -59,7 +57,7 @@ object Main {
 			case Some(config) =>
 				val parser = if (config.parser == "manual") ManualParser() else CombinatorParser()
 				if (config.compareParsers) {
-					compareParsers(config.iterations, config.steps, config.nested, config.timingsParserFilename)
+					compareParsers(config.iterations, config.steps, config.appendMode, config.timingsParserFilename)
 				} else {
 					println(s"Using ${config.parser} parser\n")
 					printResult(parser, config.evaluator, config.evaluate)
@@ -108,9 +106,13 @@ object Main {
 		parser.errors.foreach(error => println(error))
 	}
 
-	private def compareParsers(iterations: Int, steps: Int, nested: Boolean, filename: Option[String]): Unit = {
+	private def compareParsers(iterations: Int, steps: Int, appendMode: String, filename: Option[String]): Unit = {
 
-		val parserInput: String = if (nested) "foo + bar(" else "let foo = fn(a, b) { let bar = a + b; return bar * bar; }; let x = foo(foo(1, 2), 3); if (-x > 0 == true == !false) { (0 + 1) * 2; } else { x; };"
+		val parserInput: String =
+			if (appendMode == "nested")
+				"foo + bar("
+			else
+				"let foo = fn(a, b) { let bar = a + b; return bar * bar; }; let x = foo(foo(1, 2), 3); if (-x > 0 == true == !false) { (0 + 1) * 2; } else { x; };"
 
 		val printString = new StringBuilder("# Iterations\tManual\tCombinators\n")
 
@@ -119,7 +121,7 @@ object Main {
 
 		for (multiply <- 0.to(iterations, steps)) {
 			val finalInput = new StringBuilder("")
-			if (nested) {
+			if (appendMode == "nested") {
 				finalInput.append(parserInput * multiply + ")" * multiply + (if (multiply > 0) ";" else ""))
 			} else {
 				finalInput.append(parserInput * multiply)
