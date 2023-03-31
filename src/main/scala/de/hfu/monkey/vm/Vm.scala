@@ -1,7 +1,7 @@
 package de.hfu.monkey.vm
 
 import de.hfu.monkey.code.*
-import de.hfu.monkey.code.Opcode.Opcode
+import de.hfu.monkey.code.Opcode.*
 import de.hfu.monkey.evaluator.*
 import de.hfu.monkey.compiler.*
 import de.hfu.monkey.evaluator.*

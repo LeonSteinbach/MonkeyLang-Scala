@@ -1,9 +1,9 @@
 package de.hfu.monkey.compiler
 
 import de.hfu.monkey.ast.*
-import de.hfu.monkey.evaluator.{IntegerObject, Object}
-import de.hfu.monkey.code.{Definition, Instructions}
-import de.hfu.monkey.code.Opcode.{OpConstant, Opcode}
+import de.hfu.monkey.evaluator.*
+import de.hfu.monkey.code.*
+import de.hfu.monkey.code.Opcode.*
 
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonLocalReturns.{returning, throwReturn}
@@ -52,7 +52,7 @@ case class Compiler() {
 	}
 
 	private def emit(operation: Opcode, operands: Array[Int]): Int = {
-		val instruction = Definition.make(operation, operands)
+		val instruction = Definition.make(operation, operands*)
 		val position = addInstruction(instruction)
 		position
 	}
