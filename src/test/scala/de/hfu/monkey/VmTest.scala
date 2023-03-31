@@ -22,6 +22,7 @@ class VmTest extends AnyFunSuite {
 		val parser = CombinatorParser()
 		for (test <- tests) {
 			val program = parser.parse(test.input)
+			println(program)
 
 			val compiler = Compiler()
 			compiler.compile(program) match {

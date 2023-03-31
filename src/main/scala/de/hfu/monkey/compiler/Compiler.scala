@@ -22,7 +22,7 @@ case class Compiler() {
 					}
 				}
 			case expressionStatement: ExpressionStatement =>
-				compile(expressionStatement) match {
+				compile(expressionStatement.expression) match {
 					case Some(exception: Exception) => throwReturn(Some(exception))
 					case _ =>
 				}
@@ -38,6 +38,8 @@ case class Compiler() {
 			case integerLiteral: IntegerLiteral =>
 				val integerObject: IntegerObject = IntegerObject(integerLiteral.value)
 				emit(OpConstant, Array(addConstant(integerObject)))
+			case _ =>
+				throwReturn(None)
 		}
 		None
 	}
