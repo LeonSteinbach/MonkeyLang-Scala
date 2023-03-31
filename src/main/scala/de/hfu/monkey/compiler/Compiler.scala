@@ -44,18 +44,18 @@ case class Compiler() {
 
 	def bytecode: Bytecode = Bytecode(instructions, constants.toList)
 
-	def addConstant(obj: Object): Int = {
+	private def addConstant(obj: Object): Int = {
 		constants = constants :+ obj
 		constants.length - 1
 	}
 
-	def emit(operation: Opcode, operands: Array[Int]): Int = {
+	private def emit(operation: Opcode, operands: Array[Int]): Int = {
 		val instruction = Definition.make(operation, operands)
 		val position = addInstruction(instruction)
 		position
 	}
 
-	def addInstruction(ins: Array[Byte]): Int = {
+	private def addInstruction(ins: Array[Byte]): Int = {
 		val positionNewInstruction = instructions.length
 		instructions = instructions ++ ins
 		positionNewInstruction
