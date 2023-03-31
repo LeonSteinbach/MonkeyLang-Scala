@@ -22,7 +22,6 @@ class VmTest extends AnyFunSuite {
 		val parser = CombinatorParser()
 		for (test <- tests) {
 			val program = parser.parse(test.input)
-			println(program)
 
 			val compiler = Compiler()
 			compiler.compile(program) match {
@@ -36,7 +35,10 @@ class VmTest extends AnyFunSuite {
 				case None =>
 			}
 
-			testExpectedObject(test.expected, vm.stackTop)
+			vm.stackTop match {
+				case Some(value: Object) => testExpectedObject(test.expected, value)
+				case None => fail("empty stack")
+			}
 		}
 	}
 
@@ -52,7 +54,8 @@ class VmTest extends AnyFunSuite {
 
 	test("vm.integerArithmetic") {
 		runVmTests(List(
-			Test("1;", 1)
+			Test("1;", 1),
+			Test("2;", 2),
 		))
 	}
 

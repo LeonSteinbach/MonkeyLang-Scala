@@ -1,8 +1,10 @@
 package de.hfu.monkey
 
+import de.hfu.monkey.code.*
 import de.hfu.monkey.code.Opcode.{OpConstant, Opcode}
 import de.hfu.monkey.code.{Definition, Instructions, Opcode}
 import org.scalatest.funsuite.AnyFunSuite
+
 import java.nio.{ByteBuffer, ByteOrder}
 
 class CodeTest extends AnyFunSuite {
@@ -89,22 +91,18 @@ class CodeTest extends AnyFunSuite {
 		}
 	}
 
-	def readOperands(definition: Definition, ins: Array[Byte]): (Array[Int], Int) = {
+	def readOperands(definition: Definition, instructions: Instructions): (Array[Int], Int) = {
 		val operands = Array.fill[Int](definition.operandWidths.length)(0)
 		var offset = 0
 
 		for ((width, i) <- definition.operandWidths.zipWithIndex) {
 			width match {
 				case 2 =>
-					operands(i) = ByteBuffer.wrap(ins.slice(offset, offset + 2)).order(ByteOrder.BIG_ENDIAN).getShort.toInt & 0xFFFF
+					operands(i) = instructions.readInt(offset)
 			}
 			offset += width
 		}
 
 		(operands, offset)
-	}
-
-	def readUint16(ins: Array[Byte]): Int = {
-		ByteBuffer.wrap(ins).order(ByteOrder.BIG_ENDIAN).getShort.toInt
 	}
 }
