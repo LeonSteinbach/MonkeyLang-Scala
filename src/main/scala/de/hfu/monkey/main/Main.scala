@@ -82,7 +82,7 @@ object Main {
 	}
 
 	private def printResult(parser: Parser, engine: String, evaluate: Boolean): Unit = {
-		val input = "1 + 2;"
+		val input = "1 + 2 + 3;"
 		var printString: String = ""
 
 		val startTime1 = System.currentTimeMillis()
@@ -93,7 +93,7 @@ object Main {
 
 		if (evaluate) {
 			var evaluated: Option[Object] = None
-			val startTime2 = System.currentTimeMillis()
+			var startTime2 = System.currentTimeMillis()
 			if (engine == "interpreter") {
 				evaluated = Some(Evaluator.evaluateProgram(parsed, new Environment))
 			} else if (engine == "compiler") {
@@ -101,12 +101,13 @@ object Main {
 				compiler.compile(parsed)
 
 				val vm = Vm(compiler.bytecode)
+				startTime2 = System.currentTimeMillis()
 				vm.run()
 
 				evaluated = vm.stackTop
 			}
 			val endTime2 = System.currentTimeMillis()
-			printString += s"\n\n${if (engine == "interpreter") "Interpreter" else "Compiler"} [ms]:   ${endTime2 - startTime2}\n"
+			printString += s"\n\n${engine.capitalize} [ms]:   ${endTime2 - startTime2}\n"
 			printString += s"Result: ${evaluated.get}"
 		}
 
