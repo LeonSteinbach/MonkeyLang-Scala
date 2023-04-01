@@ -11,7 +11,7 @@ class VmTest extends AnyFunSuite {
 
 	case class Test(input: String, expected: Any)
 
-	def testIntegerObject(expected: Int, actual: objects.Object): Unit = {
+	def testIntegerObject(expected: Int, actual: Object): Unit = {
 		actual match {
 			case IntegerObject(value) if value == expected =>
 			case obj => fail(s"Object does not match expected value. Got $obj, expected Integer with value $expected")
@@ -30,13 +30,13 @@ class VmTest extends AnyFunSuite {
 			vm.run()
 
 			vm.stackTop match {
-				case Some(value: objects.Object) => testExpectedObject(test.expected, value)
+				case Some(value: Object) => testExpectedObject(test.expected, value)
 				case None => fail("empty stack")
 			}
 		}
 	}
 
-	def testExpectedObject(expected: Any, actual: objects.Object): Unit = {
+	def testExpectedObject(expected: Any, actual: Object): Unit = {
 		expected match {
 			case integer: Int => testIntegerObject(integer, actual)
 		}

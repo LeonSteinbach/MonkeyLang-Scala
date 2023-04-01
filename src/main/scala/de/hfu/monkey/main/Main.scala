@@ -2,15 +2,17 @@ package de.hfu.monkey.main
 
 import de.hfu.monkey.objects.Object
 import de.hfu.monkey.ast.Program
+import de.hfu.monkey.compiler.Compiler
 import de.hfu.monkey.parser.{CombinatorParser, ManualParser, Parser}
 import de.hfu.monkey.evaluator.*
+import de.hfu.monkey.vm.Vm
 import scopt.OParser
 
 import java.io.{BufferedWriter, File, FileWriter}
 
 case class Config(
 	parser: String = "manual",
-	evaluator: String = "interpreter",
+	engine: String = "interpreter",
 	evaluate: Boolean = true,
 	compareParsers: Boolean = false,
 	appendMode: String = "linear",
@@ -31,7 +33,7 @@ object Main {
 					.action((x, c) => c.copy(parser = x))
 					.text("Parser implementation (manual or combinator)"),
 				opt[String]("engine")
-					.action((x, c) => c.copy(evaluator = x))
+					.action((x, c) => c.copy(engine = x))
 					.text("Engine implementation (interpreter or compiler)"),
 				opt[Unit]("compareParsers")
 					.action((_, c) => c.copy(compareParsers = true))
@@ -60,8 +62,8 @@ object Main {
 				if (config.compareParsers) {
 					compareParsers(config.iterations, config.steps, config.appendMode, config.timingsParserFilename)
 				} else {
-					println(s"Using ${config.parser} parser\n")
-					printResult(parser, config.evaluator, config.evaluate)
+					println(s"Using ${config.parser} parser and ${config.engine}\n")
+					printResult(parser, config.engine, config.evaluate)
 				}
 			case _ =>
 		}
@@ -79,8 +81,8 @@ object Main {
 */
 	}
 
-	private def printResult(parser: Parser, evaluator: String, evaluate: Boolean): Unit = {
-		val input = "let a = {\"0\": 1, 1: 2, 2 + 3: 3, true: 6}; puts(\"hallo welt\"); a[5];"
+	private def printResult(parser: Parser, engine: String, evaluate: Boolean): Unit = {
+		val input = "1 + 2;"
 		var printString: String = ""
 
 		val startTime1 = System.currentTimeMillis()
@@ -90,16 +92,22 @@ object Main {
 		printString += s"Parser [ms]:      ${endTime1 - startTime1}"
 
 		if (evaluate) {
-			val startTime2 = System.currentTimeMillis()
 			var evaluated: Option[Object] = None
-			if (evaluator == "interpreter") {
+			val startTime2 = System.currentTimeMillis()
+			if (engine == "interpreter") {
 				evaluated = Some(Evaluator.evaluateProgram(parsed, new Environment))
-			} else if (evaluator == "compiler") {
-				// TODO: Implement compiler
+			} else if (engine == "compiler") {
+				val compiler = Compiler()
+				compiler.compile(parsed)
+
+				val vm = Vm(compiler.bytecode)
+				vm.run()
+
+				evaluated = vm.stackTop
 			}
 			val endTime2 = System.currentTimeMillis()
-			printString += s"\n\nEvaluator [ms]:   ${endTime2 - startTime2}\n"
-			printString += s"Evaluated result: ${evaluated.get}"
+			printString += s"\n\n${if (engine == "interpreter") "Interpreter" else "Compiler"} [ms]:   ${endTime2 - startTime2}\n"
+			printString += s"Result: ${evaluated.get}"
 		}
 
 		println(printString)
