@@ -1,8 +1,8 @@
-package de.hfu.monkey.evaluator
+package de.hfu.monkey.objects
 
 import de.hfu.monkey.*
 import de.hfu.monkey.ast.{BlockStatement, Identifier}
-import de.hfu.monkey.evaluator.Environment
+import de.hfu.monkey.evaluator.*
 
 object ObjectType extends Enumeration {
 	type ObjectType = Value

@@ -26,14 +26,10 @@ extension (instruction: Instructions) {
 		val out = new StringBuilder()
 		var i = 0
 		while (i < instruction.length) {
-			val (definition, err) = Definition.lookup(instruction(i))
-			if (err.isDefined) {
-				out.append(s"ERROR: ${err.get}\n")
-			} else {
-				val (operands, read) = readOperands(definition.get, instruction.slice(i + 1, i + 1 + definition.get.operandWidths.sum))
-				out.append(f"$i%04d ${instruction.fmtInstruction(definition.get, operands)}\n")
-				i += 1 + read
-			}
+			val definition = Definition.lookup(instruction(i))
+			val (operands, read) = readOperands(definition, instruction.slice(i + 1, i + 1 + definition.operandWidths.sum))
+			out.append(f"$i%04d ${instruction.fmtInstruction(definition, operands)}\n")
+			i += 1 + read
 		}
 		out.toString()
 	}
@@ -82,28 +78,22 @@ object Definition {
 		OpAdd -> Definition("OpAdd", Array())
 	)
 
-	def lookup(operation: Byte): (Option[Definition], Option[Exception]) = {
-		definitions.get(operation) match {
-			case Some(definition: Definition) => (Some(definition), None)
-			case None => (None, Some(new Exception(s"opcode $operation undefined")))
-		}
+	def lookup(operation: Opcode): Definition = {
+		definitions.getOrElse(operation, throw new Exception(s"opcode $operation undefined"))
 	}
 
-	def make(operation: Opcode, operands: Int*): Array[Byte] = {
-		definitions.get(operation) match {
-			case Some(definition) =>
-				val instruction = new Array[Byte](definition.operandWidths.sum + 1)
-				var offset = 1
-				operands.zip(definition.operandWidths).foreach {
-					case (value, width) =>
-						ByteBuffer.wrap(instruction, offset, width).order(ByteOrder.BIG_ENDIAN).putShort(value.toShort)
-						offset += width
-				}
-				instruction(0) = operation
-				instruction
-			case None =>
-				Array.emptyByteArray
+	def make(operation: Opcode, operands: Int*): Instructions = {
+		val definition = lookup(operation)
+
+		val instruction = new Instructions(definition.operandWidths.sum + 1)
+		var offset = 1
+		operands.zip(definition.operandWidths).foreach {
+			case (value, width) =>
+				ByteBuffer.wrap(instruction, offset, width).order(ByteOrder.BIG_ENDIAN).putShort(value.toShort)
+				offset += width
 		}
+		instruction(0) = operation
+		instruction
 	}
 
 }

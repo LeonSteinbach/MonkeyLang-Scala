@@ -1,10 +1,10 @@
 package de.hfu.monkey
 
 import de.hfu.monkey.ast.*
+import de.hfu.monkey.objects.*
 import de.hfu.monkey.code.*
 import de.hfu.monkey.code.Opcode.*
 import de.hfu.monkey.compiler.*
-import de.hfu.monkey.evaluator.*
 import de.hfu.monkey.lexer.Lexer
 import de.hfu.monkey.parser.ManualParser
 import org.scalatest.funsuite.AnyFunSuite
@@ -32,7 +32,7 @@ class CompilerTest extends AnyFunSuite {
 	private def testInstructions(expected: List[Instructions], actual: Instructions): Unit = {
 		val contacted = concatInstructions(expected)
 		if (actual.length != contacted.length) {
-			fail(s"wrong instructions length. want ${contacted.length} got ${actual.length}")
+			fail(s"wrong instructions length.\n\nwant\n${contacted.inspect}\ngot\n${actual.inspect}")
 		} else {
 			actual.zip(contacted).zipWithIndex.foreach {
 				case ((value, expectedValue), index) =>
@@ -43,7 +43,7 @@ class CompilerTest extends AnyFunSuite {
 		}
 	}
 
-	private def testConstants(expected: List[Int], actual: List[Object]): Unit = {
+	private def testConstants(expected: List[Int], actual: List[objects.Object]): Unit = {
 		if (expected.length != actual.length) {
 			fail(s"wrong number of constants. got ${actual.length} want ${expected.length}")
 		} else {
@@ -56,7 +56,7 @@ class CompilerTest extends AnyFunSuite {
 		}
 	}
 
-	private def testIntegerObject(expected: Int, actual: Object): Unit = {
+	private def testIntegerObject(expected: Int, actual: objects.Object): Unit = {
 		actual match {
 			case integer: IntegerObject =>
 				if (integer.value != expected)
@@ -76,10 +76,12 @@ class CompilerTest extends AnyFunSuite {
 	test("compiler.integerArithmetic") {
 		runCompilerTests(
 			List(Test(
-				"1;",
-				List(1),
+				"1 + 2;",
+				List(1, 2),
 				List(
 					Definition.make(OpConstant, 0),
+					Definition.make(OpConstant, 1),
+					Definition.make(OpAdd),
 				)
 			))
 		)

@@ -1,8 +1,12 @@
 package de.hfu.monkey.evaluator
 
+import de.hfu.monkey
+import de.hfu.monkey.objects
+import de.hfu.monkey.objects.{ArrayObject, BuiltinObject, ErrorObject, IntegerObject, NullObject, ObjectType, StringObject}
+
 object Builtins {
 	val builtins: Map[String, BuiltinObject] = Map(
-		"len" -> BuiltinObject((args: Array[Object]) => {
+		"len" -> BuiltinObject((args: Array[objects.Object]) => {
 			if (args.length != 1) {
 				ErrorObject(s"wrong number of arguments. got ${args.length} but expected 1.")
 			} else {
@@ -16,7 +20,7 @@ object Builtins {
 				}
 			}
 		}),
-		"first" -> BuiltinObject((args: Array[Object]) => {
+		"first" -> BuiltinObject((args: Array[monkey.objects.Object]) => {
 			if (args.length != 1) {
 				ErrorObject(s"wrong number of arguments. got ${args.length} but expected 1.")
 			} else {
@@ -30,7 +34,7 @@ object Builtins {
 				}
 			}
 		}),
-		"last" -> BuiltinObject((args: Array[Object]) => {
+		"last" -> BuiltinObject((args: Array[monkey.objects.Object]) => {
 			if (args.length != 1) {
 				ErrorObject(s"wrong number of arguments. got ${args.length} but expected 1.")
 			} else {
@@ -44,7 +48,7 @@ object Builtins {
 				}
 			}
 		}),
-		"rest" -> BuiltinObject((args: Array[Object]) => {
+		"rest" -> BuiltinObject((args: Array[monkey.objects.Object]) => {
 			if (args.length != 1) {
 				ErrorObject(s"wrong number of arguments. got ${args.length} but expected 1.")
 			} else {
@@ -58,7 +62,7 @@ object Builtins {
 				}
 			}
 		}),
-		"push" -> BuiltinObject((args: Array[Object]) => {
+		"push" -> BuiltinObject((args: Array[monkey.objects.Object]) => {
 			if (args.length != 2) {
 				ErrorObject(s"wrong number of arguments. got ${args.length} but expected 2.")
 			} else {
@@ -72,7 +76,7 @@ object Builtins {
 				}
 			}
 		}),
-		"puts" -> BuiltinObject((args: Array[Object]) => {
+		"puts" -> monkey.objects.BuiltinObject((args: Array[monkey.objects.Object]) => {
 			args.foreach { arg => println(arg) }
 			Evaluator.NULL
 		})

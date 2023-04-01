@@ -8,21 +8,21 @@ import java.nio.{ByteBuffer, ByteOrder}
 
 class CodeTest extends AnyFunSuite {
 
-	case class Test(op: Opcode, operands: Array[Int], bytesRead: Int)
+	case class Test(operation: Opcode, operands: Array[Int], bytesRead: Int)
 
 	test("code.make") {
 		val instructions: List[Instructions] = List(
-			Definition.make(Opcode.OpConstant, 1),
-			Definition.make(Opcode.OpConstant, 2),
-			Definition.make(Opcode.OpConstant, 65535),
-			Definition.make(Opcode.OpAdd),
+			Definition.make(OpConstant, 1),
+			Definition.make(OpConstant, 2),
+			Definition.make(OpConstant, 65535),
+			Definition.make(OpAdd),
 		)
 
 		val expected: List[Instructions] = List(
-			Array(Opcode.OpConstant, 0.toByte, 1.toByte),
-			Array(Opcode.OpConstant, 0.toByte, 2.toByte),
-			Array(Opcode.OpConstant, 255.toByte, 255.toByte),
-			Array(Opcode.OpAdd)
+			Array(OpConstant, 0.toByte, 1.toByte),
+			Array(OpConstant, 0.toByte, 2.toByte),
+			Array(OpConstant, 255.toByte, 255.toByte),
+			Array(OpAdd)
 		)
 
 		instructions.zip(expected).foreach { case (instruction, expInstruction) =>
@@ -32,9 +32,9 @@ class CodeTest extends AnyFunSuite {
 
 	test("code.instructionsString") {
 		val instructions: List[Instructions] = List(
-			Definition.make(Opcode.OpAdd),
-			Definition.make(Opcode.OpConstant, 2),
-			Definition.make(Opcode.OpConstant, 65535),
+			Definition.make(OpAdd),
+			Definition.make(OpConstant, 2),
+			Definition.make(OpConstant, 65535),
 		)
 		val expected: String =
 			"0000 OpAdd\n" +
@@ -48,18 +48,15 @@ class CodeTest extends AnyFunSuite {
 
 	test("code.readOperands") {
 		val tests = List(
-			Test(Opcode.OpConstant, Array(65535), 2)
+			Test(OpConstant, Array(65535), 2)
 		)
 
 		for (test <- tests) {
-			val instruction: Array[Byte] = Definition.make(test.op, test.operands*)
+			val instruction: Array[Byte] = Definition.make(test.operation, test.operands*)
 
-			val (definition, err) = Definition.lookup(test.op)
-			if (err.isDefined) {
-				fail(s"definition not found: ${err.get}")
-			}
+			val definition = Definition.lookup(test.operation)
 
-			val (operandsRead, n) = readOperands(definition.get, instruction.tail)
+			val (operandsRead, n) = readOperands(definition, instruction.tail)
 			if (n != test.bytesRead) {
 				fail(s"n wrong. want ${test.bytesRead} got $n")
 			}

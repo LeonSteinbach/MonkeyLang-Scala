@@ -1,5 +1,7 @@
 package de.hfu.monkey.vm
 
+import de.hfu.monkey
+import de.hfu.monkey.objects.*
 import de.hfu.monkey.code.*
 import de.hfu.monkey.code.Opcode.*
 import de.hfu.monkey.evaluator.*
@@ -14,32 +16,38 @@ class Vm(bytecode: Bytecode) {
 	private val stack: Array[Object] = Array.ofDim[Object](stackSize)
 	private var stackPointer: Int = 0
 
-	def run(): Option[Exception] = {
+	def run(): Unit = {
 		var ip: Int = 0
-		while (ip < instructions.length - 1) {
-			instructions(ip) match {
-				case Opcode.OpConstant =>
+		while (ip < instructions.length) {
+			val operation = instructions(ip)
+			operation match {
+				case OpConstant =>
 					val constIndex = instructions.readInt(ip + 1)
 					ip += 2
-
-					push(constants(constIndex)) match {
-						case Some(exception: Exception) => return Some(exception)
-						case None =>
-					}
+					push(constants(constIndex))
+				case OpAdd =>
+					val right = pop().asInstanceOf[IntegerObject]
+					val left = pop().asInstanceOf[IntegerObject]
+					push(IntegerObject(left.value + right.value))
+				case _ => throw new Exception(s"unknown operation $operation")
 			}
+			ip += 1
 		}
-		ip += 1
-		None
 	}
 
-	private def push(obj: Object): Option[Exception] = {
+	private def push(obj: Object): Unit = {
 		if (stackPointer >= stackSize)
-			Some(new Exception("stack overflow"))
+			throw new Exception("stack overflow")
 		else {
 			stack(stackPointer) = obj
 			stackPointer += 1
-			None
 		}
+	}
+
+	private def pop(): Object = {
+		val obj: Object = stack(stackPointer - 1)
+		stackPointer -= 1
+		obj
 	}
 
 	def stackTop: Option[Object] = if (stackPointer == 0) None else Some(stack.head)

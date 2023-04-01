@@ -1,7 +1,8 @@
 package de.hfu.monkey
 
+import de.hfu.monkey.objects.{BooleanObject, IntegerObject, NullObject, StringObject}
 import de.hfu.monkey.parser.CombinatorParser
-import de.hfu.monkey.evaluator.{BooleanObject, Environment, Evaluator, IntegerObject, NullObject, StringObject}
+import de.hfu.monkey.evaluator.{Environment, Evaluator}
 import org.scalatest.funsuite.AnyFunSuite
 
 class EvaluatorTest extends AnyFunSuite {

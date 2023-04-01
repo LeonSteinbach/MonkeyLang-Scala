@@ -1,47 +1,35 @@
 package de.hfu.monkey.compiler
 
 import de.hfu.monkey.ast.*
-import de.hfu.monkey.evaluator.*
+import de.hfu.monkey.objects.*
 import de.hfu.monkey.code.*
 import de.hfu.monkey.code.Opcode.*
-
-import scala.collection.mutable.ListBuffer
-import scala.util.control.NonLocalReturns.{returning, throwReturn}
 
 case class Compiler() {
 	var instructions: Instructions = Array[Byte]()
 	var constants: Array[Object] = Array[Object]()
 
-	def compile(node: Node): Option[Exception] = returning {
+	def compile(node: Node): Unit = {
 		node match {
 			case program: Program =>
-				program.statements.foreach { statement =>
-					compile(statement) match {
-						case Some(exception: Exception) => throwReturn(Some(exception))
-						case _ =>
-					}
+				program.statements.foreach {
+					statement => compile(statement)
 				}
-			case expressionStatement: ExpressionStatement =>
-				compile(expressionStatement.expression) match {
-					case Some(exception: Exception) => throwReturn(Some(exception))
-					case _ =>
-				}
+			case expressionStatement: ExpressionStatement => compile(expressionStatement.expression)
 			case infixExpression: InfixExpression =>
-				compile(infixExpression.left) match {
-					case Some(exception: Exception) => throwReturn(Some(exception))
-					case _ =>
-				}
-				compile(infixExpression.right) match {
-					case Some(exception: Exception) => throwReturn(Some(exception))
-					case _ =>
+				compile(infixExpression.left)
+				compile(infixExpression.right)
+
+				infixExpression.operator match {
+					case "+" => emit(OpAdd)
+					case operator => throw new Exception(s"unknown operator $operator")
 				}
 			case integerLiteral: IntegerLiteral =>
 				val integerObject: IntegerObject = IntegerObject(integerLiteral.value)
-				emit(OpConstant, Array(addConstant(integerObject)))
+				emit(OpConstant, addConstant(integerObject))
 			case _ =>
-				throwReturn(None)
+				throw new Exception(s"unknown node $node")
 		}
-		None
 	}
 
 	def bytecode: Bytecode = Bytecode(instructions, constants.toList)
@@ -51,13 +39,13 @@ case class Compiler() {
 		constants.length - 1
 	}
 
-	private def emit(operation: Opcode, operands: Array[Int]): Int = {
+	private def emit(operation: Opcode, operands: Int*): Int = {
 		val instruction = Definition.make(operation, operands*)
 		val position = addInstruction(instruction)
 		position
 	}
 
-	private def addInstruction(ins: Array[Byte]): Int = {
+	private def addInstruction(ins: Instructions): Int = {
 		val positionNewInstruction = instructions.length
 		instructions = instructions ++ ins
 		positionNewInstruction
