@@ -24,6 +24,9 @@ case class Compiler() {
 
 				infixExpression.operator match {
 					case "+" => emit(OpAdd)
+					case "-" => emit(OpSub)
+					case "*" => emit(OpMul)
+					case "/" => emit(OpDiv)
 					case operator => throw new Exception(s"unknown operator $operator")
 				}
 			case integerLiteral: IntegerLiteral =>

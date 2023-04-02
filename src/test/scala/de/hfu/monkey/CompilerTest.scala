@@ -87,6 +87,36 @@ class CompilerTest extends AnyFunSuite {
 					)
 				),
 				Test(
+					"1 - 2;",
+					List(1, 2),
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpSub),
+						Definition.make(OpPop),
+					)
+				),
+				Test(
+					"1 * 2;",
+					List(1, 2),
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpMul),
+						Definition.make(OpPop),
+					)
+				),
+				Test(
+					"1 / 2;",
+					List(1, 2),
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpDiv),
+						Definition.make(OpPop),
+					)
+				),
+				Test(
 					"1; 2;",
 					List(1, 2),
 					List(

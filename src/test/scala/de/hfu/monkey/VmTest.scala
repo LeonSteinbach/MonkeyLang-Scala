@@ -44,7 +44,11 @@ class VmTest extends AnyFunSuite {
 		runVmTests(List(
 			Test("1;", 1),
 			Test("2;", 2),
-			Test("1 + 2;", 3)
+			Test("1 + 2;", 3),
+			Test("1 - 2;", -1),
+			Test("2 * 3;", 6),
+			Test("6 / 2;", 3),
+			Test("50 / 2 * 2 + 10 - 5;", 55),
 		))
 	}
 

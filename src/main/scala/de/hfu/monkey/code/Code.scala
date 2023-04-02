@@ -68,7 +68,10 @@ object Opcode extends Enumeration {
 	type Opcode = Byte
 	val OpConstant: Opcode = 0
 	val OpAdd: Opcode = 1
-	val OpPop: Opcode = 2
+	val OpSub: Opcode = 2
+	val OpMul: Opcode = 3
+	val OpDiv: Opcode = 4
+	val OpPop: Opcode = 5
 }
 
 case class Definition(name: String, operandWidths: Array[Int])
@@ -77,6 +80,9 @@ object Definition {
 	private val definitions: Map[Opcode, Definition] = Map[Opcode, Definition](
 		OpConstant -> Definition("OpConstant", Array(2)),
 		OpAdd -> Definition("OpAdd", Array()),
+		OpSub -> Definition("OpSub", Array()),
+		OpMul -> Definition("OpMul", Array()),
+		OpDiv -> Definition("OpDiv", Array()),
 		OpPop -> Definition("OpPop", Array()),
 	)
 

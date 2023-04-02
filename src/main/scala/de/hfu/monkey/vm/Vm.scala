@@ -25,15 +25,35 @@ class Vm(bytecode: Bytecode) {
 					val constIndex = instructions.readInt(ip + 1)
 					ip += 2
 					push(constants(constIndex))
-				case OpAdd =>
-					val right = pop().asInstanceOf[IntegerObject]
-					val left = pop().asInstanceOf[IntegerObject]
-					push(IntegerObject(left.value + right.value))
+				case OpAdd | OpSub | OpMul | OpDiv =>
+					executeBinaryOperation(operation)
 				case OpPop =>
 					pop()
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 			ip += 1
+		}
+	}
+
+	private def executeBinaryOperation(operation: Opcode): Unit = {
+		val right = pop()
+		val left = pop()
+
+		if (left.`type`() == ObjectType.INTEGER && right.`type`() == ObjectType.INTEGER)
+			executeBinaryIntegerOperation(operation, left, right)
+		else
+			throw new Exception(s"unsupported types for binary operation: ${left.`type`()} ${right.`type`()}")
+	}
+
+	private def executeBinaryIntegerOperation(operation: Opcode.Opcode, left: Object, right: Object): Unit = {
+		val leftValue = left.asInstanceOf[IntegerObject].value
+		val rightValue = right.asInstanceOf[IntegerObject].value
+
+		operation match {
+			case OpAdd => push(IntegerObject(leftValue + rightValue))
+			case OpSub => push(IntegerObject(leftValue - rightValue))
+			case OpMul => push(IntegerObject(leftValue * rightValue))
+			case OpDiv => push(IntegerObject(leftValue / rightValue))
 		}
 	}
 
