@@ -126,6 +126,15 @@ class CompilerTest extends AnyFunSuite {
 						Definition.make(OpPop),
 					)
 				),
+				Test(
+					"-1;",
+					List(1),
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpMinus),
+						Definition.make(OpPop),
+					)
+				),
 			)
 		)
 	}
@@ -209,6 +218,15 @@ class CompilerTest extends AnyFunSuite {
 						Definition.make(OpPop),
 					),
 				),
+				Test(
+					"!true;",
+					List(),
+					List(
+						Definition.make(OpTrue),
+						Definition.make(OpBang),
+						Definition.make(OpPop),
+					)
+				)
 			)
 		)
 	}

@@ -57,6 +57,9 @@ class VmTest extends AnyFunSuite {
 			Test("2 * 3;", 6),
 			Test("6 / 2;", 3),
 			Test("50 / 2 * 2 + 10 - 5;", 55),
+			Test("-1;", -1),
+			Test("--1;", 1),
+			Test("-50 + 100 + -50;", 0),
 		))
 	}
 
@@ -80,6 +83,11 @@ class VmTest extends AnyFunSuite {
 			Test("(1 < 2) == false;", false),
 			Test("(1 > 2) == true;", false),
 			Test("(1 > 2) == false;", true),
+			Test("!true;", false),
+			Test("!!true;", true),
+			Test("!false;", true),
+			Test("!!false;", false),
+			Test("!!5;", true),
 		))
 	}
 

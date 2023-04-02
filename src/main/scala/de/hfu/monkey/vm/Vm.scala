@@ -38,10 +38,31 @@ class Vm(bytecode: Bytecode) {
 					push(FALSE)
 				case OpEqual | OpNotEqual | OpGreaterThan =>
 					executeComparison(operation)
+				case OpBang =>
+					executeBangOperator()
+				case OpMinus =>
+					executeMinusOperator()
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 			ip += 1
 		}
+	}
+
+	private def executeBangOperator(): Unit = {
+		val operand = pop()
+
+		operand match {
+			case TRUE => push(FALSE)
+			case FALSE => push(TRUE)
+			case _ => push(FALSE)
+		}
+	}
+
+	private def executeMinusOperator(): Unit = {
+		val operand = pop()
+		if (operand.`type`() != ObjectType.INTEGER)
+			throw new Exception(s"unsupported type for negation: ${operand.`type`()}")
+		push(IntegerObject(-operand.asInstanceOf[IntegerObject].value))
 	}
 
 	private def executeComparison(operation: Opcode): Unit = {

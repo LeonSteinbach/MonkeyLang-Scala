@@ -39,6 +39,14 @@ case class Compiler() {
 						case operator => throw new Exception(s"unknown operator $operator")
 					}
 				}
+			case prefixExpression: PrefixExpression =>
+				compile(prefixExpression.value)
+
+				prefixExpression.operator match {
+					case "!" => emit(OpBang)
+					case "-" => emit(OpMinus)
+					case operator => throw new Exception(s"unknown operator $operator")
+				}
 			case integerLiteral: IntegerLiteral =>
 				val integerObject: IntegerObject = IntegerObject(integerLiteral.value)
 				emit(OpConstant, addConstant(integerObject))
