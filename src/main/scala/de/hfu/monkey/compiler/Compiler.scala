@@ -32,6 +32,8 @@ case class Compiler() {
 			case integerLiteral: IntegerLiteral =>
 				val integerObject: IntegerObject = IntegerObject(integerLiteral.value)
 				emit(OpConstant, addConstant(integerObject))
+			case booleanLiteral: BooleanLiteral =>
+				emit(if (booleanLiteral.value) OpTrue else OpFalse)
 			case _ =>
 				throw new Exception(s"unknown node $node")
 		}

@@ -18,6 +18,13 @@ class VmTest extends AnyFunSuite {
 		}
 	}
 
+	def testBooleanObject(expected: Boolean, actual: Object): Unit = {
+		actual match {
+			case BooleanObject(value) if value == expected =>
+			case obj => fail(s"Object does not match expected value. Got $obj, expected Boolean with value $expected")
+		}
+	}
+
 	def runVmTests(tests: List[Test]): Unit = {
 		val parser = CombinatorParser()
 		for (test <- tests) {
@@ -37,6 +44,7 @@ class VmTest extends AnyFunSuite {
 	def testExpectedObject(expected: Any, actual: Object): Unit = {
 		expected match {
 			case integer: Int => testIntegerObject(integer, actual)
+			case boolean: Boolean => testBooleanObject(boolean, actual)
 		}
 	}
 
@@ -49,6 +57,13 @@ class VmTest extends AnyFunSuite {
 			Test("2 * 3;", 6),
 			Test("6 / 2;", 3),
 			Test("50 / 2 * 2 + 10 - 5;", 55),
+		))
+	}
+
+	test("vm.booleanExpression") {
+		runVmTests(List(
+			Test("true;", true),
+			Test("false;", false),
 		))
 	}
 

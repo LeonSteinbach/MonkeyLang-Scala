@@ -16,6 +16,9 @@ class Vm(bytecode: Bytecode) {
 	private val stack: Array[Object] = Array.ofDim[Object](stackSize)
 	private var stackPointer: Int = 0
 
+	private val TRUE = BooleanObject(true)
+	private val FALSE = BooleanObject(false)
+
 	def run(): Unit = {
 		var ip: Int = 0
 		while (ip < instructions.length) {
@@ -29,6 +32,10 @@ class Vm(bytecode: Bytecode) {
 					executeBinaryOperation(operation)
 				case OpPop =>
 					pop()
+				case OpTrue =>
+					push(TRUE)
+				case OpFalse =>
+					push(FALSE)
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 			ip += 1
