@@ -29,10 +29,8 @@ class VmTest extends AnyFunSuite {
 			val vm = Vm(compiler.bytecode)
 			vm.run()
 
-			vm.stackTop match {
-				case Some(value: Object) => testExpectedObject(test.expected, value)
-				case None => fail("empty stack")
-			}
+			val stackElement = vm.lastPoppedStackElement
+			testExpectedObject(test.expected, stackElement)
 		}
 	}
 

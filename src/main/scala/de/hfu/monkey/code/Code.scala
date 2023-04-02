@@ -68,6 +68,7 @@ object Opcode extends Enumeration {
 	type Opcode = Byte
 	val OpConstant: Opcode = 0
 	val OpAdd: Opcode = 1
+	val OpPop: Opcode = 2
 }
 
 case class Definition(name: String, operandWidths: Array[Int])
@@ -75,7 +76,8 @@ case class Definition(name: String, operandWidths: Array[Int])
 object Definition {
 	private val definitions: Map[Opcode, Definition] = Map[Opcode, Definition](
 		OpConstant -> Definition("OpConstant", Array(2)),
-		OpAdd -> Definition("OpAdd", Array())
+		OpAdd -> Definition("OpAdd", Array()),
+		OpPop -> Definition("OpPop", Array()),
 	)
 
 	def lookup(operation: Opcode): Definition = {

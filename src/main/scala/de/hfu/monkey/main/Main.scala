@@ -104,7 +104,7 @@ object Main {
 				startTime2 = System.currentTimeMillis()
 				vm.run()
 
-				evaluated = vm.stackTop
+				evaluated = Some(vm.lastPoppedStackElement)
 			}
 			val endTime2 = System.currentTimeMillis()
 			printString += s"\n\n${engine.capitalize} [ms]:   ${endTime2 - startTime2}\n"

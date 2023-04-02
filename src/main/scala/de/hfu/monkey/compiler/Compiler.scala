@@ -15,7 +15,9 @@ case class Compiler() {
 				program.statements.foreach {
 					statement => compile(statement)
 				}
-			case expressionStatement: ExpressionStatement => compile(expressionStatement.expression)
+			case expressionStatement: ExpressionStatement =>
+				compile(expressionStatement.expression)
+				emit(OpPop)
 			case infixExpression: InfixExpression =>
 				compile(infixExpression.left)
 				compile(infixExpression.right)

@@ -75,15 +75,28 @@ class CompilerTest extends AnyFunSuite {
 
 	test("compiler.integerArithmetic") {
 		runCompilerTests(
-			List(Test(
-				"1 + 2;",
-				List(1, 2),
-				List(
-					Definition.make(OpConstant, 0),
-					Definition.make(OpConstant, 1),
-					Definition.make(OpAdd),
+			List(
+				Test(
+					"1 + 2;",
+					List(1, 2),
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpAdd),
+						Definition.make(OpPop),
+					)
+				),
+				Test(
+					"1; 2;",
+					List(1, 2),
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpPop),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpPop),
+					)
 				)
-			))
+			)
 		)
 	}
 

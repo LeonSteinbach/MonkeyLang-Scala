@@ -29,6 +29,8 @@ class Vm(bytecode: Bytecode) {
 					val right = pop().asInstanceOf[IntegerObject]
 					val left = pop().asInstanceOf[IntegerObject]
 					push(IntegerObject(left.value + right.value))
+				case OpPop =>
+					pop()
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 			ip += 1
@@ -50,7 +52,7 @@ class Vm(bytecode: Bytecode) {
 		obj
 	}
 
-	def stackTop: Option[Object] = if (stackPointer == 0) None else Some(stack.head)
+	def lastPoppedStackElement: Object = stack(stackPointer)
 
 }
 
