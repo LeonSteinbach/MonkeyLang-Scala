@@ -36,32 +36,61 @@ class Vm(bytecode: Bytecode) {
 					push(TRUE)
 				case OpFalse =>
 					push(FALSE)
+				case OpEqual | OpNotEqual | OpGreaterThan =>
+					executeComparison(operation)
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 			ip += 1
 		}
 	}
 
+	private def executeComparison(operation: Opcode): Unit = {
+		val right = pop()
+		val left = pop()
+
+		(left, right) match {
+			case (leftInt: IntegerObject, rightInt: IntegerObject) =>
+				executeIntegerComparison(operation, leftInt, rightInt)
+			case _ =>
+				operation match {
+					case OpEqual => push(BooleanObject(right == left))
+					case OpNotEqual => push(BooleanObject(right != left))
+					case _ => throw new Exception(s"unknown operator: $operation ${left.`type`()} ${right.`type`()}")
+				}
+		}
+	}
+
+	private def executeIntegerComparison(operation: Opcode, left: IntegerObject, right: IntegerObject): Unit = {
+		val result = operation match {
+			case OpEqual => left.value == right.value
+			case OpNotEqual => left.value != right.value
+			case OpGreaterThan => left.value > right.value
+			case _ => throw new Exception(s"unknown operator: $operation")
+		}
+		push(BooleanObject(result))
+	}
+
 	private def executeBinaryOperation(operation: Opcode): Unit = {
 		val right = pop()
 		val left = pop()
 
-		if (left.`type`() == ObjectType.INTEGER && right.`type`() == ObjectType.INTEGER)
-			executeBinaryIntegerOperation(operation, left, right)
-		else
-			throw new Exception(s"unsupported types for binary operation: ${left.`type`()} ${right.`type`()}")
+		(left, right) match {
+			case (leftInt: IntegerObject, rightInt: IntegerObject) =>
+				executeBinaryIntegerOperation(operation, leftInt, rightInt)
+			case _ =>
+				throw new Exception(s"unsupported types for binary operation: ${left.`type`()} ${right.`type`()}")
+		}
 	}
 
-	private def executeBinaryIntegerOperation(operation: Opcode.Opcode, left: Object, right: Object): Unit = {
-		val leftValue = left.asInstanceOf[IntegerObject].value
-		val rightValue = right.asInstanceOf[IntegerObject].value
-
-		operation match {
-			case OpAdd => push(IntegerObject(leftValue + rightValue))
-			case OpSub => push(IntegerObject(leftValue - rightValue))
-			case OpMul => push(IntegerObject(leftValue * rightValue))
-			case OpDiv => push(IntegerObject(leftValue / rightValue))
+	private def executeBinaryIntegerOperation(operation: Opcode, left: IntegerObject, right: IntegerObject): Unit = {
+		val result = operation match {
+			case OpAdd => left.value + right.value
+			case OpSub => left.value - right.value
+			case OpMul => left.value * right.value
+			case OpDiv => left.value / right.value
+			case _ => throw new Exception(s"unknown operator: $operation")
 		}
+		push(IntegerObject(result))
 	}
 
 	private def push(obj: Object): Unit = {

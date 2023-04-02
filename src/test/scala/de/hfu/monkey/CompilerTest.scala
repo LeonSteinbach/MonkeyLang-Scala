@@ -126,6 +126,13 @@ class CompilerTest extends AnyFunSuite {
 						Definition.make(OpPop),
 					)
 				),
+			)
+		)
+	}
+
+	test("compiler.booleanExpressions") {
+		runCompilerTests(
+			List(
 				Test(
 					"true;",
 					List(),
@@ -141,6 +148,66 @@ class CompilerTest extends AnyFunSuite {
 						Definition.make(OpFalse),
 						Definition.make(OpPop),
 					)
+				),
+				Test(
+					"1 > 2;",
+					List(1, 2),
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpGreaterThan),
+						Definition.make(OpPop),
+					),
+				),
+				Test(
+					"1 < 2;",
+					List(2, 1),
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpGreaterThan),
+						Definition.make(OpPop),
+					),
+				),
+				Test(
+					"1 == 2;",
+					List(1, 2),
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpEqual),
+						Definition.make(OpPop),
+					),
+				),
+				Test(
+					"1 != 2;",
+					List(1, 2),
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpNotEqual),
+						Definition.make(OpPop),
+					),
+				),
+				Test(
+					"true == false;",
+					List(),
+					List(
+						Definition.make(OpTrue),
+						Definition.make(OpFalse),
+						Definition.make(OpEqual),
+						Definition.make(OpPop),
+					),
+				),
+				Test(
+					"true != false;",
+					List(),
+					List(
+						Definition.make(OpTrue),
+						Definition.make(OpFalse),
+						Definition.make(OpNotEqual),
+						Definition.make(OpPop),
+					),
 				),
 			)
 		)

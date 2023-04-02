@@ -19,15 +19,25 @@ case class Compiler() {
 				compile(expressionStatement.expression)
 				emit(OpPop)
 			case infixExpression: InfixExpression =>
-				compile(infixExpression.left)
-				compile(infixExpression.right)
+				if (infixExpression.operator == "<") {
+					compile(infixExpression.right)
+					compile(infixExpression.left)
+					emit(OpGreaterThan)
+				}
+				else {
+					compile(infixExpression.left)
+					compile(infixExpression.right)
 
-				infixExpression.operator match {
-					case "+" => emit(OpAdd)
-					case "-" => emit(OpSub)
-					case "*" => emit(OpMul)
-					case "/" => emit(OpDiv)
-					case operator => throw new Exception(s"unknown operator $operator")
+					infixExpression.operator match {
+						case "+" => emit(OpAdd)
+						case "-" => emit(OpSub)
+						case "*" => emit(OpMul)
+						case "/" => emit(OpDiv)
+						case ">" => emit(OpGreaterThan)
+						case "==" => emit(OpEqual)
+						case "!=" => emit(OpNotEqual)
+						case operator => throw new Exception(s"unknown operator $operator")
+					}
 				}
 			case integerLiteral: IntegerLiteral =>
 				val integerObject: IntegerObject = IntegerObject(integerLiteral.value)

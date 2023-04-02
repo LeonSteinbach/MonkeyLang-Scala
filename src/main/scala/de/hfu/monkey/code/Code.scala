@@ -74,6 +74,9 @@ object Opcode extends Enumeration {
 	val OpPop: Opcode = 5
 	val OpTrue: Opcode = 6
 	val OpFalse: Opcode = 7
+	val OpEqual: Opcode = 8
+	val OpNotEqual: Opcode = 9
+	val OpGreaterThan: Opcode = 10
 }
 
 case class Definition(name: String, operandWidths: Array[Int])
@@ -88,6 +91,9 @@ object Definition {
 		OpPop -> Definition("OpPop", Array()),
 		OpTrue -> Definition("OpTrue", Array()),
 		OpFalse -> Definition("OpFalse", Array()),
+		OpEqual -> Definition("OpEqual", Array()),
+		OpNotEqual -> Definition("OpNotEqual", Array()),
+		OpGreaterThan -> Definition("OpGreaterThan", Array()),
 	)
 
 	def lookup(operation: Opcode): Definition = {

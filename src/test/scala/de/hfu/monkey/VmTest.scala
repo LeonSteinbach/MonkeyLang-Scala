@@ -64,6 +64,22 @@ class VmTest extends AnyFunSuite {
 		runVmTests(List(
 			Test("true;", true),
 			Test("false;", false),
+			Test("1 < 2;", true),
+			Test("1 > 2;", false),
+			Test("1 < 1;", false),
+			Test("1 > 1;", false),
+			Test("1 == 1;", true),
+			Test("1 != 1;", false),
+			Test("1 == 2;", false),
+			Test("1 != 2;", true),
+			Test("true == true;", true),
+			Test("false == false;", true),
+			Test("true != false;", true),
+			Test("false != true;", true),
+			Test("(1 < 2) == true;", true),
+			Test("(1 < 2) == false;", false),
+			Test("(1 > 2) == true;", false),
+			Test("(1 > 2) == false;", true),
 		))
 	}
 
