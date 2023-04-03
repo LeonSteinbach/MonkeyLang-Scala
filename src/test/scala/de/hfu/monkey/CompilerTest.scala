@@ -231,4 +231,39 @@ class CompilerTest extends AnyFunSuite {
 		)
 	}
 
+	test("compiler.conditionals") {
+		runCompilerTests(
+			List(
+				Test(
+					"if (true) { 10; }; 3333;",
+					List(10, 3333),
+					List(
+						Definition.make(OpTrue),
+						Definition.make(OpJumpNotTruthy, 10),
+						Definition.make(OpConstant, 0),
+						Definition.make(OpJump, 11),
+						Definition.make(OpNull),
+						Definition.make(OpPop),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpPop),
+					)
+				),
+				Test(
+					"if (true) { 10; } else { 20; }; 3333;",
+					List(10, 20, 3333),
+					List(
+						Definition.make(OpTrue),
+						Definition.make(OpJumpNotTruthy, 10),
+						Definition.make(OpConstant, 0),
+						Definition.make(OpJump, 13),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpPop),
+						Definition.make(OpConstant, 2),
+						Definition.make(OpPop),
+					)
+				),
+			)
+		)
+	}
+
 }

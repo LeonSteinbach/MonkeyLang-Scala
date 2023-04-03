@@ -45,6 +45,9 @@ class VmTest extends AnyFunSuite {
 		expected match {
 			case integer: Int => testIntegerObject(integer, actual)
 			case boolean: Boolean => testBooleanObject(boolean, actual)
+			case NULL =>
+				if (actual != NULL)
+					throw new Exception(s"object is not null: ${actual.`type`()} $actual")
 		}
 	}
 
@@ -88,6 +91,21 @@ class VmTest extends AnyFunSuite {
 			Test("!false;", true),
 			Test("!!false;", false),
 			Test("!!5;", true),
+			Test("!(if (false) { 5; });", true),
+		))
+	}
+
+	test("vm.conditionals") {
+		runVmTests(List(
+			Test("if (true) { 10; };", 10),
+			Test("if (true) { 10; } else { 20; };", 10),
+			Test("if (false) { 10; } else { 20; };", 20),
+			Test("if (1) { 10; };", 10),
+			Test("if (1 < 2) { 10; };", 10),
+			Test("if (1 < 2) { 10; } else { 20; };", 10),
+			Test("if (1 > 2) { 10; } else { 20; };", 20),
+			Test("if (1 > 2) { 10; };", NULL),
+			Test("if ((if (false) { 10; })) { 10; } else { 20; };", 20),
 		))
 	}
 

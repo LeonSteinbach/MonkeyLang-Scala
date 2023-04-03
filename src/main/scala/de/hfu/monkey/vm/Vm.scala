@@ -9,15 +9,16 @@ import de.hfu.monkey.compiler.*
 import de.hfu.monkey.evaluator.*
 import de.hfu.monkey.vm.Vm.*
 
+val TRUE = BooleanObject(true)
+val FALSE = BooleanObject(false)
+val NULL = NullObject
+
 class Vm(bytecode: Bytecode) {
 
 	private val constants: List[Object] = bytecode.constants
 	private val instructions: Instructions = bytecode.instructions
 	private val stack: Array[Object] = Array.ofDim[Object](stackSize)
 	private var stackPointer: Int = 0
-
-	private val TRUE = BooleanObject(true)
-	private val FALSE = BooleanObject(false)
 
 	def run(): Unit = {
 		var ip: Int = 0
@@ -42,9 +43,29 @@ class Vm(bytecode: Bytecode) {
 					executeBangOperator()
 				case OpMinus =>
 					executeMinusOperator()
+				case OpJump =>
+					val constIndex = instructions.readInt(ip + 1)
+					ip = constIndex - 1
+				case OpJumpNotTruthy =>
+					val constIndex = instructions.readInt(ip + 1)
+					ip += 2
+
+					val condition = pop()
+					if (!isTruthy(condition))
+						ip = constIndex - 1
+				case OpNull =>
+					push(NULL)
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 			ip += 1
+		}
+	}
+
+	private def isTruthy(obj: Object): Boolean = {
+		obj match {
+			case booleanObject: BooleanObject => booleanObject.value
+			case NULL => false
+			case _ => true
 		}
 	}
 
@@ -54,6 +75,7 @@ class Vm(bytecode: Bytecode) {
 		operand match {
 			case TRUE => push(FALSE)
 			case FALSE => push(TRUE)
+			case NULL => push(TRUE)
 			case _ => push(FALSE)
 		}
 	}
