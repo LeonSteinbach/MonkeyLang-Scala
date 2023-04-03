@@ -89,10 +89,6 @@ case class CombinatorParser() extends parser.Parser, JavaTokenParsers {
 		case function ~ arguments => CallExpression(function, arguments)
 	}
 
-	//private def indexExpression: Parser[Expression] = (ifExpression | functionLiteral | callExpression | unaryExpression | value | "(" ~> expression <~ ")") ~ ("[" ~> expression <~ "]") ^^ {
-	//	case left ~ right => IndexExpression(left, right)
-	//}
-
 	private def statement: Parser[Statement] = letStatement | returnStatement | expressionStatement | blockStatement
 
 	private def program: Parser[Program] = rep(statement) ^^ { statements => Program(statements) }
