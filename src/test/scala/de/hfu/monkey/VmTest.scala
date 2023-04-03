@@ -109,4 +109,12 @@ class VmTest extends AnyFunSuite {
 		))
 	}
 
+	test("vm.globalLetStatements") {
+		runVmTests(List(
+			Test("let one = 1; one;", 1),
+			Test("let one = 1; let two = 2; one + two;", 3),
+			Test("let one = 1; let two = one + one; one + two;", 3),
+		))
+	}
+
 }

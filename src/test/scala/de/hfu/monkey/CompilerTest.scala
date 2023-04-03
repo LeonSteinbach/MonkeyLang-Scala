@@ -266,4 +266,41 @@ class CompilerTest extends AnyFunSuite {
 		)
 	}
 
+	test("compiler.globalLetStatements") {
+		runCompilerTests(List(
+			Test(
+				"let one = 1; let two = 2;",
+				List(1, 2),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpSetGlobal, 0),
+					Definition.make(OpConstant, 1),
+					Definition.make(OpSetGlobal, 1),
+				)
+			),
+			Test(
+				"let one = 1; one;",
+				List(1),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpSetGlobal, 0),
+					Definition.make(OpGetGlobal, 0),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"let one = 1; let two = one; two;",
+				List(1),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpSetGlobal, 0),
+					Definition.make(OpGetGlobal, 0),
+					Definition.make(OpSetGlobal, 1),
+					Definition.make(OpGetGlobal, 1),
+					Definition.make(OpPop),
+				)
+			),
+		))
+	}
+
 }

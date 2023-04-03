@@ -17,8 +17,9 @@ class Vm(bytecode: Bytecode) {
 
 	private val constants: List[Object] = bytecode.constants
 	private val instructions: Instructions = bytecode.instructions
-	private val stack: Array[Object] = Array.ofDim[Object](stackSize)
+	private val stack: Array[Object] = Array.ofDim[Object](STACK_SIZE)
 	private var stackPointer: Int = 0
+	private val globals: Array[Object] = Array.ofDim[Object](GLOBALS_SIZE)
 
 	def run(): Unit = {
 		var ip: Int = 0
@@ -55,6 +56,14 @@ class Vm(bytecode: Bytecode) {
 						ip = constIndex - 1
 				case OpNull =>
 					push(NULL)
+				case OpSetGlobal =>
+					val globalIndex = instructions.readInt(ip + 1)
+					ip += 2
+					globals(globalIndex) = pop()
+				case OpGetGlobal =>
+					val globalIndex = instructions.readInt(ip + 1)
+					ip += 2
+					push(globals(globalIndex))
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 			ip += 1
@@ -137,7 +146,7 @@ class Vm(bytecode: Bytecode) {
 	}
 
 	private def push(obj: Object): Unit = {
-		if (stackPointer >= stackSize)
+		if (stackPointer >= STACK_SIZE)
 			throw new Exception("stack overflow")
 		else {
 			stack(stackPointer) = obj
@@ -156,5 +165,6 @@ class Vm(bytecode: Bytecode) {
 }
 
 object Vm {
-	private val stackSize = 2048
+	private val STACK_SIZE = 2048
+	private val GLOBALS_SIZE = 65536
 }

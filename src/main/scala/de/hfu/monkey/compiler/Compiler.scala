@@ -9,8 +9,10 @@ case class Compiler() {
 	var instructions: Instructions = Array[Byte]()
 	var constants: Array[Object] = Array[Object]()
 
-	var lastInstruction: Option[EmittedInstruction] = None
-	var previousInstruction: Option[EmittedInstruction] = None
+	private val symbolTable: SymbolTable = new SymbolTable()
+
+	private var lastInstruction: Option[EmittedInstruction] = None
+	private var previousInstruction: Option[EmittedInstruction] = None
 
 	def compile(node: Node): Unit = {
 		node match {
@@ -74,11 +76,18 @@ case class Compiler() {
 				blockStatement.statements.foreach {
 					statement => compile(statement)
 				}
+			case letStatement: LetStatement =>
+				compile(letStatement.value)
+				val symbol = symbolTable.define(letStatement.name.name)
+				emit(OpSetGlobal, symbol.index)
 			case integerLiteral: IntegerLiteral =>
 				val integerObject: IntegerObject = IntegerObject(integerLiteral.value)
 				emit(OpConstant, addConstant(integerObject))
 			case booleanLiteral: BooleanLiteral =>
 				emit(if (booleanLiteral.value) OpTrue else OpFalse)
+			case identifier: Identifier =>
+				val symbol = symbolTable.resolve(identifier.name)
+				emit(OpGetGlobal, symbol.index)
 			case _ =>
 				throw new Exception(s"unknown node $node")
 		}
