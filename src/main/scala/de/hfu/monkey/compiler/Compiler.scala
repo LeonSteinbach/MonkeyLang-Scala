@@ -88,6 +88,9 @@ case class Compiler() {
 			case identifier: Identifier =>
 				val symbol = symbolTable.resolve(identifier.name)
 				emit(OpGetGlobal, symbol.index)
+			case stringLiteral: StringLiteral =>
+				val stringObject: StringObject = StringObject(stringLiteral.value)
+				emit(OpConstant, addConstant(stringObject))
 			case _ =>
 				throw new Exception(s"unknown node $node")
 		}

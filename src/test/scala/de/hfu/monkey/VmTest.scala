@@ -25,6 +25,13 @@ class VmTest extends AnyFunSuite {
 		}
 	}
 
+	def testStringObject(expected: String, actual: Object): Unit = {
+		actual match {
+			case StringObject(value) if value == expected =>
+			case obj => fail(s"Object does not match expected value. Got $obj, expected String with value $expected")
+		}
+	}
+
 	def runVmTests(tests: List[Test]): Unit = {
 		val parser = CombinatorParser()
 		for (test <- tests) {
@@ -45,6 +52,7 @@ class VmTest extends AnyFunSuite {
 		expected match {
 			case integer: Int => testIntegerObject(integer, actual)
 			case boolean: Boolean => testBooleanObject(boolean, actual)
+			case string: String => testStringObject(string, actual)
 			case NULL =>
 				if (actual != NULL)
 					throw new Exception(s"object is not null: ${actual.`type`()} $actual")
@@ -114,6 +122,14 @@ class VmTest extends AnyFunSuite {
 			Test("let one = 1; one;", 1),
 			Test("let one = 1; let two = 2; one + two;", 3),
 			Test("let one = 1; let two = one + one; one + two;", 3),
+		))
+	}
+
+	test("vm.stringExpressions") {
+		runVmTests(List(
+			Test("\"monkey\";", "monkey"),
+			Test("\"mon\" + \"key\";", "monkey"),
+			Test("\"mon\" + \"key\" + \" banana\";", "monkey banana"),
 		))
 	}
 

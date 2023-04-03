@@ -13,7 +13,7 @@ import scala.util.control.NonLocalReturns.{returning, throwReturn}
 
 class CompilerTest extends AnyFunSuite {
 
-	case class Test(input: String, expectedConstants: List[Int], expectedInstructions: List[Instructions])
+	case class Test(input: String, expectedConstants: List[Any], expectedInstructions: List[Instructions])
 
 	private def runCompilerTests(tests: List[Test]): Unit = {
 		tests.foreach { test =>
@@ -43,25 +43,35 @@ class CompilerTest extends AnyFunSuite {
 		}
 	}
 
-	private def testConstants(expected: List[Int], actual: List[objects.Object]): Unit = {
+	private def testConstants(expected: List[Any], actual: List[Object]): Unit = {
 		if (expected.length != actual.length) {
 			fail(s"wrong number of constants. got ${actual.length} want ${expected.length}")
 		} else {
 			expected.zipWithIndex.foreach {
-				case (value, index) =>
-					value match {
+				case (constant, index) =>
+					constant match {
 						case integer: Int => testIntegerObject(integer, actual(index))
+						case string: String => testStringObject(string, actual(index))
 					}
 			}
 		}
 	}
 
-	private def testIntegerObject(expected: Int, actual: objects.Object): Unit = {
+	private def testIntegerObject(expected: Int, actual: Object): Unit = {
 		actual match {
 			case integer: IntegerObject =>
 				if (integer.value != expected)
 					fail(s"object has wrong value. got ${integer.value} want $expected")
 			case _ => fail(s"object is not an Integer. got ${actual.`type`()}")
+		}
+	}
+
+	private def testStringObject(expected: String, actual: Object): Unit = {
+		actual match {
+			case string: StringObject =>
+				if (string.value != expected)
+					fail(s"object has wrong value. got ${string.value} want $expected")
+			case _ => fail(s"object is not a String. got ${actual.`type`()}")
 		}
 	}
 
@@ -297,6 +307,29 @@ class CompilerTest extends AnyFunSuite {
 					Definition.make(OpGetGlobal, 0),
 					Definition.make(OpSetGlobal, 1),
 					Definition.make(OpGetGlobal, 1),
+					Definition.make(OpPop),
+				)
+			),
+		))
+	}
+
+	test("compiler.stringExpressions") {
+		runCompilerTests(List(
+			Test(
+				"\"monkey\";",
+				List("monkey"),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"\"mon\" + \"key\";",
+				List("mon", "key"),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpConstant, 1),
+					Definition.make(OpAdd),
 					Definition.make(OpPop),
 				)
 			),

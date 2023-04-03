@@ -129,6 +129,8 @@ class Vm(bytecode: Bytecode) {
 		(left, right) match {
 			case (leftInt: IntegerObject, rightInt: IntegerObject) =>
 				executeBinaryIntegerOperation(operation, leftInt, rightInt)
+			case (leftString: StringObject, rightString: StringObject) =>
+				executeBinaryStringOperation(operation, leftString, rightString)
 			case _ =>
 				throw new Exception(s"unsupported types for binary operation: ${left.`type`()} ${right.`type`()}")
 		}
@@ -143,6 +145,14 @@ class Vm(bytecode: Bytecode) {
 			case _ => throw new Exception(s"unknown operator: $operation")
 		}
 		push(IntegerObject(result))
+	}
+
+	private def executeBinaryStringOperation(operation: Opcode, left: StringObject, right: StringObject): Unit = {
+		val result = operation match {
+			case OpAdd => left.value + right.value
+			case _ => throw new Exception(s"unknown operator: $operation")
+		}
+		push(StringObject(result))
 	}
 
 	private def push(obj: Object): Unit = {
