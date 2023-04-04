@@ -91,6 +91,11 @@ case class Compiler() {
 			case stringLiteral: StringLiteral =>
 				val stringObject: StringObject = StringObject(stringLiteral.value)
 				emit(OpConstant, addConstant(stringObject))
+			case arrayLiteral: ArrayLiteral =>
+				arrayLiteral.elements.foreach {
+					element => compile(element)
+				}
+				emit(OpArray, arrayLiteral.elements.length)
 			case _ =>
 				throw new Exception(s"unknown node $node")
 		}

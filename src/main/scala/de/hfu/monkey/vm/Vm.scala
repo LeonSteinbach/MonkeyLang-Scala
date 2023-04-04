@@ -64,10 +64,25 @@ class Vm(bytecode: Bytecode) {
 					val globalIndex = instructions.readInt(ip + 1)
 					ip += 2
 					push(globals(globalIndex))
+				case OpArray =>
+					val numElements = instructions.readInt(ip + 1)
+					ip += 2
+
+					val array = buildArray(stackPointer - numElements, stackPointer)
+					stackPointer -= numElements
+
+					push(array)
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 			ip += 1
 		}
+	}
+
+	private def buildArray(startIndex: Int, endIndex: Int): ArrayObject = {
+		val elements = for (i <- startIndex until endIndex) yield {
+			stack(i)
+		}
+		ArrayObject(elements.toList)
 	}
 
 	private def isTruthy(obj: Object): Boolean = {

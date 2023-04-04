@@ -32,6 +32,13 @@ class VmTest extends AnyFunSuite {
 		}
 	}
 
+	def testArrayObject(expected: List[Object], actual: Object): Unit = {
+		actual match {
+			case ArrayObject(elements) if elements == expected =>
+			case obj => fail(s"Object does not match expected value. Got $obj, expected Array with value $expected")
+		}
+	}
+
 	def runVmTests(tests: List[Test]): Unit = {
 		val parser = CombinatorParser()
 		for (test <- tests) {
@@ -53,9 +60,19 @@ class VmTest extends AnyFunSuite {
 			case integer: Int => testIntegerObject(integer, actual)
 			case boolean: Boolean => testBooleanObject(boolean, actual)
 			case string: String => testStringObject(string, actual)
+			case array: List[Any] => testArrayObject(convertToObjects(array), actual)
 			case NULL =>
 				if (actual != NULL)
 					throw new Exception(s"object is not null: ${actual.`type`()} $actual")
+		}
+	}
+
+	def convertToObjects(list: List[Any]): List[Object] = {
+		list.map {
+			case i: Int => IntegerObject(i)
+			case b: Boolean => BooleanObject(b)
+			case s: String => StringObject(s)
+			case other => fail(s"invalid type $other")
 		}
 	}
 
@@ -130,6 +147,15 @@ class VmTest extends AnyFunSuite {
 			Test("\"monkey\";", "monkey"),
 			Test("\"mon\" + \"key\";", "monkey"),
 			Test("\"mon\" + \"key\" + \" banana\";", "monkey banana"),
+		))
+	}
+
+	test("vm.arrayLiterals") {
+		runVmTests(List(
+			Test("[];", List()),
+			Test("[1, 2, 3];", List(1, 2, 3)),
+			Test("[1 + 2, 3 - 4, 5 * 6];", List(3, -1, 30)),
+			Test("[!true, 1, \"a\"];", List(false, 1, "a")),
 		))
 	}
 

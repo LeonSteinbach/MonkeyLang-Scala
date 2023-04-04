@@ -336,4 +336,45 @@ class CompilerTest extends AnyFunSuite {
 		))
 	}
 
+	test("compiler.arrayLiterals") {
+		runCompilerTests(List(
+			Test(
+				"[];",
+				List(),
+				List(
+					Definition.make(OpArray, 0),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"[1, 2, 3];",
+				List(1, 2, 3),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpConstant, 1),
+					Definition.make(OpConstant, 2),
+					Definition.make(OpArray, 3),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"[1 + 2, 3 - 4, 5 * 6];",
+				List(1, 2, 3, 4, 5, 6),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpConstant, 1),
+					Definition.make(OpAdd),
+					Definition.make(OpConstant, 2),
+					Definition.make(OpConstant, 3),
+					Definition.make(OpSub),
+					Definition.make(OpConstant, 4),
+					Definition.make(OpConstant, 5),
+					Definition.make(OpMul),
+					Definition.make(OpArray, 3),
+					Definition.make(OpPop),
+				)
+			),
+		))
+	}
+
 }
