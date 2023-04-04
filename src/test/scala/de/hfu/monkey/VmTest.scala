@@ -7,6 +7,8 @@ import de.hfu.monkey.compiler.*
 import de.hfu.monkey.vm.*
 import org.scalatest.funsuite.AnyFunSuite
 
+import scala.collection.immutable.HashMap
+
 class VmTest extends AnyFunSuite {
 
 	case class Test(input: String, expected: Any)
@@ -39,6 +41,13 @@ class VmTest extends AnyFunSuite {
 		}
 	}
 
+	def testHashObject(expected: HashObject, actual: Object): Unit = {
+		actual match {
+			case hash: HashObject if hash == actual =>
+			case obj => fail(s"Object does not match expected value. Got $obj, expected Hash with value $expected")
+		}
+	}
+
 	def runVmTests(tests: List[Test]): Unit = {
 		val parser = CombinatorParser()
 		for (test <- tests) {
@@ -60,19 +69,38 @@ class VmTest extends AnyFunSuite {
 			case integer: Int => testIntegerObject(integer, actual)
 			case boolean: Boolean => testBooleanObject(boolean, actual)
 			case string: String => testStringObject(string, actual)
-			case array: List[Any] => testArrayObject(convertToObjects(array), actual)
+			case array: List[Any] => testArrayObject(convertToObjectsArray(array), actual)
+			case hash: HashObject => testHashObject(hash, actual)
 			case NULL =>
 				if (actual != NULL)
 					throw new Exception(s"object is not null: ${actual.`type`()} $actual")
 		}
 	}
 
-	def convertToObjects(list: List[Any]): List[Object] = {
+	def wrapInObject(value: Any): Object = {
+		value match {
+			case i: Int => IntegerObject(i)
+			case b: Boolean => BooleanObject(b)
+			case s: String => StringObject(s)
+			case a: List[_] => ArrayObject(a.asInstanceOf[List[Object]])
+			case h: Map[_, _] => HashObject(h.asInstanceOf[Map[HashKey, HashPair]])
+		}
+	}
+
+	def convertToObjectsArray(list: List[Any]): List[Object] = {
 		list.map {
 			case i: Int => IntegerObject(i)
 			case b: Boolean => BooleanObject(b)
 			case s: String => StringObject(s)
 			case other => fail(s"invalid type $other")
+		}
+	}
+
+	def convertToObjectsHash(hash: Map[_, _]): Map[HashKey, HashPair] = {
+		hash.map {
+			case (key, value) =>
+				val objectKey = wrapInObject(key)
+				objectKey.asInstanceOf[Hashable].hashKey -> HashPair(objectKey, wrapInObject(value))
 		}
 	}
 
@@ -156,6 +184,14 @@ class VmTest extends AnyFunSuite {
 			Test("[1, 2, 3];", List(1, 2, 3)),
 			Test("[1 + 2, 3 - 4, 5 * 6];", List(3, -1, 30)),
 			Test("[!true, 1, \"a\"];", List(false, 1, "a")),
+		))
+	}
+
+	test("vm.hashLiterals") {
+		runVmTests(List(
+			Test("{};", HashObject(Map())),
+			Test("{1: 2, 2: 3};", HashObject(Map(HashKey(1) -> HashPair(IntegerObject(1), IntegerObject(2)), HashKey(2) -> HashPair(IntegerObject(2), IntegerObject(3))))),
+			Test("{1 + 1: 2 * 2, 3 + 3: 4 * 4};", HashObject(Map(HashKey(2) -> HashPair(IntegerObject(2), IntegerObject(4)), HashKey(6) -> HashPair(IntegerObject(6), IntegerObject(16))))),
 		))
 	}
 

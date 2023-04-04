@@ -377,4 +377,47 @@ class CompilerTest extends AnyFunSuite {
 		))
 	}
 
+	test("compiler.hashLiterals") {
+		runCompilerTests(List(
+			Test(
+				"{};",
+				List(),
+				List(
+					Definition.make(OpHash, 0),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"{1: 2, 3: 4, 5: 6};",
+				List(1, 2, 3, 4, 5, 6),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpConstant, 1),
+					Definition.make(OpConstant, 2),
+					Definition.make(OpConstant, 3),
+					Definition.make(OpConstant, 4),
+					Definition.make(OpConstant, 5),
+					Definition.make(OpHash, 6),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"{1: true, \"a\": 2 + 3, false: 4};",
+				List(4, 1, "a", 2, 3),
+				List(
+					Definition.make(OpFalse),
+					Definition.make(OpConstant, 0),
+					Definition.make(OpConstant, 1),
+					Definition.make(OpTrue),
+					Definition.make(OpConstant, 2),
+					Definition.make(OpConstant, 3),
+					Definition.make(OpConstant, 4),
+					Definition.make(OpAdd),
+					Definition.make(OpHash, 6),
+					Definition.make(OpPop),
+				)
+			),
+		))
+	}
+
 }

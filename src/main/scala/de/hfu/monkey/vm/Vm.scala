@@ -72,6 +72,14 @@ class Vm(bytecode: Bytecode) {
 					stackPointer -= numElements
 
 					push(array)
+				case OpHash =>
+					val numElements = instructions.readInt(ip + 1)
+					ip += 2
+
+					val hash = buildHash(stackPointer - numElements, stackPointer)
+					stackPointer -= numElements
+
+					push(hash)
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 			ip += 1
@@ -83,6 +91,15 @@ class Vm(bytecode: Bytecode) {
 			stack(i)
 		}
 		ArrayObject(elements.toList)
+	}
+
+	private def buildHash(startIndex: Int, endIndex: Int): HashObject = {
+		val elements = for (i <- startIndex until endIndex) yield {
+			val key = stack(i).asInstanceOf[Hashable]
+			val value = stack(i + 1)
+			key.hashKey -> HashPair(key, value)
+		}
+		HashObject(elements.toMap)
 	}
 
 	private def isTruthy(obj: Object): Boolean = {

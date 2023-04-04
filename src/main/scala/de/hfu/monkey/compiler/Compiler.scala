@@ -5,6 +5,9 @@ import de.hfu.monkey.objects.*
 import de.hfu.monkey.code.*
 import de.hfu.monkey.code.Opcode.*
 
+import scala.collection.immutable.ListMap
+import scala.collection.mutable
+
 case class Compiler() {
 	var instructions: Instructions = Array[Byte]()
 	var constants: Array[Object] = Array[Object]()
@@ -96,6 +99,14 @@ case class Compiler() {
 					element => compile(element)
 				}
 				emit(OpArray, arrayLiteral.elements.length)
+			case hashLiteral: HashLiteral =>
+				val sortedKeys = hashLiteral.pairs.keys.toSeq.sortBy(_.toString)
+				sortedKeys.foreach {
+					key =>
+						compile(key)
+						compile(hashLiteral.pairs(key))
+				}
+				emit(OpHash, sortedKeys.length * 2)
 			case _ =>
 				throw new Exception(s"unknown node $node")
 		}
