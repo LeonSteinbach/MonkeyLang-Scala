@@ -76,7 +76,7 @@ class Vm(bytecode: Bytecode) {
 					val numElements = instructions.readInt(ip + 1)
 					ip += 2
 
-					val hash = buildHash(stackPointer - numElements, stackPointer)
+					val hash = buildHash(stackPointer - numElements, stackPointer - 1)
 					stackPointer -= numElements
 
 					push(hash)
@@ -94,7 +94,7 @@ class Vm(bytecode: Bytecode) {
 	}
 
 	private def buildHash(startIndex: Int, endIndex: Int): HashObject = {
-		val elements = for (i <- startIndex until endIndex) yield {
+		val elements = for (i <- startIndex until endIndex by 2) yield {
 			val key = stack(i).asInstanceOf[Hashable]
 			val value = stack(i + 1)
 			key.hashKey -> HashPair(key, value)

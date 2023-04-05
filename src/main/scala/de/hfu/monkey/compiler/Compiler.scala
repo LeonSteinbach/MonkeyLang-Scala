@@ -100,13 +100,13 @@ case class Compiler() {
 				}
 				emit(OpArray, arrayLiteral.elements.length)
 			case hashLiteral: HashLiteral =>
-				val sortedKeys = hashLiteral.pairs.keys.toSeq.sortBy(_.toString)
+				val sortedKeys = hashLiteral.pairs.keys.toArray.sortBy(_.toString)
 				sortedKeys.foreach {
 					key =>
 						compile(key)
 						compile(hashLiteral.pairs(key))
 				}
-				emit(OpHash, sortedKeys.length * 2)
+				emit(OpHash, hashLiteral.pairs.size * 2)
 			case _ =>
 				throw new Exception(s"unknown node $node")
 		}

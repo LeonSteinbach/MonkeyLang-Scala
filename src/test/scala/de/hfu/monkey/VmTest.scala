@@ -11,40 +11,59 @@ import scala.collection.immutable.HashMap
 
 class VmTest extends AnyFunSuite {
 
-	case class Test(input: String, expected: Any)
+	case class Test(input: String, expected: Object)
 
-	def testIntegerObject(expected: Int, actual: Object): Unit = {
+	def testIntegerObject(expected: IntegerObject, actual: Object): Unit = {
 		actual match {
-			case IntegerObject(value) if value == expected =>
+			case IntegerObject(value) if value == expected.value =>
 			case obj => fail(s"Object does not match expected value. Got $obj, expected Integer with value $expected")
 		}
 	}
 
-	def testBooleanObject(expected: Boolean, actual: Object): Unit = {
+	def testBooleanObject(expected: BooleanObject, actual: Object): Unit = {
 		actual match {
-			case BooleanObject(value) if value == expected =>
+			case BooleanObject(value) if value == expected.value =>
 			case obj => fail(s"Object does not match expected value. Got $obj, expected Boolean with value $expected")
 		}
 	}
 
-	def testStringObject(expected: String, actual: Object): Unit = {
+	def testStringObject(expected: StringObject, actual: Object): Unit = {
 		actual match {
-			case StringObject(value) if value == expected =>
+			case StringObject(value) if value == expected.value =>
 			case obj => fail(s"Object does not match expected value. Got $obj, expected String with value $expected")
 		}
 	}
 
-	def testArrayObject(expected: List[Object], actual: Object): Unit = {
+	def testArrayObject(expected: ArrayObject, actual: Object): Unit = {
 		actual match {
-			case ArrayObject(elements) if elements == expected =>
-			case obj => fail(s"Object does not match expected value. Got $obj, expected Array with value $expected")
+			case array: ArrayObject =>
+				if (array.elements.length != expected.elements.length) {
+					throw new Exception(s"array has wrong number of elements: expected ${expected.elements.length}, got ${array.elements.length}")
+				}
+				for ((expectedElem, actualElem) <- expected.elements.zip(array.elements)) {
+					testExpectedObject(expectedElem, actualElem)
+				}
+			case _ => throw new Exception(s"object is not an array: ${actual.`type`()} $actual")
 		}
 	}
 
 	def testHashObject(expected: HashObject, actual: Object): Unit = {
 		actual match {
-			case hash: HashObject if hash == actual =>
-			case obj => fail(s"Object does not match expected value. Got $obj, expected Hash with value $expected")
+			case hash: HashObject =>
+				println(hash.pairs)
+				println(expected.pairs)
+				if (hash.pairs.size != expected.pairs.size) {
+					throw new Exception(s"hash has wrong number of pairs: expected ${expected.pairs.size}, got ${hash.pairs.size}")
+				}
+				for ((expectedKey, expectedPair) <- expected.pairs) {
+					hash.pairs.get(expectedKey) match {
+						case Some(actualPair) =>
+							testExpectedObject(expectedPair.key, actualPair.key)
+							testExpectedObject(expectedPair.value, actualPair.value)
+						case None => throw new Exception(s"hash missing expected key: ${expectedKey.value}")
+					}
+				}
+			case _ => throw new Exception(s"object is not a hash: ${actual.`type`()} $actual")
 		}
 	}
 
@@ -64,12 +83,12 @@ class VmTest extends AnyFunSuite {
 		}
 	}
 
-	def testExpectedObject(expected: Any, actual: Object): Unit = {
+	def testExpectedObject(expected: Object, actual: Object): Unit = {
 		expected match {
-			case integer: Int => testIntegerObject(integer, actual)
-			case boolean: Boolean => testBooleanObject(boolean, actual)
-			case string: String => testStringObject(string, actual)
-			case array: List[Any] => testArrayObject(convertToObjectsArray(array), actual)
+			case integer: IntegerObject => testIntegerObject(integer, actual)
+			case boolean: BooleanObject => testBooleanObject(boolean, actual)
+			case string: StringObject => testStringObject(string, actual)
+			case array: ArrayObject => testArrayObject(array, actual)
 			case hash: HashObject => testHashObject(hash, actual)
 			case NULL =>
 				if (actual != NULL)
@@ -77,121 +96,101 @@ class VmTest extends AnyFunSuite {
 		}
 	}
 
-	def wrapInObject(value: Any): Object = {
-		value match {
-			case i: Int => IntegerObject(i)
-			case b: Boolean => BooleanObject(b)
-			case s: String => StringObject(s)
-			case a: List[_] => ArrayObject(a.asInstanceOf[List[Object]])
-			case h: Map[_, _] => HashObject(h.asInstanceOf[Map[HashKey, HashPair]])
-		}
-	}
-
-	def convertToObjectsArray(list: List[Any]): List[Object] = {
-		list.map {
-			case i: Int => IntegerObject(i)
-			case b: Boolean => BooleanObject(b)
-			case s: String => StringObject(s)
-			case other => fail(s"invalid type $other")
-		}
-	}
-
-	def convertToObjectsHash(hash: Map[_, _]): Map[HashKey, HashPair] = {
-		hash.map {
-			case (key, value) =>
-				val objectKey = wrapInObject(key)
-				objectKey.asInstanceOf[Hashable].hashKey -> HashPair(objectKey, wrapInObject(value))
-		}
-	}
-
 	test("vm.integerArithmetic") {
 		runVmTests(List(
-			Test("1;", 1),
-			Test("2;", 2),
-			Test("1 + 2;", 3),
-			Test("1 - 2;", -1),
-			Test("2 * 3;", 6),
-			Test("6 / 2;", 3),
-			Test("50 / 2 * 2 + 10 - 5;", 55),
-			Test("-1;", -1),
-			Test("--1;", 1),
-			Test("-50 + 100 + -50;", 0),
+			Test("1;", IntegerObject(1)),
+			Test("2;", IntegerObject(2)),
+			Test("1 + 2;", IntegerObject(3)),
+			Test("1 - 2;", IntegerObject(-1)),
+			Test("2 * 3;", IntegerObject(6)),
+			Test("6 / 2;", IntegerObject(3)),
+			Test("50 / 2 * 2 + 10 - 5;", IntegerObject(55)),
+			Test("-1;", IntegerObject(-1)),
+			Test("--1;", IntegerObject(1)),
+			Test("-50 + 100 + -50;", IntegerObject(0)),
 		))
 	}
 
 	test("vm.booleanExpression") {
 		runVmTests(List(
-			Test("true;", true),
-			Test("false;", false),
-			Test("1 < 2;", true),
-			Test("1 > 2;", false),
-			Test("1 < 1;", false),
-			Test("1 > 1;", false),
-			Test("1 == 1;", true),
-			Test("1 != 1;", false),
-			Test("1 == 2;", false),
-			Test("1 != 2;", true),
-			Test("true == true;", true),
-			Test("false == false;", true),
-			Test("true != false;", true),
-			Test("false != true;", true),
-			Test("(1 < 2) == true;", true),
-			Test("(1 < 2) == false;", false),
-			Test("(1 > 2) == true;", false),
-			Test("(1 > 2) == false;", true),
-			Test("!true;", false),
-			Test("!!true;", true),
-			Test("!false;", true),
-			Test("!!false;", false),
-			Test("!!5;", true),
-			Test("!(if (false) { 5; });", true),
+			Test("true;", BooleanObject(true)),
+			Test("false;", BooleanObject(false)),
+			Test("1 < 2;", BooleanObject(true)),
+			Test("1 > 2;", BooleanObject(false)),
+			Test("1 < 1;", BooleanObject(false)),
+			Test("1 > 1;", BooleanObject(false)),
+			Test("1 == 1;", BooleanObject(true)),
+			Test("1 != 1;", BooleanObject(false)),
+			Test("1 == 2;", BooleanObject(false)),
+			Test("1 != 2;", BooleanObject(true)),
+			Test("true == true;", BooleanObject(true)),
+			Test("false == false;", BooleanObject(true)),
+			Test("true != false;", BooleanObject(true)),
+			Test("false != true;", BooleanObject(true)),
+			Test("(1 < 2) == true;", BooleanObject(true)),
+			Test("(1 < 2) == false;", BooleanObject(false)),
+			Test("(1 > 2) == true;", BooleanObject(false)),
+			Test("(1 > 2) == false;", BooleanObject(true)),
+			Test("!true;", BooleanObject(false)),
+			Test("!!true;", BooleanObject(true)),
+			Test("!false;", BooleanObject(true)),
+			Test("!!false;", BooleanObject(false)),
+			Test("!!5;", BooleanObject(true)),
+			Test("!(if (false) { 5; });", BooleanObject(true)),
 		))
 	}
 
 	test("vm.conditionals") {
 		runVmTests(List(
-			Test("if (true) { 10; };", 10),
-			Test("if (true) { 10; } else { 20; };", 10),
-			Test("if (false) { 10; } else { 20; };", 20),
-			Test("if (1) { 10; };", 10),
-			Test("if (1 < 2) { 10; };", 10),
-			Test("if (1 < 2) { 10; } else { 20; };", 10),
-			Test("if (1 > 2) { 10; } else { 20; };", 20),
+			Test("if (true) { 10; };", IntegerObject(10)),
+			Test("if (true) { 10; } else { 20; };", IntegerObject(10)),
+			Test("if (false) { 10; } else { 20; };", IntegerObject(20)),
+			Test("if (1) { 10; };", IntegerObject(10)),
+			Test("if (1 < 2) { 10; };", IntegerObject(10)),
+			Test("if (1 < 2) { 10; } else { 20; };", IntegerObject(10)),
+			Test("if (1 > 2) { 10; } else { 20; };", IntegerObject(20)),
 			Test("if (1 > 2) { 10; };", NULL),
-			Test("if ((if (false) { 10; })) { 10; } else { 20; };", 20),
+			Test("if ((if (false) { 10; })) { 10; } else { 20; };", IntegerObject(20)),
 		))
 	}
 
 	test("vm.globalLetStatements") {
 		runVmTests(List(
-			Test("let one = 1; one;", 1),
-			Test("let one = 1; let two = 2; one + two;", 3),
-			Test("let one = 1; let two = one + one; one + two;", 3),
+			Test("let one = 1; one;", IntegerObject(1)),
+			Test("let one = 1; let two = 2; one + two;", IntegerObject(3)),
+			Test("let one = 1; let two = one + one; one + two;", IntegerObject(3)),
 		))
 	}
 
 	test("vm.stringExpressions") {
 		runVmTests(List(
-			Test("\"monkey\";", "monkey"),
-			Test("\"mon\" + \"key\";", "monkey"),
-			Test("\"mon\" + \"key\" + \" banana\";", "monkey banana"),
+			Test("\"monkey\";", StringObject("monkey")),
+			Test("\"mon\" + \"key\";", StringObject("monkey")),
+			Test("\"mon\" + \"key\" + \" banana\";", StringObject("monkey banana")),
 		))
 	}
 
 	test("vm.arrayLiterals") {
 		runVmTests(List(
-			Test("[];", List()),
-			Test("[1, 2, 3];", List(1, 2, 3)),
-			Test("[1 + 2, 3 - 4, 5 * 6];", List(3, -1, 30)),
-			Test("[!true, 1, \"a\"];", List(false, 1, "a")),
+			Test("[];", ArrayObject(List.empty)),
+			Test("[1, 2, 3];", ArrayObject(List(IntegerObject(1), IntegerObject(2), IntegerObject(3)))),
+			Test("[true, false];", ArrayObject(List(BooleanObject(true), BooleanObject(false)))),
+			Test("[1, \"hello\", [2, 3]];", ArrayObject(List(IntegerObject(1), StringObject("hello"), ArrayObject(List(IntegerObject(2), IntegerObject(3)))))),
 		))
 	}
 
 	test("vm.hashLiterals") {
 		runVmTests(List(
-			Test("{};", HashObject(Map())),
-			Test("{1: 2, 2: 3};", HashObject(Map(HashKey(1) -> HashPair(IntegerObject(1), IntegerObject(2)), HashKey(2) -> HashPair(IntegerObject(2), IntegerObject(3))))),
-			Test("{1 + 1: 2 * 2, 3 + 3: 4 * 4};", HashObject(Map(HashKey(2) -> HashPair(IntegerObject(2), IntegerObject(4)), HashKey(6) -> HashPair(IntegerObject(6), IntegerObject(16))))),
+			Test("{};", HashObject(Map.empty)),
+			Test("{1: 2};", HashObject(Map(IntegerObject(1).hashKey -> HashPair(IntegerObject(1), IntegerObject(2))))),
+			Test("{1: 2, 3: 4};", HashObject(Map(
+				IntegerObject(1).hashKey -> HashPair(IntegerObject(1), IntegerObject(2)),
+				IntegerObject(3).hashKey -> HashPair(IntegerObject(3), IntegerObject(4))))),
+			Test("{true: false};", HashObject(Map(BooleanObject(true).hashKey -> HashPair(BooleanObject(true), BooleanObject(false))))),
+			Test("{1: 2, \"foo\": \"bar\", true: [3, 4]};", HashObject(Map(
+				IntegerObject(1).hashKey -> HashPair(IntegerObject(1), IntegerObject(2)),
+				StringObject("foo").hashKey -> HashPair(StringObject("foo"), StringObject("bar")),
+				BooleanObject(true).hashKey -> HashPair(BooleanObject(true), ArrayObject(List(IntegerObject(3), IntegerObject(4))))))),
 		))
 	}
 
