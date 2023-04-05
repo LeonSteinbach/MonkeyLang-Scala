@@ -52,6 +52,12 @@ class CompilerTest extends AnyFunSuite {
 					constant match {
 						case integer: Int => testIntegerObject(integer, actual(index))
 						case string: String => testStringObject(string, actual(index))
+						case list: List[?] =>
+							actual(index) match {
+								case compiledFunctionObject: CompiledFunctionObject =>
+									testInstructions(list.asInstanceOf[List[Instructions]], compiledFunctionObject.instructions)
+								case other => fail(s"constant $other not a function")
+							}
 					}
 			}
 		}
@@ -456,4 +462,111 @@ class CompilerTest extends AnyFunSuite {
 		))
 	}
 
+	test("compiler.functions") {
+		runCompilerTests(List(
+			Test(
+				"fn() { return 5 + 10; };",
+				List(
+					5,
+					10,
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpAdd),
+						Definition.make(OpReturnValue),
+					)
+				),
+				List(
+					Definition.make(OpConstant, 2),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"fn() { 5 + 10; };",
+				List(
+					5,
+					10,
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpAdd),
+						Definition.make(OpReturnValue),
+					)
+				),
+				List(
+					Definition.make(OpConstant, 2),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"fn() { 1; 2; };",
+				List(
+					1,
+					2,
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpPop),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpReturnValue),
+					)
+				),
+				List(
+					Definition.make(OpConstant, 2),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"fn() { };",
+				List(
+					List(
+						Definition.make(OpReturn),
+					)
+				),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpPop),
+				)
+			),
+		))
+	}
+
+	test("compiler.scopes") {
+		val compiler = Compiler()
+		if (compiler.scopeIndex != 0)
+			fail(s"scopeIndex wrong. got ${compiler.scopeIndex}, want 0")
+
+		compiler.emit(OpMul)
+
+		compiler.enterScope()
+
+		if (compiler.scopeIndex != 1)
+			fail(s"scopeIndex wrong. got ${compiler.scopeIndex}, want 1")
+
+		compiler.emit(OpSub)
+
+		if (compiler.scopes(compiler.scopeIndex).instructions.length != 1)
+			fail(s"instructions length wrong. got ${compiler.scopes(compiler.scopeIndex).instructions.length}, want 1")
+
+		var last = compiler.scopes(compiler.scopeIndex).lastInstruction
+		if (last.opcode != OpSub)
+			fail(s"lastInstruction opcode wrong. got ${last.opcode}, want $OpSub")
+
+		compiler.leaveScope()
+
+		if (compiler.scopeIndex != 0)
+			fail(s"scopeIndex wrong. got ${compiler.scopeIndex}, want 0")
+
+		compiler.emit(OpAdd)
+
+		if (compiler.scopes(compiler.scopeIndex).instructions.length != 2)
+			fail(s"instructions length wrong. got ${compiler.scopes(compiler.scopeIndex).instructions.length}, want 2")
+
+		last = compiler.scopes(compiler.scopeIndex).lastInstruction
+		if (last.opcode != OpAdd)
+			fail(s"lastInstruction opcode wrong. got ${last.opcode}, want $OpAdd")
+
+		val previous = compiler.scopes(compiler.scopeIndex).previousInstruction
+		if (previous.opcode != OpMul)
+			fail(s"previousInstruction opcode wrong. got ${previous.opcode}, want $OpMul")
+	}
 }

@@ -3,10 +3,11 @@ package de.hfu.monkey.objects
 import de.hfu.monkey.*
 import de.hfu.monkey.ast.{BlockStatement, Identifier}
 import de.hfu.monkey.evaluator.*
+import de.hfu.monkey.code.*
 
 object ObjectType extends Enumeration {
 	type ObjectType = Value
-	val INTEGER, BOOLEAN, STRING, ARRAY, HASH, NULL, RETURN, ERROR, FUNCTION, BUILTIN = Value
+	val INTEGER, BOOLEAN, STRING, ARRAY, HASH, NULL, RETURN, ERROR, FUNCTION, COMPILED_FUNCTION, BUILTIN = Value
 }
 
 type BuiltinFunction = Array[Object] => Object
@@ -73,6 +74,11 @@ case class ErrorObject(message: String) extends Object {
 case class FunctionObject(parameters: Option[List[Identifier]] = None, body: Option[BlockStatement] = None, environment: Environment) extends Object {
 	override def toString: String = s"fn(${parameters.map(_.mkString(", ")).getOrElse("")}) ${body.getOrElse("")}"
 	def `type`(): ObjectType.Value = ObjectType.FUNCTION
+}
+
+case class CompiledFunctionObject(instructions: Instructions) extends Object {
+	override def toString: String = s"compiled_function[${instructions.toList}]"
+	def `type`(): ObjectType.Value = ObjectType.COMPILED_FUNCTION
 }
 
 case class BuiltinObject(builtinFunction: BuiltinFunction) extends Object {

@@ -9,13 +9,12 @@ import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
 case class Compiler() {
-	var instructions: Instructions = Array[Byte]()
 	var constants: Array[Object] = Array[Object]()
 
 	private val symbolTable: SymbolTable = new SymbolTable()
 
-	private var lastInstruction: Option[EmittedInstruction] = None
-	private var previousInstruction: Option[EmittedInstruction] = None
+	var scopes: List[CompilationScope] = List[CompilationScope](CompilationScope())
+	var scopeIndex: Int = 0
 
 	def compile(node: Node): Unit = {
 		node match {
@@ -59,21 +58,21 @@ case class Compiler() {
 				compile(ifExpression.condition)
 				val jumpNotTruthyPosition = emit(OpJumpNotTruthy, 9999)
 				compile(ifExpression.consequence)
-				if (lastInstructionIsPop)
+				if (lastInstructionIs(OpPop))
 					removeLastPop()
 
 				val jumpPosition = emit(OpJump, 9999)
-				val afterConsequencePosition = instructions.length
+				val afterConsequencePosition = currentInstructions.length
 				changeOperand(jumpNotTruthyPosition, afterConsequencePosition)
 
 				if (ifExpression.alternative.statements.isEmpty) {
 					emit(OpNull)
 				} else {
 					compile(ifExpression.alternative)
-					if (lastInstructionIsPop)
+					if (lastInstructionIs(OpPop))
 						removeLastPop()
 				}
-				val afterAlternativePosition = instructions.length
+				val afterAlternativePosition = currentInstructions.length
 				changeOperand(jumpPosition, afterAlternativePosition)
 			case blockStatement: BlockStatement =>
 				blockStatement.statements.foreach {
@@ -111,19 +110,46 @@ case class Compiler() {
 				compile(indexExpression.left)
 				compile(indexExpression.index)
 				emit(OpIndex)
+			case functionLiteral: FunctionLiteral =>
+				enterScope()
+				compile(functionLiteral.body)
+
+				if (lastInstructionIs(OpPop))
+					replaceLastPopWithReturn()
+				if (!lastInstructionIs(OpReturnValue))
+					emit(OpReturn)
+
+				val instructions = leaveScope()
+				val compiledFunctionObject = CompiledFunctionObject(instructions)
+				emit(OpConstant, addConstant(compiledFunctionObject))
+			case returnStatement: ReturnStatement =>
+				compile(returnStatement.value)
+				emit(OpReturnValue)
 			case _ =>
 				throw new Exception(s"unknown node $node")
 		}
 	}
 
-	def bytecode: Bytecode = Bytecode(instructions, constants.toList)
+	def bytecode: Bytecode = Bytecode(currentInstructions, constants.toList)
+
+	private def replaceLastPopWithReturn(): Unit = {
+		val lastPosition = scopes(scopeIndex).lastInstruction.position
+		replaceInstruction(lastPosition, Definition.make(OpReturnValue))
+		scopes(scopeIndex).lastInstruction.opcode = OpReturnValue
+	}
+
+	private def currentInstructions: Instructions = scopes(scopeIndex).instructions
+
+	private def lastInstructionIs(operation: Opcode): Boolean = {
+		currentInstructions.length != 0 && scopes(scopeIndex).lastInstruction.opcode == operation
+	}
 
 	private def addConstant(obj: Object): Int = {
 		constants = constants :+ obj
 		constants.length - 1
 	}
 
-	private def emit(operation: Opcode, operands: Int*): Int = {
+	def emit(operation: Opcode, operands: Int*): Int = {
 		val instruction = Definition.make(operation, operands*)
 		val position = addInstruction(instruction)
 		setLastInstruction(operation, position)
@@ -131,40 +157,63 @@ case class Compiler() {
 	}
 
 	private def addInstruction(ins: Instructions): Int = {
-		val positionNewInstruction = instructions.length
-		instructions = instructions ++ ins
+		val positionNewInstruction = currentInstructions.length
+		val updatedInstructions = currentInstructions ++ ins
+		scopes(scopeIndex).instructions = updatedInstructions
 		positionNewInstruction
 	}
 
 	private def setLastInstruction(operation: Opcode, position: Int): Unit = {
-		val previous = lastInstruction
+		val previous = scopes(scopeIndex).lastInstruction
 		val last = EmittedInstruction(operation, position)
-		previousInstruction = previous
-		lastInstruction = Some(last)
-	}
-
-	private def lastInstructionIsPop: Boolean = {
-		lastInstruction.getOrElse(return false).opcode == OpPop
+		scopes(scopeIndex).previousInstruction = previous
+		scopes(scopeIndex).lastInstruction = last
 	}
 
 	private def removeLastPop(): Unit = {
-		instructions = instructions.slice(0, lastInstruction.getOrElse(throw new Exception("no last instruction")).position)
+		val last = scopes(scopeIndex).lastInstruction
+		val previous = scopes(scopeIndex).previousInstruction
+
+		val oldInstructions = currentInstructions
+		val newInstructions = oldInstructions.slice(0, last.position)
+
+		scopes(scopeIndex).instructions = newInstructions
+		scopes(scopeIndex).lastInstruction = previous
 	}
 
 	private def replaceInstruction(position: Int, newInstruction: Instructions): Unit = {
+		val ins = currentInstructions
 		newInstruction.zipWithIndex.foreach {
 			case (value, index) =>
-				instructions(position + index) = value
+				ins(position + index) = value
 		}
+		scopes(scopeIndex).instructions = ins
 	}
 
 	private def changeOperand(position: Int, operand: Int): Unit = {
-		val operation = instructions(position)
+		val operation = currentInstructions(position)
 		val newInstruction = Definition.make(operation, operand)
 		replaceInstruction(position, newInstruction)
+	}
+
+	def enterScope(): Unit = {
+		val newScope = CompilationScope()
+		scopes = scopes :+ newScope
+		scopeIndex += 1
+	}
+
+	def leaveScope(): Instructions = {
+		val instructions = currentInstructions
+		scopes = scopes.dropRight(1)
+		scopeIndex -= 1
+		instructions
 	}
 }
 
 case class Bytecode(instructions: Instructions, constants: List[Object])
 
-case class EmittedInstruction(opcode: Opcode, position: Int)
+case class EmittedInstruction(var opcode: Opcode = 0.toByte, position: Int = 0)
+
+case class CompilationScope(var instructions: Instructions = Array.empty,
+							var lastInstruction: EmittedInstruction = EmittedInstruction(),
+							var previousInstruction: EmittedInstruction = EmittedInstruction())
