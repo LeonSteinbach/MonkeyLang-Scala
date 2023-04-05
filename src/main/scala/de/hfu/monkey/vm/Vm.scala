@@ -80,6 +80,10 @@ class Vm(bytecode: Bytecode) {
 					stackPointer -= numElements
 
 					push(hash)
+				case OpIndex =>
+					val index = pop()
+					val left = pop()
+					executeIndexExpression(left, index)
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 			ip += 1
@@ -107,6 +111,33 @@ class Vm(bytecode: Bytecode) {
 			case booleanObject: BooleanObject => booleanObject.value
 			case NULL => false
 			case _ => true
+		}
+	}
+
+	private def executeIndexExpression(left: Object, index: Object): Unit = {
+		if (left.`type`() == ObjectType.ARRAY && index.`type`() == ObjectType.INTEGER)
+			executeArrayIndex(left.asInstanceOf[ArrayObject], index.asInstanceOf[IntegerObject])
+		else if (left.`type`() == ObjectType.HASH)
+			executeHashIndex(left.asInstanceOf[HashObject], index)
+		else
+			throw new Exception(s"index operator not supported: ${left.`type`()}")
+	}
+
+	private def executeArrayIndex(left: ArrayObject, index: IntegerObject): Unit = {
+		if (index.value < 0 || index.value > left.elements.length - 1)
+			push(NULL)
+		else
+			push(left.elements(index.value))
+	}
+
+	private def executeHashIndex(left: HashObject, index: Object): Unit = {
+		val key: Hashable = index match {
+			case hashable: Hashable => hashable
+			case _ => throw new Exception(s"index unusable as hash key: ${index.`type`()}")
+		}
+		left.pairs.get(key.hashKey) match {
+			case Some(pair: HashPair) => push(pair.value)
+			case None => push(NULL)
 		}
 	}
 

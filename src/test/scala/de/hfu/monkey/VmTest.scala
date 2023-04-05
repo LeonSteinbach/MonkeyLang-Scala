@@ -194,4 +194,19 @@ class VmTest extends AnyFunSuite {
 		))
 	}
 
+	test("vm.indexExpressions") {
+		runVmTests(List(
+			Test("[1, 2, 3][1];", IntegerObject(2)),
+			Test("[1, 2, 3][0 + 2];", IntegerObject(3)),
+			Test("[[1, 2, 3], 4][0][1];", IntegerObject(2)),
+			Test("[][0];", NULL),
+			Test("[1][-1];", NULL),
+			Test("{1: 2, 3: 4}[1];", IntegerObject(2)),
+			Test("{1: 2, 3: 4}[3];", IntegerObject(4)),
+			Test("{\"a\": 1, \"b\": 2}[\"a\"];", IntegerObject(1)),
+			Test("{1: 2, 3: 4}[2];", NULL),
+			Test("{}[0];", NULL),
+		))
+	}
+
 }

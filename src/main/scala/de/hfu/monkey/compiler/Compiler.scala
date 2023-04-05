@@ -107,6 +107,10 @@ case class Compiler() {
 						compile(hashLiteral.pairs(key))
 				}
 				emit(OpHash, hashLiteral.pairs.size * 2)
+			case indexExpression: IndexExpression =>
+				compile(indexExpression.left)
+				compile(indexExpression.index)
+				emit(OpIndex)
 			case _ =>
 				throw new Exception(s"unknown node $node")
 		}

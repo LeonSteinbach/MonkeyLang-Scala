@@ -420,4 +420,40 @@ class CompilerTest extends AnyFunSuite {
 		))
 	}
 
+	test("compiler.indexExpressions") {
+		runCompilerTests(List(
+			Test(
+				"[1, 2, 3][1 + 1];",
+				List(1, 2, 3, 1, 1),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpConstant, 1),
+					Definition.make(OpConstant, 2),
+					Definition.make(OpArray, 3),
+					Definition.make(OpConstant, 3),
+					Definition.make(OpConstant, 4),
+					Definition.make(OpAdd),
+					Definition.make(OpIndex),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"{1: 2, 3: 4}[2 - 1];",
+				List(1, 2, 3, 4, 2, 1),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpConstant, 1),
+					Definition.make(OpConstant, 2),
+					Definition.make(OpConstant, 3),
+					Definition.make(OpHash, 4),
+					Definition.make(OpConstant, 4),
+					Definition.make(OpConstant, 5),
+					Definition.make(OpSub),
+					Definition.make(OpIndex),
+					Definition.make(OpPop),
+				)
+			),
+		))
+	}
+
 }
