@@ -125,6 +125,9 @@ case class Compiler() {
 			case returnStatement: ReturnStatement =>
 				compile(returnStatement.value)
 				emit(OpReturnValue)
+			case callExpression: CallExpression =>
+				compile(callExpression.function)
+				emit(OpCall)
 			case _ =>
 				throw new Exception(s"unknown node $node")
 		}

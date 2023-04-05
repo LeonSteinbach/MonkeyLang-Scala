@@ -530,6 +530,43 @@ class CompilerTest extends AnyFunSuite {
 		))
 	}
 
+	test("compiler.functionCalls") {
+		runCompilerTests(List(
+			Test(
+				"fn() { 123; }();",
+				List(
+					123,
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpReturnValue),
+					)
+				),
+				List(
+					Definition.make(OpConstant, 1),
+					Definition.make(OpCall),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"let foo = fn() { 123; }; foo();",
+				List(
+					123,
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpReturnValue),
+					)
+				),
+				List(
+					Definition.make(OpConstant, 1),
+					Definition.make(OpSetGlobal, 0),
+					Definition.make(OpGetGlobal, 0),
+					Definition.make(OpCall),
+					Definition.make(OpPop),
+				)
+			),
+		))
+	}
+
 	test("compiler.scopes") {
 		val compiler = Compiler()
 		if (compiler.scopeIndex != 0)
