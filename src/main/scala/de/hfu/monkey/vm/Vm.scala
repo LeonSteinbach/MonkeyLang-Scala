@@ -16,19 +16,28 @@ val NULL = NullObject
 class Vm(bytecode: Bytecode) {
 
 	private val constants: List[Object] = bytecode.constants
-	private val instructions: Instructions = bytecode.instructions
 	private val stack: Array[Object] = Array.ofDim[Object](STACK_SIZE)
 	private var stackPointer: Int = 0
 	private val globals: Array[Object] = Array.ofDim[Object](GLOBALS_SIZE)
+	private val frames: Array[Frame] = Array.ofDim[Frame](MAX_FRAMES)
+	frames(0) = Frame(CompiledFunctionObject(bytecode.instructions))
+	private var framesIndex: Int = 1
 
 	def run(): Unit = {
 		var ip: Int = 0
-		while (ip < instructions.length) {
-			val operation = instructions(ip)
+		var ins: Instructions = Array.empty
+		var operation: Opcode = 0.toByte
+
+		while (currentFrame.ip < currentFrame.instructions.length - 1) {
+			currentFrame.ip += 1
+			ip = currentFrame.ip
+			ins = currentFrame.instructions
+
+			operation = ins(ip)
 			operation match {
 				case OpConstant =>
-					val constIndex = instructions.readInt(ip + 1)
-					ip += 2
+					val constIndex = ins.readInt(ip + 1)
+					currentFrame.ip += 2
 					push(constants(constIndex))
 				case OpAdd | OpSub | OpMul | OpDiv =>
 					executeBinaryOperation(operation)
@@ -45,36 +54,36 @@ class Vm(bytecode: Bytecode) {
 				case OpMinus =>
 					executeMinusOperator()
 				case OpJump =>
-					val constIndex = instructions.readInt(ip + 1)
-					ip = constIndex - 1
+					val constIndex = ins.readInt(ip + 1)
+					currentFrame.ip = constIndex - 1
 				case OpJumpNotTruthy =>
-					val constIndex = instructions.readInt(ip + 1)
-					ip += 2
+					val constIndex = ins.readInt(ip + 1)
+					currentFrame.ip += 2
 
 					val condition = pop()
 					if (!isTruthy(condition))
-						ip = constIndex - 1
+						currentFrame.ip = constIndex - 1
 				case OpNull =>
 					push(NULL)
 				case OpSetGlobal =>
-					val globalIndex = instructions.readInt(ip + 1)
-					ip += 2
+					val globalIndex = ins.readInt(ip + 1)
+					currentFrame.ip += 2
 					globals(globalIndex) = pop()
 				case OpGetGlobal =>
-					val globalIndex = instructions.readInt(ip + 1)
-					ip += 2
+					val globalIndex = ins.readInt(ip + 1)
+					currentFrame.ip += 2
 					push(globals(globalIndex))
 				case OpArray =>
-					val numElements = instructions.readInt(ip + 1)
-					ip += 2
+					val numElements = ins.readInt(ip + 1)
+					currentFrame.ip += 2
 
 					val array = buildArray(stackPointer - numElements, stackPointer)
 					stackPointer -= numElements
 
 					push(array)
 				case OpHash =>
-					val numElements = instructions.readInt(ip + 1)
-					ip += 2
+					val numElements = ins.readInt(ip + 1)
+					currentFrame.ip += 2
 
 					val hash = buildHash(stackPointer - numElements, stackPointer - 1)
 					stackPointer -= numElements
@@ -86,8 +95,19 @@ class Vm(bytecode: Bytecode) {
 					executeIndexExpression(left, index)
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
-			ip += 1
 		}
+	}
+
+	def currentFrame: Frame = frames(framesIndex - 1)
+
+	def pushFrame(frame: Frame): Unit = {
+		frames(framesIndex) = frame
+		framesIndex += 1
+	}
+
+	def popFrame(): Frame = {
+		framesIndex -= 1
+		frames(framesIndex)
 	}
 
 	private def buildArray(startIndex: Int, endIndex: Int): ArrayObject = {
@@ -240,4 +260,5 @@ class Vm(bytecode: Bytecode) {
 object Vm {
 	private val STACK_SIZE = 2048
 	private val GLOBALS_SIZE = 65536
+	private val MAX_FRAMES = 1024
 }
