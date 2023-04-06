@@ -8,7 +8,7 @@ import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
 enum Precedence {
-	case LOWEST, EQUALS, LESSGREATER, SUM, PRODUCT, CALL, INDEX
+	case LOWEST, EQUALS, LESSGREATER, SUM, PRODUCT, PREFIX, CALL, INDEX
 }
 
 case class ManualParser() extends parser.Parser {
@@ -326,7 +326,7 @@ case class ManualParser() extends parser.Parser {
 	private def parsePrefixExpression: Option[PrefixExpression] = {
 		val operator: String = currentToken.get.literal
 		advanceTokens()
-		val expression: Expression = parseExpression(Precedence.LOWEST) match {
+		val expression: Expression = parseExpression(Precedence.PREFIX) match {
 			case Some(expression: Expression) => Some(expression).get
 			case None => return None
 		}
