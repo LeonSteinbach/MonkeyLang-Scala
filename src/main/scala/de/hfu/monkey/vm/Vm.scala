@@ -93,6 +93,21 @@ class Vm(bytecode: Bytecode) {
 					val index = pop()
 					val left = pop()
 					executeIndexExpression(left, index)
+				case OpCall =>
+					val function: CompiledFunctionObject = stack(stackPointer - 1) match {
+						case compiledFunctionObject: CompiledFunctionObject => compiledFunctionObject
+						case other => throw new Exception(s"calling non-function ${other.`type`()}")
+					}
+					pushFrame(Frame(function))
+				case OpReturnValue =>
+					val returnValue = pop()
+					popFrame()
+					pop()
+					push(returnValue)
+				case OpReturn =>
+					popFrame()
+					pop()
+					push(NULL)
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 		}

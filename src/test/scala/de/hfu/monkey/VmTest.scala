@@ -209,4 +209,32 @@ class VmTest extends AnyFunSuite {
 		))
 	}
 
+	test("vm.functionCallsWithoutArguments") {
+		runVmTests(List(
+			Test("let three = fn() { 1 + 2; }; three();", IntegerObject(3)),
+			Test("let foo = fn() { 1; }; let bar = fn() { 2; }; foo() + bar();", IntegerObject(3)),
+			Test("let foo = fn() { 1; }; let bar = fn() { foo() + 2; }; bar();", IntegerObject(3)),
+		))
+	}
+
+	test("vm.functionCallsWithReturnStatement") {
+		runVmTests(List(
+			Test("let foo = fn() { return 1; 2; 3; }; foo();", IntegerObject(1)),
+			Test("let foo = fn() { return 1; return 2; }; foo();", IntegerObject(1)),
+		))
+	}
+
+	test("vm.functionCallsWithoutReturnValue") {
+		runVmTests(List(
+			Test("let foo = fn() { }; foo();", NULL),
+			Test("let foo = fn() { }; let bar = fn() { foo(); }; bar();", NULL),
+		))
+	}
+
+	test("vm.firstClassFunctions") {
+		runVmTests(List(
+			//Test("let foo = fn() { 1; }; let bar = fn() { foo; }; bar()();", IntegerObject(1)),
+		))
+	}
+
 }
