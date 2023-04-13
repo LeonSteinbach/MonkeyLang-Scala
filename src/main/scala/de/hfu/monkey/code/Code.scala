@@ -124,7 +124,7 @@ object Definition {
 		OpArray -> Definition("OpArray", Array(2)),
 		OpHash -> Definition("OpHash", Array(2)),
 		OpIndex -> Definition("OpIndex", Array()),
-		OpCall -> Definition("OpCall", Array()),
+		OpCall -> Definition("OpCall", Array(1)),
 		OpReturnValue -> Definition("OpReturnValue", Array()),
 		OpReturn -> Definition("OpReturn", Array()),
 		OpGetLocal -> Definition("OpGetLocal", Array(1)),

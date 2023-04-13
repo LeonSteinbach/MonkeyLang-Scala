@@ -115,6 +115,9 @@ case class Compiler() {
 				emit(OpIndex)
 			case functionLiteral: FunctionLiteral =>
 				enterScope()
+
+				functionLiteral.parameters.foreach(parameter => symbolTable.define(parameter.name))
+
 				compile(functionLiteral.body)
 
 				if (lastInstructionIs(OpPop))
@@ -131,7 +134,10 @@ case class Compiler() {
 				emit(OpReturnValue)
 			case callExpression: CallExpression =>
 				compile(callExpression.function)
-				emit(OpCall)
+				callExpression.arguments.foreach {
+					argument => compile(argument)
+				}
+				emit(OpCall, callExpression.arguments.length)
 			case _ =>
 				throw new Exception(s"unknown node $node")
 		}

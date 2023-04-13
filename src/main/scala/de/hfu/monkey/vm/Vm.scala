@@ -102,6 +102,7 @@ class Vm(bytecode: Bytecode) {
 					val left = pop()
 					executeIndexExpression(left, index)
 				case OpCall =>
+					currentFrame.ip += 1
 					val function: CompiledFunctionObject = stack(stackPointer - 1) match {
 						case compiledFunctionObject: CompiledFunctionObject => compiledFunctionObject
 						case other => throw new Exception(s"calling non-function ${other.`type`()}")

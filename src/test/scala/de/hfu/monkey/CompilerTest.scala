@@ -543,7 +543,7 @@ class CompilerTest extends AnyFunSuite {
 				),
 				List(
 					Definition.make(OpConstant, 1),
-					Definition.make(OpCall),
+					Definition.make(OpCall, 0),
 					Definition.make(OpPop),
 				)
 			),
@@ -560,7 +560,51 @@ class CompilerTest extends AnyFunSuite {
 					Definition.make(OpConstant, 1),
 					Definition.make(OpSetGlobal, 0),
 					Definition.make(OpGetGlobal, 0),
-					Definition.make(OpCall),
+					Definition.make(OpCall, 0),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"let foo = fn(a) { a; }; foo(123);",
+				List(
+					List(
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpReturnValue),
+					),
+					123
+				),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpSetGlobal, 0),
+					Definition.make(OpGetGlobal, 0),
+					Definition.make(OpConstant, 1),
+					Definition.make(OpCall, 1),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"let foo = fn(a, b, c) { a; b; c; }; foo(1, 2, 3);",
+				List(
+					List(
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpPop),
+						Definition.make(OpGetLocal, 1),
+						Definition.make(OpPop),
+						Definition.make(OpGetLocal, 2),
+						Definition.make(OpReturnValue),
+					),
+					1,
+					2,
+					3
+				),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpSetGlobal, 0),
+					Definition.make(OpGetGlobal, 0),
+					Definition.make(OpConstant, 1),
+					Definition.make(OpConstant, 2),
+					Definition.make(OpConstant, 3),
+					Definition.make(OpCall, 3),
 					Definition.make(OpPop),
 				)
 			),
