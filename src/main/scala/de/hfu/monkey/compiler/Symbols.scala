@@ -10,7 +10,7 @@ enum SymbolScope {
 case class Symbol(name: String, scope: SymbolScope, index: Int)
 
 class SymbolTable(val outer: Option[SymbolTable] = None, private val store: mutable.HashMap[String, Symbol] = mutable.HashMap.empty) {
-	private var numDefinitions: Int = 0
+	var numDefinitions: Int = 0
 
 	def define(name: String): Symbol = {
 		val scope = if (outer.isDefined) LOCAL else GLOBAL

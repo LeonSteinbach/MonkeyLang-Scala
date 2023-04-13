@@ -50,8 +50,6 @@ class VmTest extends AnyFunSuite {
 	def testHashObject(expected: HashObject, actual: Object): Unit = {
 		actual match {
 			case hash: HashObject =>
-				println(hash.pairs)
-				println(expected.pairs)
 				if (hash.pairs.size != expected.pairs.size) {
 					throw new Exception(s"hash has wrong number of pairs: expected ${expected.pairs.size}, got ${hash.pairs.size}")
 				}
@@ -234,6 +232,16 @@ class VmTest extends AnyFunSuite {
 	test("vm.firstClassFunctions") {
 		runVmTests(List(
 			//Test("let foo = fn() { 1; }; let bar = fn() { foo; }; bar()();", IntegerObject(1)),
+		))
+	}
+
+	test("vm.functionCallsWithBindings") {
+		runVmTests(List(
+			Test("let foo = fn() { let bar = 1; bar; }; foo();", IntegerObject(1)),
+			Test("let foo = fn() { let one = 1; let two = 2; one + two; }; foo();", IntegerObject(3)),
+			Test("let foo = fn() { let one = 1; let two = 2; one + two; }; let bar = fn() { let three = 3; let four = 4; three + four; }; foo() + bar();", IntegerObject(10)),
+			Test("let first = fn() { let bar = 1; bar; }; let second = fn() { let bar = 2; bar; }; first() + second();", IntegerObject(3)),
+			Test("let global = 50; let foo = fn () { let num = 1; global - num; }; let bar = fn () { let num = 2; global - num; }; foo() + bar();", IntegerObject(97)),
 		))
 	}
 

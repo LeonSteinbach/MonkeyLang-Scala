@@ -20,7 +20,7 @@ class Vm(bytecode: Bytecode) {
 	private var stackPointer: Int = 0
 	private val globals: Array[Object] = Array.ofDim[Object](GLOBALS_SIZE)
 	private val frames: Array[Frame] = Array.ofDim[Frame](MAX_FRAMES)
-	frames(0) = Frame(CompiledFunctionObject(bytecode.instructions))
+	frames(0) = Frame(CompiledFunctionObject(bytecode.instructions, 0), 0)
 	private var framesIndex: Int = 1
 
 	def run(): Unit = {
@@ -73,6 +73,14 @@ class Vm(bytecode: Bytecode) {
 					val globalIndex = ins.readInt(ip + 1)
 					currentFrame.ip += 2
 					push(globals(globalIndex))
+				case OpSetLocal =>
+					val localIndex = ins.readByte(ip + 1)
+					currentFrame.ip += 1
+					stack(currentFrame.basePointer + localIndex.toInt) = pop()
+				case OpGetLocal =>
+					val localIndex = ins.readByte(ip + 1)
+					currentFrame.ip += 1
+					push(stack(currentFrame.basePointer + localIndex.toInt))
 				case OpArray =>
 					val numElements = ins.readInt(ip + 1)
 					currentFrame.ip += 2
@@ -98,15 +106,17 @@ class Vm(bytecode: Bytecode) {
 						case compiledFunctionObject: CompiledFunctionObject => compiledFunctionObject
 						case other => throw new Exception(s"calling non-function ${other.`type`()}")
 					}
-					pushFrame(Frame(function))
+					val frame = Frame(function, stackPointer)
+					pushFrame(frame)
+					stackPointer = frame.basePointer + function.numLocals
 				case OpReturnValue =>
 					val returnValue = pop()
-					popFrame()
-					pop()
+					val frame = popFrame()
+					stackPointer = frame.basePointer - 1
 					push(returnValue)
 				case OpReturn =>
-					popFrame()
-					pop()
+					val frame = popFrame()
+					stackPointer = frame.basePointer - 1
 					push(NULL)
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
