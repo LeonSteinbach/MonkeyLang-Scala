@@ -76,7 +76,7 @@ case class FunctionObject(parameters: Option[List[Identifier]] = None, body: Opt
 	def `type`(): ObjectType.Value = ObjectType.FUNCTION
 }
 
-case class CompiledFunctionObject(instructions: Instructions, numLocals: Int) extends Object {
+case class CompiledFunctionObject(instructions: Instructions, numLocals: Int, numParameters: Int) extends Object {
 	override def toString: String = s"compiled_function[${instructions.toList}]"
 	def `type`(): ObjectType.Value = ObjectType.COMPILED_FUNCTION
 }

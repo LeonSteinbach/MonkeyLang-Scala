@@ -127,7 +127,7 @@ case class Compiler() {
 
 				val numLocals = symbolTable.numDefinitions
 				val instructions = leaveScope()
-				val compiledFunctionObject = CompiledFunctionObject(instructions, numLocals)
+				val compiledFunctionObject = CompiledFunctionObject(instructions, numLocals, functionLiteral.parameters.length)
 				emit(OpConstant, addConstant(compiledFunctionObject))
 			case returnStatement: ReturnStatement =>
 				compile(returnStatement.value)

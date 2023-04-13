@@ -245,4 +245,51 @@ class VmTest extends AnyFunSuite {
 		))
 	}
 
+	test("vm.functionCallsWithArgumentsAndBindings") {
+		runVmTests(List(
+			Test("let foo = fn(a) { a; }; foo(1);", IntegerObject(1)),
+			Test("let sum = fn(a, b) { a + b; }; sum(1, 2);", IntegerObject(3)),
+			Test("let sum = fn(a, b) { let c = a + b; c; }; sum(1, 2);", IntegerObject(3)),
+			Test("let sum = fn(a, b) { let c = a + b; c; }; sum(1, 2) + sum(3, 4);", IntegerObject(10)),
+			Test("let sum = fn(a, b) { let c = a + b; c; }; let outer = fn() { sum(1, 2) + sum(3, 4); }; outer();", IntegerObject(10)),
+			Test("let global = 10; let sum = fn(a, b) { let c = a + b; c + global; }; let outer = fn() { sum(1, 2) + sum(3, 4) + global; }; outer() + global;", IntegerObject(50)),
+		))
+	}
+
+	test("vm.functionCallsWithWrongArguments") {
+
+		case class ErrorTest(input: String, expected: String)
+
+		val tests: List[ErrorTest] = List(
+			ErrorTest(
+				"fn() { 1; }(1);",
+				"wrong number of arguments: want=0, got=1",
+			),
+			ErrorTest(
+				"fn(a) { a; }();",
+				"wrong number of arguments: want=1, got=0",
+			),
+			ErrorTest(
+				"fn(a, b) { a + b; }(1);",
+				"wrong number of arguments: want=2, got=1",
+			),
+		)
+
+		tests.foreach { case ErrorTest(input, expected) =>
+			val program = ManualParser().parse(input)
+			val compiler = Compiler()
+			compiler.compile(program)
+
+			val vm = Vm(compiler.bytecode)
+
+			try {
+				vm.run()
+				fail("expected VM error but resulted in none.")
+			} catch {
+				case e: Exception => assert(expected == e.getMessage)
+			}
+		}
+
+	}
+
 }

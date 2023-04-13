@@ -20,7 +20,7 @@ class Vm(bytecode: Bytecode) {
 	private var stackPointer: Int = 0
 	private val globals: Array[Object] = Array.ofDim[Object](GLOBALS_SIZE)
 	private val frames: Array[Frame] = Array.ofDim[Frame](MAX_FRAMES)
-	frames(0) = Frame(CompiledFunctionObject(bytecode.instructions, 0), 0)
+	frames(0) = Frame(CompiledFunctionObject(bytecode.instructions, 0, 0), 0)
 	private var framesIndex: Int = 1
 
 	def run(): Unit = {
@@ -102,14 +102,9 @@ class Vm(bytecode: Bytecode) {
 					val left = pop()
 					executeIndexExpression(left, index)
 				case OpCall =>
+					val numArgs = ins.readByte(ip + 1)
 					currentFrame.ip += 1
-					val function: CompiledFunctionObject = stack(stackPointer - 1) match {
-						case compiledFunctionObject: CompiledFunctionObject => compiledFunctionObject
-						case other => throw new Exception(s"calling non-function ${other.`type`()}")
-					}
-					val frame = Frame(function, stackPointer)
-					pushFrame(frame)
-					stackPointer = frame.basePointer + function.numLocals
+					callFunction(numArgs.toInt)
 				case OpReturnValue =>
 					val returnValue = pop()
 					val frame = popFrame()
@@ -124,14 +119,28 @@ class Vm(bytecode: Bytecode) {
 		}
 	}
 
-	def currentFrame: Frame = frames(framesIndex - 1)
+	def callFunction(numArgs: Int): Unit = {
+		val function: CompiledFunctionObject = stack(stackPointer - 1 - numArgs) match {
+			case compiledFunctionObject: CompiledFunctionObject => compiledFunctionObject
+			case other => throw new Exception(s"calling non-function ${other.`type`()}")
+		}
 
-	def pushFrame(frame: Frame): Unit = {
+		if (numArgs != function.numParameters)
+			throw new Exception(s"wrong number of arguments: want=${function.numParameters}, got=$numArgs")
+
+		val frame = Frame(function, stackPointer - numArgs)
+		pushFrame(frame)
+		stackPointer = frame.basePointer + function.numLocals
+	}
+
+	private def currentFrame: Frame = frames(framesIndex - 1)
+
+	private def pushFrame(frame: Frame): Unit = {
 		frames(framesIndex) = frame
 		framesIndex += 1
 	}
 
-	def popFrame(): Frame = {
+	private def popFrame(): Frame = {
 		framesIndex -= 1
 		frames(framesIndex)
 	}
