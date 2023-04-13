@@ -572,6 +572,8 @@ class CompilerTest extends AnyFunSuite {
 		if (compiler.scopeIndex != 0)
 			fail(s"scopeIndex wrong. got ${compiler.scopeIndex}, want 0")
 
+		val globalSymbolTable = compiler.symbolTable
+
 		compiler.emit(OpMul)
 
 		compiler.enterScope()
@@ -588,10 +590,19 @@ class CompilerTest extends AnyFunSuite {
 		if (last.opcode != OpSub)
 			fail(s"lastInstruction opcode wrong. got ${last.opcode}, want $OpSub")
 
+		if (compiler.symbolTable.outer.get != globalSymbolTable)
+			fail("compiler did not enclose symbol table")
+
 		compiler.leaveScope()
 
 		if (compiler.scopeIndex != 0)
 			fail(s"scopeIndex wrong. got ${compiler.scopeIndex}, want 0")
+
+		if (compiler.symbolTable != globalSymbolTable)
+			fail("compiler did not restore global symbol table")
+
+		if (compiler.symbolTable.outer.isDefined)
+			fail("compiler modified global symbol table incorrectly")
 
 		compiler.emit(OpAdd)
 
@@ -605,5 +616,63 @@ class CompilerTest extends AnyFunSuite {
 		val previous = compiler.scopes(compiler.scopeIndex).previousInstruction
 		if (previous.opcode != OpMul)
 			fail(s"previousInstruction opcode wrong. got ${previous.opcode}, want $OpMul")
+	}
+
+	test("compiler.letStatementScopes") {
+		runCompilerTests(List(
+			Test(
+				"let num = 55; fn() { num; };",
+				List(
+					55,
+					List(
+						Definition.make(OpGetGlobal, 0),
+						Definition.make(OpReturnValue),
+					)
+				),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpSetGlobal, 0),
+					Definition.make(OpConstant, 1),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"fn() { let num = 55; num; };",
+				List(
+					55,
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpSetLocal, 0),
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpReturnValue),
+					)
+				),
+				List(
+					Definition.make(OpConstant, 1),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"fn() { let a = 55; let b = 77; a + b; };",
+				List(
+					55,
+					77,
+					List(
+						Definition.make(OpConstant, 0),
+						Definition.make(OpSetLocal, 0),
+						Definition.make(OpConstant, 1),
+						Definition.make(OpSetLocal, 1),
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpGetLocal, 1),
+						Definition.make(OpAdd),
+						Definition.make(OpReturnValue),
+					)
+				),
+				List(
+					Definition.make(OpConstant, 2),
+					Definition.make(OpPop),
+				)
+			),
+		))
 	}
 }

@@ -20,6 +20,10 @@ extension (instruction: Instructions) {
 		}
 	}
 
+	def readByte: Byte = instruction.read(0).toByte
+
+	def readByte(offset: Int): Byte = instruction.offset(offset).readByte
+
 	def read(position: Int): Int = instruction(position) & 255
 
 	def inspect: String = {
@@ -55,8 +59,9 @@ def readOperands(definition: Definition, instructions: Instructions): (Array[Int
 
 	for ((width, i) <- definition.operandWidths.zipWithIndex) {
 		width match {
-			case 2 =>
-				operands(i) = instructions.readInt(offset)
+			case 2 => operands(i) = instructions.readInt(offset)
+			case 1 => operands(i) = instructions.offset(offset).readByte.toInt
+			case _ => operands(i) = width
 		}
 		offset += width
 	}
@@ -90,6 +95,8 @@ object Opcode extends Enumeration {
 	val OpCall: Opcode = 21
 	val OpReturnValue: Opcode = 22
 	val OpReturn: Opcode = 23
+	val OpGetLocal: Opcode = 24
+	val OpSetLocal: Opcode = 25
 }
 
 case class Definition(name: String, operandWidths: Array[Int])
@@ -120,6 +127,8 @@ object Definition {
 		OpCall -> Definition("OpCall", Array()),
 		OpReturnValue -> Definition("OpReturnValue", Array()),
 		OpReturn -> Definition("OpReturn", Array()),
+		OpGetLocal -> Definition("OpGetLocal", Array(1)),
+		OpSetLocal -> Definition("OpSetLocal", Array(1)),
 	)
 
 	def lookup(operation: Opcode): Definition = {
@@ -133,7 +142,10 @@ object Definition {
 		var offset = 1
 		operands.zip(definition.operandWidths).foreach {
 			case (value, width) =>
-				ByteBuffer.wrap(instruction, offset, width).order(ByteOrder.BIG_ENDIAN).putShort(value.toShort)
+				width match {
+					case 2 => ByteBuffer.wrap(instruction, offset, width).order(ByteOrder.BIG_ENDIAN).putShort(value.toShort)
+					case 1 => ByteBuffer.wrap(instruction, offset, width).order(ByteOrder.BIG_ENDIAN).put(value.toByte)
+				}
 				offset += width
 		}
 		instruction(0) = operation

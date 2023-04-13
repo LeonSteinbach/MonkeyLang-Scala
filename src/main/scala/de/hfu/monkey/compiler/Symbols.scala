@@ -4,22 +4,30 @@ import SymbolScope.*
 import scala.collection.mutable
 
 enum SymbolScope {
-	case GLOBAL
+	case LOCAL, GLOBAL
 }
 
 case class Symbol(name: String, scope: SymbolScope, index: Int)
 
-class SymbolTable(private val store: mutable.HashMap[String, Symbol] = mutable.HashMap.empty) {
+class SymbolTable(val outer: Option[SymbolTable] = None, private val store: mutable.HashMap[String, Symbol] = mutable.HashMap.empty) {
 	private var numDefinitions: Int = 0
 
 	def define(name: String): Symbol = {
-		val symbol = Symbol(name, GLOBAL, numDefinitions)
+		val scope = if (outer.isDefined) LOCAL else GLOBAL
+		val symbol = Symbol(name, scope, numDefinitions)
 		store(name) = symbol
 		numDefinitions += 1
 		symbol
 	}
 
 	def resolve(name: String): Symbol = {
-		store.getOrElse(name, throw new Exception(s"symbol $name not found"))
+		store.get(name) match {
+			case Some(symbol: Symbol) => symbol
+			case None =>
+				outer match {
+					case Some(outer: SymbolTable) => outer.resolve(name)
+					case None => throw new Exception(s"symbol not found: $name")
+				}
+		}
 	}
 }

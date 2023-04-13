@@ -4,6 +4,7 @@ import de.hfu.monkey.ast.*
 import de.hfu.monkey.objects.*
 import de.hfu.monkey.code.*
 import de.hfu.monkey.code.Opcode.*
+import de.hfu.monkey.compiler.SymbolScope.*
 
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
@@ -11,7 +12,7 @@ import scala.collection.mutable
 case class Compiler() {
 	var constants: Array[Object] = Array[Object]()
 
-	private val symbolTable: SymbolTable = new SymbolTable()
+	var symbolTable: SymbolTable = new SymbolTable()
 
 	var scopes: List[CompilationScope] = List[CompilationScope](CompilationScope())
 	var scopeIndex: Int = 0
@@ -81,7 +82,8 @@ case class Compiler() {
 			case letStatement: LetStatement =>
 				compile(letStatement.value)
 				val symbol = symbolTable.define(letStatement.name.name)
-				emit(OpSetGlobal, symbol.index)
+				val scopeOperation = if (symbol.scope == GLOBAL) OpSetGlobal else OpSetLocal
+				emit(scopeOperation, symbol.index)
 			case integerLiteral: IntegerLiteral =>
 				val integerObject: IntegerObject = IntegerObject(integerLiteral.value)
 				emit(OpConstant, addConstant(integerObject))
@@ -89,7 +91,8 @@ case class Compiler() {
 				emit(if (booleanLiteral.value) OpTrue else OpFalse)
 			case identifier: Identifier =>
 				val symbol = symbolTable.resolve(identifier.name)
-				emit(OpGetGlobal, symbol.index)
+				val scopeOperation = if (symbol.scope == GLOBAL) OpGetGlobal else OpGetLocal
+				emit(scopeOperation, symbol.index)
 			case stringLiteral: StringLiteral =>
 				val stringObject: StringObject = StringObject(stringLiteral.value)
 				emit(OpConstant, addConstant(stringObject))
@@ -202,6 +205,7 @@ case class Compiler() {
 	def enterScope(): Unit = {
 		val newScope = CompilationScope()
 		scopes = scopes :+ newScope
+		symbolTable = new SymbolTable(outer = Some(symbolTable))
 		scopeIndex += 1
 	}
 
@@ -209,6 +213,7 @@ case class Compiler() {
 		val instructions = currentInstructions
 		scopes = scopes.dropRight(1)
 		scopeIndex -= 1
+		symbolTable = symbolTable.outer.get
 		instructions
 	}
 }
