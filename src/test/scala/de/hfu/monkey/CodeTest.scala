@@ -16,13 +16,15 @@ class CodeTest extends AnyFunSuite {
 			Definition.make(OpConstant, 2),
 			Definition.make(OpConstant, 65535),
 			Definition.make(OpAdd),
+			Definition.make(OpClosure, 65534, 255),
 		)
 
 		val expected: List[Instructions] = List(
-			Array(OpConstant, 0.toByte, 1.toByte),
-			Array(OpConstant, 0.toByte, 2.toByte),
-			Array(OpConstant, 255.toByte, 255.toByte),
-			Array(OpAdd)
+			Array(OpConstant, 0.toUnsignedByte, 1.toUnsignedByte),
+			Array(OpConstant, 0.toUnsignedByte, 2.toUnsignedByte),
+			Array(OpConstant, 255.toUnsignedByte, 255.toUnsignedByte),
+			Array(OpAdd),
+			Array(OpClosure, 255.toUnsignedByte, 254.toUnsignedByte, 255.toUnsignedByte),
 		)
 
 		instructions.zip(expected).foreach { case (instruction, expInstruction) =>
@@ -33,13 +35,17 @@ class CodeTest extends AnyFunSuite {
 	test("code.instructionsString") {
 		val instructions: List[Instructions] = List(
 			Definition.make(OpAdd),
+			Definition.make(OpGetLocal, 1),
 			Definition.make(OpConstant, 2),
 			Definition.make(OpConstant, 65535),
+			Definition.make(OpClosure, 65535, 255),
 		)
 		val expected: String =
 			"0000 OpAdd\n" +
-			"0001 OpConstant 2\n" +
-			"0004 OpConstant 65535\n"
+			"0001 OpGetLocal 1\n" +
+			"0003 OpConstant 2\n" +
+			"0006 OpConstant 65535\n" +
+			"0009 OpClosure 65535 255\n"
 
 		val contacted: Array[Opcode] = instructions.flatten.toArray
 		if (contacted.inspect != expected)
@@ -48,11 +54,12 @@ class CodeTest extends AnyFunSuite {
 
 	test("code.readOperands") {
 		val tests = List(
-			Test(OpConstant, Array(65535), 2)
+			Test(OpConstant, Array(65535), 2),
+			Test(OpClosure, Array(65535, 255), 3),
 		)
 
 		for (test <- tests) {
-			val instruction: Array[Byte] = Definition.make(test.operation, test.operands*)
+			val instruction: Array[UnsignedByte] = Definition.make(test.operation, test.operands*)
 
 			val definition = Definition.lookup(test.operation)
 

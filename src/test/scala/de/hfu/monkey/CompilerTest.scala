@@ -82,7 +82,7 @@ class CompilerTest extends AnyFunSuite {
 	}
 
 	private def concatInstructions(instructions: List[Instructions]): Instructions = {
-		var out: Array[Byte] = Array.emptyByteArray
+		var out: Instructions = Array.empty[UnsignedByte]
 		for (ins <- instructions) {
 			out = Array.concat(out, ins)
 		}

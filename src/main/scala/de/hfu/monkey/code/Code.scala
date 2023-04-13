@@ -1,12 +1,30 @@
 package de.hfu.monkey.code
 
 import de.hfu.monkey.code.Opcode.*
+
 import java.nio.{ByteBuffer, ByteOrder}
 
-type Instructions = Array[Byte]
+case class UnsignedByte(byte: Short) extends AnyVal {
+	override def toString: String = s"${byte}u"
+
+	def &(i: Int): Int = byte & i
+
+	def toInt: Int = byte
+}
+
+extension (int: Int) {
+	def toUnsignedByte: UnsignedByte = UnsignedByte(int.toShort)
+}
+
+type Instructions = Array[UnsignedByte]
 
 extension (instruction: Instructions) {
 	def offset(offset: Int): Instructions = instruction.slice(offset, instruction.length)
+
+	def writeChar(offset: Int, value: Int): Unit = {
+		instruction(offset) = ((value >>> 8) & 255).toUnsignedByte
+		instruction(offset + 1) = ((value >>> 0) & 255).toUnsignedByte
+	}
 
 	def readInt(offset: Int): Int = instruction.offset(offset).readChar
 
@@ -20,9 +38,9 @@ extension (instruction: Instructions) {
 		}
 	}
 
-	def readByte: Byte = instruction.read(0).toByte
+	def readByte: UnsignedByte = instruction.read(0).toUnsignedByte
 
-	def readByte(offset: Int): Byte = instruction.offset(offset).readByte
+	def readByte(offset: Int): UnsignedByte = instruction.offset(offset).readByte
 
 	def read(position: Int): Int = instruction(position) & 255
 
@@ -31,7 +49,7 @@ extension (instruction: Instructions) {
 		var i = 0
 		while (i < instruction.length) {
 			val definition = Definition.lookup(instruction(i))
-			val (operands, read) = readOperands(definition, instruction.slice(i + 1, i + 1 + definition.operandWidths.sum))
+			val (operands, read) = readOperands(definition, instruction.offset(i + 1))
 			out.append(f"$i%04d ${instruction.fmtInstruction(definition, operands)}\n")
 			i += 1 + read
 		}
@@ -48,6 +66,7 @@ extension (instruction: Instructions) {
 		operandCount match {
 			case 0 => definition.name
 			case 1 => s"${definition.name} ${operands(0)}"
+			case 2 => s"${definition.name} ${operands(0)} ${operands(1)}"
 			case _ => s"ERROR: unhandled operandCount for ${definition.name}\n"
 		}
 	}
@@ -70,33 +89,34 @@ def readOperands(definition: Definition, instructions: Instructions): (Array[Int
 }
 
 object Opcode extends Enumeration {
-	type Opcode = Byte
-	val OpConstant: Opcode = 0
-	val OpAdd: Opcode = 1
-	val OpSub: Opcode = 2
-	val OpMul: Opcode = 3
-	val OpDiv: Opcode = 4
-	val OpPop: Opcode = 5
-	val OpTrue: Opcode = 6
-	val OpFalse: Opcode = 7
-	val OpEqual: Opcode = 8
-	val OpNotEqual: Opcode = 9
-	val OpGreaterThan: Opcode = 10
-	val OpMinus: Opcode = 11
-	val OpBang: Opcode = 12
-	val OpJumpNotTruthy: Opcode = 13
-	val OpJump: Opcode = 14
-	val OpNull: Opcode = 15
-	val OpGetGlobal: Opcode = 16
-	val OpSetGlobal: Opcode = 17
-	val OpArray: Opcode = 18
-	val OpHash: Opcode = 19
-	val OpIndex: Opcode = 20
-	val OpCall: Opcode = 21
-	val OpReturnValue: Opcode = 22
-	val OpReturn: Opcode = 23
-	val OpGetLocal: Opcode = 24
-	val OpSetLocal: Opcode = 25
+	type Opcode = UnsignedByte
+	val OpConstant: Opcode = 0.toUnsignedByte
+	val OpAdd: Opcode = 1.toUnsignedByte
+	val OpSub: Opcode = 2.toUnsignedByte
+	val OpMul: Opcode = 3.toUnsignedByte
+	val OpDiv: Opcode = 4.toUnsignedByte
+	val OpPop: Opcode = 5.toUnsignedByte
+	val OpTrue: Opcode = 6.toUnsignedByte
+	val OpFalse: Opcode = 7.toUnsignedByte
+	val OpEqual: Opcode = 8.toUnsignedByte
+	val OpNotEqual: Opcode = 9.toUnsignedByte
+	val OpGreaterThan: Opcode = 10.toUnsignedByte
+	val OpMinus: Opcode = 11.toUnsignedByte
+	val OpBang: Opcode = 12.toUnsignedByte
+	val OpJumpNotTruthy: Opcode = 13.toUnsignedByte
+	val OpJump: Opcode = 14.toUnsignedByte
+	val OpNull: Opcode = 15.toUnsignedByte
+	val OpGetGlobal: Opcode = 16.toUnsignedByte
+	val OpSetGlobal: Opcode = 17.toUnsignedByte
+	val OpArray: Opcode = 18.toUnsignedByte
+	val OpHash: Opcode = 19.toUnsignedByte
+	val OpIndex: Opcode = 20.toUnsignedByte
+	val OpCall: Opcode = 21.toUnsignedByte
+	val OpReturnValue: Opcode = 22.toUnsignedByte
+	val OpReturn: Opcode = 23.toUnsignedByte
+	val OpGetLocal: Opcode = 24.toUnsignedByte
+	val OpSetLocal: Opcode = 25.toUnsignedByte
+	val OpClosure: Opcode = 26.toUnsignedByte
 }
 
 case class Definition(name: String, operandWidths: Array[Int])
@@ -129,6 +149,7 @@ object Definition {
 		OpReturn -> Definition("OpReturn", Array()),
 		OpGetLocal -> Definition("OpGetLocal", Array(1)),
 		OpSetLocal -> Definition("OpSetLocal", Array(1)),
+		OpClosure -> Definition("OpClosure", Array(2, 1)),
 	)
 
 	def lookup(operation: Opcode): Definition = {
@@ -139,16 +160,17 @@ object Definition {
 		val definition = lookup(operation)
 
 		val instruction = new Instructions(definition.operandWidths.sum + 1)
-		var offset = 1
-		operands.zip(definition.operandWidths).foreach {
-			case (value, width) =>
-				width match {
-					case 2 => ByteBuffer.wrap(instruction, offset, width).order(ByteOrder.BIG_ENDIAN).putShort(value.toShort)
-					case 1 => ByteBuffer.wrap(instruction, offset, width).order(ByteOrder.BIG_ENDIAN).put(value.toByte)
-				}
-				offset += width
-		}
 		instruction(0) = operation
+		var offset = 1
+		operands.zipWithIndex.foreach { case (value, i) =>
+			val width = definition.operandWidths(i)
+			width match {
+				case 2 => instruction.writeChar(offset, value)
+				case 1 => instruction(offset) = value.toUnsignedByte
+			}
+			offset += width
+		}
+
 		instruction
 	}
 

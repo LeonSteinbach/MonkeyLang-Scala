@@ -7,7 +7,7 @@ import de.hfu.monkey.code.*
 
 object ObjectType extends Enumeration {
 	type ObjectType = Value
-	val INTEGER, BOOLEAN, STRING, ARRAY, HASH, NULL, RETURN, ERROR, FUNCTION, COMPILED_FUNCTION, BUILTIN = Value
+	val INTEGER, BOOLEAN, STRING, ARRAY, HASH, NULL, RETURN, ERROR, FUNCTION, COMPILED_FUNCTION, BUILTIN, CLOSURE = Value
 }
 
 type BuiltinFunction = Array[Object] => Object
@@ -84,4 +84,9 @@ case class CompiledFunctionObject(instructions: Instructions, numLocals: Int, nu
 case class BuiltinObject(builtinFunction: BuiltinFunction) extends Object {
 	override def toString: String = "builtin function"
 	def `type`(): ObjectType.Value = ObjectType.BUILTIN
+}
+
+case class ClosureObject(free: Object) extends Object {
+	override def toString: String = "closure"
+	def `type`(): ObjectType.Value = ObjectType.CLOSURE
 }

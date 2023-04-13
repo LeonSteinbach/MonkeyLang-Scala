@@ -227,7 +227,7 @@ case class Compiler() {
 
 case class Bytecode(instructions: Instructions, constants: List[Object])
 
-case class EmittedInstruction(var opcode: Opcode = 0.toByte, position: Int = 0)
+case class EmittedInstruction(var opcode: Opcode = 0.toUnsignedByte, position: Int = 0)
 
 case class CompilationScope(var instructions: Instructions = Array.empty,
 							var lastInstruction: EmittedInstruction = EmittedInstruction(),

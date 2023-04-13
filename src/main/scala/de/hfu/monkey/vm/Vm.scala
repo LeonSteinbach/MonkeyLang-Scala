@@ -26,7 +26,7 @@ class Vm(bytecode: Bytecode) {
 	def run(): Unit = {
 		var ip: Int = 0
 		var ins: Instructions = Array.empty
-		var operation: Opcode = 0.toByte
+		var operation: Opcode = 0.toUnsignedByte
 
 		while (currentFrame.ip < currentFrame.instructions.length - 1) {
 			currentFrame.ip += 1
