@@ -298,4 +298,12 @@ class VmTest extends AnyFunSuite {
 		))
 	}
 
+	test("vm.recursiveFunctions") {
+		runVmTests(List(
+			Test("let countDown = fn(x) { if (x == 0) { return 0; } else { countDown(x - 1); }; }; countDown(1);", IntegerObject(0)),
+			Test("let countDown = fn(x) { if (x == 0) { return 0; } else { countDown(x - 1); }; }; let wrapper = fn() { countDown(1); }; wrapper();", IntegerObject(0)),
+			Test("let wrapper = fn() { let countDown = fn(x) { if (x == 0) { return 0; } else { countDown(x - 1); }; }; countDown(1); }; wrapper();", IntegerObject(0)),
+		))
+	}
+
 }

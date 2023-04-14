@@ -188,4 +188,23 @@ class ParserTest extends AnyFunSuite {
 				ReturnStatement(IntegerLiteral(1)),
 				ReturnStatement(InfixExpression("+", Identifier("foo"), Identifier("bar"))))))
 	}
+
+	test("parser.functionLiteralWithName") {
+		val program: Program = parserCombinator.parse("let myFunction = fn() {};")
+		assert(parserManual.parse("let myFunction = fn() {};") === program)
+
+		if (program.statements.length != 1)
+			fail(s"program body does not contain 1 statement. got=${program.statements.length}")
+
+		program.statements.head match {
+			case letStatement: LetStatement =>
+				letStatement.value match {
+					case functionLiteral: FunctionLiteral =>
+						if (functionLiteral.name != "myFunction")
+							fail(s"function literal name wrong. want='myFunction', got=${functionLiteral.name}")
+					case other => fail(s"value of letStatement is not a functionLiteral. got=$other")
+				}
+			case other => fail(s"program statements at 0 is not a letStatement. got=$other")
+		}
+	}
 }

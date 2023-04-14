@@ -188,4 +188,27 @@ class SymbolTableTest extends AnyFunSuite {
 		}
 	}
 
+	test("symbolTable.defineAndResolveFunctionName") {
+		val global = new SymbolTable()
+		global.defineFunctionName("a")
+
+		val expected = Symbol("a", FUNCTION, 0)
+
+		val result = global.resolve(expected.name)
+		if (result != expected)
+			fail(s"expected ${expected.name} to resolve to $expected, got=$result")
+	}
+
+	test("symbolTable.shadowingFunctionName") {
+		val global = new SymbolTable()
+		global.defineFunctionName("a")
+		global.define("a")
+
+		val expected = Symbol("a", GLOBAL, 0)
+
+		val result = global.resolve(expected.name)
+		if (result != expected)
+			fail(s"expected ${expected.name} to resolve to $expected, got=$result")
+	}
+
 }

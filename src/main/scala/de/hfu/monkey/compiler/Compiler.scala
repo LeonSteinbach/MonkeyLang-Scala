@@ -80,8 +80,8 @@ case class Compiler() {
 					statement => compile(statement)
 				}
 			case letStatement: LetStatement =>
-				compile(letStatement.value)
 				val symbol = symbolTable.define(letStatement.name.name)
+				compile(letStatement.value)
 				val scopeOperation = if (symbol.scope == GLOBAL) OpSetGlobal else OpSetLocal
 				emit(scopeOperation, symbol.index)
 			case integerLiteral: IntegerLiteral =>
@@ -114,6 +114,9 @@ case class Compiler() {
 				emit(OpIndex)
 			case functionLiteral: FunctionLiteral =>
 				enterScope()
+
+				if (functionLiteral.name != "")
+					symbolTable.defineFunctionName(functionLiteral.name)
 
 				functionLiteral.parameters.foreach(parameter => symbolTable.define(parameter.name))
 
@@ -155,6 +158,7 @@ case class Compiler() {
 			case LOCAL => emit(OpGetLocal, symbol.index)
 			case BUILTIN => // TODO: Implement todo operation
 			case FREE => emit(OpGetFree, symbol.index)
+			case FUNCTION => emit(OpCurrentClosure)
 		}
 	}
 

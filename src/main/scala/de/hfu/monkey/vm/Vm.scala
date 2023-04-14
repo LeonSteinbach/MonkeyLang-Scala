@@ -123,9 +123,9 @@ class Vm(bytecode: Bytecode) {
 				case OpGetFree =>
 					val freeIndex = ins.readByte(ip + 1)
 					currentFrame.ip += 1
-
-					val currentClosure = currentFrame.closure
-					push(currentClosure.free(freeIndex.toInt))
+					push(currentFrame.closure.free(freeIndex.toInt))
+				case OpCurrentClosure =>
+					push(currentFrame.closure)
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 		}

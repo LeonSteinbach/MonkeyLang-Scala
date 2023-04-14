@@ -127,6 +127,7 @@ object Opcode extends Enumeration {
 	val OpSetLocal: Opcode = 25.toUnsignedByte
 	val OpClosure: Opcode = 26.toUnsignedByte
 	val OpGetFree: Opcode = 27.toUnsignedByte
+	val OpCurrentClosure: Opcode = 28.toUnsignedByte
 }
 
 case class Definition(name: String, operandWidths: Array[Int])
@@ -161,6 +162,7 @@ object Definition {
 		OpSetLocal -> Definition("OpSetLocal", Array(1)),
 		OpClosure -> Definition("OpClosure", Array(2, 1)),
 		OpGetFree -> Definition("OpGetFree", Array(1)),
+		OpCurrentClosure -> Definition("OpCurrentClosure", Array()),
 	)
 
 	def lookup(operation: Opcode): Definition = {

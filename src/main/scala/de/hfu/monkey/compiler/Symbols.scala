@@ -4,7 +4,7 @@ import SymbolScope.*
 import scala.collection.mutable
 
 enum SymbolScope {
-	case LOCAL, GLOBAL, FREE, BUILTIN
+	case LOCAL, GLOBAL, FREE, BUILTIN, FUNCTION
 }
 
 case class Symbol(name: String, var scope: SymbolScope, index: Int)
@@ -42,6 +42,12 @@ class SymbolTable(val outer: Option[SymbolTable] = None, private val store: muta
 		val symbol = Symbol(original.name, FREE, freeSymbols.length - 1)
 		symbol.scope = FREE
 		store(original.name) = symbol
+		symbol
+	}
+
+	def defineFunctionName(name: String): Symbol = {
+		val symbol = Symbol(name, FUNCTION, 0)
+		store(name) = symbol
 		symbol
 	}
 }

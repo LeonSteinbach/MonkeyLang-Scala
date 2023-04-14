@@ -814,4 +814,62 @@ class CompilerTest extends AnyFunSuite {
 			),
 		))
 	}
+
+	test("compiler.recursiveFunctions") {
+		runCompilerTests(List(
+			Test(
+				"let countDown = fn(x) { countDown(x - 1); }; countDown(1);",
+				List(
+					1,
+					List(
+						Definition.make(OpCurrentClosure),
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpConstant, 0),
+						Definition.make(OpSub),
+						Definition.make(OpCall, 1),
+						Definition.make(OpReturnValue),
+					),
+					1
+				),
+				List(
+					Definition.make(OpClosure, 1, 0),
+					Definition.make(OpSetGlobal, 0),
+					Definition.make(OpGetGlobal, 0),
+					Definition.make(OpConstant, 2),
+					Definition.make(OpCall, 1),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"let wrapper = fn() { let countDown = fn(x) { countDown(x - 1); }; countDown(1); }; wrapper();",
+				List(
+					1,
+					List(
+						Definition.make(OpCurrentClosure),
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpConstant, 0),
+						Definition.make(OpSub),
+						Definition.make(OpCall, 1),
+						Definition.make(OpReturnValue),
+					),
+					1,
+					List(
+						Definition.make(OpClosure, 1, 0),
+						Definition.make(OpSetLocal, 0),
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpConstant, 2),
+						Definition.make(OpCall, 1),
+						Definition.make(OpReturnValue),
+					),
+				),
+				List(
+					Definition.make(OpClosure, 3, 0),
+					Definition.make(OpSetGlobal, 0),
+					Definition.make(OpGetGlobal, 0),
+					Definition.make(OpCall, 0),
+					Definition.make(OpPop),
+				)
+			),
+		))
+	}
 }

@@ -17,7 +17,7 @@ case class LetStatement(name: Identifier, value: Expression) extends Statement
 case class ReturnStatement(value: Expression) extends Statement
 case class BlockStatement(statements: List[Statement]) extends Statement
 case class IfExpression(condition: Expression, consequence: BlockStatement, alternative: BlockStatement) extends Expression
-case class FunctionLiteral(parameters: List[Identifier], body: BlockStatement) extends Expression
+case class FunctionLiteral(parameters: List[Identifier], body: BlockStatement, var name: String = "") extends Expression
 case class CallExpression(function: Expression, arguments: List[Expression]) extends Expression
 case class IndexExpression(left: Expression, index: Expression) extends Expression
 case class ExpressionStatement(expression: Expression) extends Statement

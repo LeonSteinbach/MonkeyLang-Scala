@@ -66,7 +66,12 @@ case class CombinatorParser() extends parser.Parser, JavaTokenParsers {
 	}
 
 	private def letStatement: Parser[LetStatement] = "let" ~> identifier ~ ("=" ~> expression <~ ";") ^^ {
-		case name ~ value => LetStatement(name, value)
+		case name ~ value => value match {
+			case functionLiteral: FunctionLiteral =>
+				functionLiteral.name = name.name
+				LetStatement(name, functionLiteral)
+			case expression: Expression => LetStatement(name, expression)
+		}
 	}
 
 	private def returnStatement: Parser[ReturnStatement] = "return" ~> expression <~ ";" ^^ {

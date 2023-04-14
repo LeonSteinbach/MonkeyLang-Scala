@@ -120,6 +120,9 @@ case class ManualParser() extends parser.Parser {
 			return None
 		advanceTokens()
 		val value: Expression = parseExpression(Precedence.LOWEST) match {
+			case Some(functionLiteral: FunctionLiteral) =>
+				functionLiteral.name = name.name
+				Some(functionLiteral).get
 			case Some(expression: Expression) => Some(expression).get
 			case None => return None
 		}
