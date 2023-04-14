@@ -76,7 +76,7 @@ case class FunctionObject(parameters: Option[List[Identifier]] = None, body: Opt
 	def `type`(): ObjectType.Value = ObjectType.FUNCTION
 }
 
-case class CompiledFunctionObject(instructions: Instructions, numLocals: Int, numParameters: Int) extends Object {
+case class CompiledFunctionObject(instructions: Instructions, numLocals: Int = 0, numParameters: Int = 0) extends Object {
 	override def toString: String = s"compiled_function[${instructions.toList}]"
 	def `type`(): ObjectType.Value = ObjectType.COMPILED_FUNCTION
 }
@@ -86,7 +86,7 @@ case class BuiltinObject(builtinFunction: BuiltinFunction) extends Object {
 	def `type`(): ObjectType.Value = ObjectType.BUILTIN
 }
 
-case class ClosureObject(free: Object) extends Object {
+case class ClosureObject(function: CompiledFunctionObject, free: List[Object] = List.empty) extends Object {
 	override def toString: String = "closure"
 	def `type`(): ObjectType.Value = ObjectType.CLOSURE
 }

@@ -4,12 +4,21 @@ import de.hfu.monkey.code.Opcode.*
 
 import java.nio.{ByteBuffer, ByteOrder}
 
-case class UnsignedByte(byte: Short) extends AnyVal {
+class UnsignedByte(byte: Short) extends AnyVal {
 	override def toString: String = s"${byte}u"
 
 	def &(i: Int): Int = byte & i
 
 	def toInt: Int = byte
+}
+
+object UnsignedByte {
+	def apply(value: Int): UnsignedByte = {
+		if (value < 0 || value > 255) {
+			throw new IllegalArgumentException("Value must be between 0 and 255.")
+		}
+		new UnsignedByte(value.toShort)
+	}
 }
 
 extension (int: Int) {
@@ -117,6 +126,7 @@ object Opcode extends Enumeration {
 	val OpGetLocal: Opcode = 24.toUnsignedByte
 	val OpSetLocal: Opcode = 25.toUnsignedByte
 	val OpClosure: Opcode = 26.toUnsignedByte
+	val OpGetFree: Opcode = 27.toUnsignedByte
 }
 
 case class Definition(name: String, operandWidths: Array[Int])
@@ -150,6 +160,7 @@ object Definition {
 		OpGetLocal -> Definition("OpGetLocal", Array(1)),
 		OpSetLocal -> Definition("OpSetLocal", Array(1)),
 		OpClosure -> Definition("OpClosure", Array(2, 1)),
+		OpGetFree -> Definition("OpGetFree", Array(1)),
 	)
 
 	def lookup(operation: Opcode): Definition = {

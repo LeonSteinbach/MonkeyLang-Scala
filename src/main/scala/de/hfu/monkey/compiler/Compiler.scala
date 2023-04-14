@@ -91,8 +91,7 @@ case class Compiler() {
 				emit(if (booleanLiteral.value) OpTrue else OpFalse)
 			case identifier: Identifier =>
 				val symbol = symbolTable.resolve(identifier.name)
-				val scopeOperation = if (symbol.scope == GLOBAL) OpGetGlobal else OpGetLocal
-				emit(scopeOperation, symbol.index)
+				loadSymbol(symbol)
 			case stringLiteral: StringLiteral =>
 				val stringObject: StringObject = StringObject(stringLiteral.value)
 				emit(OpConstant, addConstant(stringObject))
@@ -125,10 +124,15 @@ case class Compiler() {
 				if (!lastInstructionIs(OpReturnValue))
 					emit(OpReturn)
 
+				val freeSymbols = symbolTable.freeSymbols
 				val numLocals = symbolTable.numDefinitions
 				val instructions = leaveScope()
+
+				freeSymbols.foreach(loadSymbol)
+
 				val compiledFunctionObject = CompiledFunctionObject(instructions, numLocals, functionLiteral.parameters.length)
-				emit(OpConstant, addConstant(compiledFunctionObject))
+				val fnIndex = addConstant(compiledFunctionObject)
+				emit(OpClosure, fnIndex, freeSymbols.length)
 			case returnStatement: ReturnStatement =>
 				compile(returnStatement.value)
 				emit(OpReturnValue)
@@ -144,6 +148,15 @@ case class Compiler() {
 	}
 
 	def bytecode: Bytecode = Bytecode(currentInstructions, constants.toList)
+
+	private def loadSymbol(symbol: Symbol): Unit = {
+		symbol.scope match {
+			case GLOBAL => emit(OpGetGlobal, symbol.index)
+			case LOCAL => emit(OpGetLocal, symbol.index)
+			case BUILTIN => // TODO: Implement todo operation
+			case FREE => emit(OpGetFree, symbol.index)
+		}
+	}
 
 	private def replaceLastPopWithReturn(): Unit = {
 		val lastPosition = scopes(scopeIndex).lastInstruction.position

@@ -20,7 +20,8 @@ class Vm(bytecode: Bytecode) {
 	private var stackPointer: Int = 0
 	private val globals: Array[Object] = Array.ofDim[Object](GLOBALS_SIZE)
 	private val frames: Array[Frame] = Array.ofDim[Frame](MAX_FRAMES)
-	frames(0) = Frame(CompiledFunctionObject(bytecode.instructions, 0, 0), 0)
+	private val mainClosure: ClosureObject = ClosureObject(CompiledFunctionObject(bytecode.instructions))
+	frames(0) = Frame(mainClosure, 0)
 	private var framesIndex: Int = 1
 
 	def run(): Unit = {
@@ -104,7 +105,7 @@ class Vm(bytecode: Bytecode) {
 				case OpCall =>
 					val numArgs = ins.readByte(ip + 1)
 					currentFrame.ip += 1
-					callFunction(numArgs.toInt)
+					executeCall(numArgs.toInt)
 				case OpReturnValue =>
 					val returnValue = pop()
 					val frame = popFrame()
@@ -114,23 +115,38 @@ class Vm(bytecode: Bytecode) {
 					val frame = popFrame()
 					stackPointer = frame.basePointer - 1
 					push(NULL)
+				case OpClosure =>
+					val constIndex = ins.readInt(ip + 1)
+					val numFree = ins.readByte(ip + 3) // TODO: Use numFree
+					currentFrame.ip += 3
+					pushClosure(constIndex)
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 		}
 	}
 
-	def callFunction(numArgs: Int): Unit = {
-		val function: CompiledFunctionObject = stack(stackPointer - 1 - numArgs) match {
+	private def pushClosure(constIndex: Int): Unit = {
+		val function = constants(constIndex) match {
 			case compiledFunctionObject: CompiledFunctionObject => compiledFunctionObject
-			case other => throw new Exception(s"calling non-function ${other.`type`()}")
+			case _ => throw new Exception(s"closure is not a function")
 		}
+		push(ClosureObject(function))
+	}
 
-		if (numArgs != function.numParameters)
-			throw new Exception(s"wrong number of arguments: want=${function.numParameters}, got=$numArgs")
+	private def executeCall(numArgs: Int): Unit = {
+		stack(stackPointer - 1 - numArgs) match {
+			case closure: ClosureObject => callClosure(closure, numArgs)
+			case builtin: BuiltinObject => // TODO: Implement builtins call
+			case _ => throw new Exception("calling non-closure and non-builtin")
+		}
+	}
 
-		val frame = Frame(function, stackPointer - numArgs)
+	private def callClosure(closure: ClosureObject, numArgs: Int): Unit = {
+		if (numArgs != closure.function.numParameters)
+			throw new Exception(s"wrong number of arguments: want=${closure.function.numParameters}, got=$numArgs")
+		val frame = Frame(closure, stackPointer - numArgs)
 		pushFrame(frame)
-		stackPointer = frame.basePointer + function.numLocals
+		stackPointer = frame.basePointer + closure.function.numLocals
 	}
 
 	private def currentFrame: Frame = frames(framesIndex - 1)

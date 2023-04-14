@@ -477,7 +477,7 @@ class CompilerTest extends AnyFunSuite {
 					)
 				),
 				List(
-					Definition.make(OpConstant, 2),
+					Definition.make(OpClosure, 2, 0),
 					Definition.make(OpPop),
 				)
 			),
@@ -494,7 +494,7 @@ class CompilerTest extends AnyFunSuite {
 					)
 				),
 				List(
-					Definition.make(OpConstant, 2),
+					Definition.make(OpClosure, 2, 0),
 					Definition.make(OpPop),
 				)
 			),
@@ -511,7 +511,7 @@ class CompilerTest extends AnyFunSuite {
 					)
 				),
 				List(
-					Definition.make(OpConstant, 2),
+					Definition.make(OpClosure, 2, 0),
 					Definition.make(OpPop),
 				)
 			),
@@ -523,7 +523,7 @@ class CompilerTest extends AnyFunSuite {
 					)
 				),
 				List(
-					Definition.make(OpConstant, 0),
+					Definition.make(OpClosure, 0, 0),
 					Definition.make(OpPop),
 				)
 			),
@@ -542,7 +542,7 @@ class CompilerTest extends AnyFunSuite {
 					)
 				),
 				List(
-					Definition.make(OpConstant, 1),
+					Definition.make(OpClosure, 1, 0),
 					Definition.make(OpCall, 0),
 					Definition.make(OpPop),
 				)
@@ -557,7 +557,7 @@ class CompilerTest extends AnyFunSuite {
 					)
 				),
 				List(
-					Definition.make(OpConstant, 1),
+					Definition.make(OpClosure, 1, 0),
 					Definition.make(OpSetGlobal, 0),
 					Definition.make(OpGetGlobal, 0),
 					Definition.make(OpCall, 0),
@@ -574,7 +574,7 @@ class CompilerTest extends AnyFunSuite {
 					123
 				),
 				List(
-					Definition.make(OpConstant, 0),
+					Definition.make(OpClosure, 0, 0),
 					Definition.make(OpSetGlobal, 0),
 					Definition.make(OpGetGlobal, 0),
 					Definition.make(OpConstant, 1),
@@ -598,7 +598,7 @@ class CompilerTest extends AnyFunSuite {
 					3
 				),
 				List(
-					Definition.make(OpConstant, 0),
+					Definition.make(OpClosure, 0, 0),
 					Definition.make(OpSetGlobal, 0),
 					Definition.make(OpGetGlobal, 0),
 					Definition.make(OpConstant, 1),
@@ -676,7 +676,7 @@ class CompilerTest extends AnyFunSuite {
 				List(
 					Definition.make(OpConstant, 0),
 					Definition.make(OpSetGlobal, 0),
-					Definition.make(OpConstant, 1),
+					Definition.make(OpClosure, 1, 0),
 					Definition.make(OpPop),
 				)
 			),
@@ -692,7 +692,7 @@ class CompilerTest extends AnyFunSuite {
 					)
 				),
 				List(
-					Definition.make(OpConstant, 1),
+					Definition.make(OpClosure, 1, 0),
 					Definition.make(OpPop),
 				)
 			),
@@ -713,7 +713,102 @@ class CompilerTest extends AnyFunSuite {
 					)
 				),
 				List(
-					Definition.make(OpConstant, 2),
+					Definition.make(OpClosure, 2, 0),
+					Definition.make(OpPop),
+				)
+			),
+		))
+	}
+
+	test("compiler.closures") {
+		runCompilerTests(List(
+			Test(
+				"fn(a) { fn(b) { a + b; }; };",
+				List(
+					List(
+						Definition.make(OpGetFree, 0),
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpAdd),
+						Definition.make(OpReturnValue),
+					),
+					List(
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpClosure, 0, 1),
+						Definition.make(OpReturnValue),
+					),
+				),
+				List(
+					Definition.make(OpClosure, 1, 0),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"fn(a) { fn(b) { fn(c) { a + b + c; }; }; };",
+				List(
+					List(
+						Definition.make(OpGetFree, 0),
+						Definition.make(OpGetFree, 1),
+						Definition.make(OpAdd),
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpAdd),
+						Definition.make(OpReturnValue),
+					),
+					List(
+						Definition.make(OpGetFree, 0),
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpClosure, 0, 2),
+						Definition.make(OpReturnValue),
+					),
+					List(
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpClosure, 1, 1),
+						Definition.make(OpReturnValue),
+					),
+				),
+				List(
+					Definition.make(OpClosure, 2, 0),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"let global = 55; fn() { let a = 66; fn() { let b = 77; fn() { let c = 88; global + a + b + c; }; }; };",
+				List(
+					55,
+					66,
+					77,
+					88,
+					List(
+						Definition.make(OpConstant, 3),
+						Definition.make(OpSetLocal, 0),
+						Definition.make(OpGetGlobal, 0),
+						Definition.make(OpGetFree, 0),
+						Definition.make(OpAdd),
+						Definition.make(OpGetFree, 1),
+						Definition.make(OpAdd),
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpAdd),
+						Definition.make(OpReturnValue),
+					),
+					List(
+						Definition.make(OpConstant, 2),
+						Definition.make(OpSetLocal, 0),
+						Definition.make(OpGetFree, 0),
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpClosure, 4, 2),
+						Definition.make(OpReturnValue),
+					),
+					List(
+						Definition.make(OpConstant, 1),
+						Definition.make(OpSetLocal, 0),
+						Definition.make(OpGetLocal, 0),
+						Definition.make(OpClosure, 5, 1),
+						Definition.make(OpReturnValue),
+					),
+				),
+				List(
+					Definition.make(OpConstant, 0),
+					Definition.make(OpSetGlobal, 0),
+					Definition.make(OpClosure, 6, 0),
 					Definition.make(OpPop),
 				)
 			),
