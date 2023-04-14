@@ -82,7 +82,7 @@ object Main {
 	}
 
 	private def printResult(parser: Parser, engine: String, evaluate: Boolean): Unit = {
-		val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n - 1) + fib(n - 2); }; fib(10);"
+		val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n - 1) + fib(n - 2); }; fib(35);"
 		var printString: String = ""
 
 		val startTime1 = System.currentTimeMillis()
