@@ -9,7 +9,7 @@ set output "timings-evaluator-fib.png"
 #set output "timings-evaluator-fib.svg"
 set style fill solid
 set boxwidth 0.5
-#set xtics rotate by -45
+set xtics rotate by -30
 #set logscale y
 plot "timings-evaluator-fib.dat" using 2:xtic(1) with boxes notitle linecolor rgb "black", \
      "timings-evaluator-fib.dat" using 0:($2+300):2 with labels notitle
