@@ -257,7 +257,6 @@ class VmTest extends AnyFunSuite {
 	}
 
 	test("vm.functionCallsWithWrongArguments") {
-
 		case class ErrorTest(input: String, expected: String)
 
 		val tests: List[ErrorTest] = List(
@@ -289,7 +288,14 @@ class VmTest extends AnyFunSuite {
 				case e: Exception => assert(expected == e.getMessage)
 			}
 		}
+	}
 
+	test("vm.closures") {
+		runVmTests(List(
+			Test("let newClosure = fn(a) { fn() { a; }; }; let closure = newClosure(99); closure();", IntegerObject(99)),
+			Test("let newAdder = fn(a, b) { fn(c) { a + b + c; }; }; let adder = newAdder(1, 2); adder(8);", IntegerObject(11)),
+			Test("let newAdder = fn(a, b) { let c = a + b; fn(d) { c + d; }; }; let adder = newAdder(1, 2); adder(8);", IntegerObject(11)),
+		))
 	}
 
 }

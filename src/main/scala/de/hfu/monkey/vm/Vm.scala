@@ -117,20 +117,28 @@ class Vm(bytecode: Bytecode) {
 					push(NULL)
 				case OpClosure =>
 					val constIndex = ins.readInt(ip + 1)
-					val numFree = ins.readByte(ip + 3) // TODO: Use numFree
+					val numFree = ins.readByte(ip + 3)
 					currentFrame.ip += 3
-					pushClosure(constIndex)
+					pushClosure(constIndex, numFree.toInt)
+				case OpGetFree =>
+					val freeIndex = ins.readByte(ip + 1)
+					currentFrame.ip += 1
+
+					val currentClosure = currentFrame.closure
+					push(currentClosure.free(freeIndex.toInt))
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 		}
 	}
 
-	private def pushClosure(constIndex: Int): Unit = {
+	private def pushClosure(constIndex: Int, numFree: Int): Unit = {
 		val function = constants(constIndex) match {
 			case compiledFunctionObject: CompiledFunctionObject => compiledFunctionObject
 			case _ => throw new Exception(s"closure is not a function")
 		}
-		push(ClosureObject(function))
+		val free = stack.slice(stackPointer - numFree, stackPointer).toList
+		stackPointer -= numFree
+		push(ClosureObject(function, free))
 	}
 
 	private def executeCall(numArgs: Int): Unit = {
