@@ -1,7 +1,7 @@
 package de.hfu.monkey.objects
 
 import de.hfu.monkey.*
-import de.hfu.monkey.ast.{BlockStatement, Identifier}
+import de.hfu.monkey.ast.*
 import de.hfu.monkey.evaluator.*
 import de.hfu.monkey.code.*
 

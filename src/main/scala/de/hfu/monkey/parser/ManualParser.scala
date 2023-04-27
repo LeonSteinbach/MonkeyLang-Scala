@@ -1,7 +1,7 @@
 package de.hfu.monkey.parser
 
 import de.hfu.monkey.*
-import de.hfu.monkey.ast.{ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, Node, PrefixExpression, Program, ReturnStatement, Statement, StringLiteral}
+import de.hfu.monkey.ast.*
 import de.hfu.monkey.lexer.{Lexer, Token, TokenType}
 
 import scala.collection.mutable
@@ -237,7 +237,7 @@ case class ManualParser() extends parser.Parser {
 		}
 	}
 
-	private def parseIfExpression: Option[Expression] = {
+	private def parseIfExpression: Option[IfExpression] = {
 		if (!expectPeek(TokenType.LPAREN))
 			return None
 

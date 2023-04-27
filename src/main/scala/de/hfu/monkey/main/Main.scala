@@ -3,7 +3,7 @@ package de.hfu.monkey.main
 import de.hfu.monkey.objects.Object
 import de.hfu.monkey.ast.Program
 import de.hfu.monkey.compiler.Compiler
-import de.hfu.monkey.parser.{CombinatorParser, ManualParser, Parser}
+import de.hfu.monkey.parser.*
 import de.hfu.monkey.evaluator.*
 import de.hfu.monkey.vm.Vm
 import scopt.OParser

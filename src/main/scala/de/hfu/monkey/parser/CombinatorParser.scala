@@ -1,10 +1,10 @@
 package de.hfu.monkey.parser
 
 import de.hfu.monkey.*
-import de.hfu.monkey.ast.{ArrayLiteral, BlockStatement, BooleanLiteral, CallExpression, Expression, ExpressionStatement, FunctionLiteral, HashLiteral, Identifier, IfExpression, IndexExpression, InfixExpression, IntegerLiteral, LetStatement, PrefixExpression, Program, ReturnStatement, Statement, StringLiteral}
+import de.hfu.monkey.ast.*
 
 import scala.util.matching.Regex
-import scala.util.parsing.combinator.{JavaTokenParsers, RegexParsers}
+import scala.util.parsing.combinator.JavaTokenParsers
 
 case class CombinatorParser() extends parser.Parser, JavaTokenParsers {
 
