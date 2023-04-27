@@ -231,7 +231,7 @@ class VmTest extends AnyFunSuite {
 
 	test("vm.firstClassFunctions") {
 		runVmTests(List(
-			//Test("let foo = fn() { 1; }; let bar = fn() { foo; }; bar()();", IntegerObject(1)),
+			Test("let foo = fn() { 1; }; let bar = fn() { foo; }; bar()();", IntegerObject(1)),
 		))
 	}
 
