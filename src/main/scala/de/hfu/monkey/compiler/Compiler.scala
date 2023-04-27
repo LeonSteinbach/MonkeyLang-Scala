@@ -156,7 +156,7 @@ case class Compiler() {
 		symbol.scope match {
 			case GLOBAL => emit(OpGetGlobal, symbol.index)
 			case LOCAL => emit(OpGetLocal, symbol.index)
-			case BUILTIN => // TODO: Implement todo operation
+			case BUILTIN => // TODO: Implement builtin operation
 			case FREE => emit(OpGetFree, symbol.index)
 			case FUNCTION => emit(OpCurrentClosure)
 		}
