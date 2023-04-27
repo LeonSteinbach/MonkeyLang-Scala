@@ -2,8 +2,8 @@ package de.hfu.monkey.evaluator
 
 import de.hfu.monkey
 import de.hfu.monkey.ast.*
-import de.hfu.monkey.*
-import de.hfu.monkey.objects.{ArrayObject, BooleanObject, BuiltinObject, ErrorObject, FunctionObject, HashKey, HashObject, HashPair, Hashable, IntegerObject, NullObject, ObjectType, ReturnObject, StringObject}
+import de.hfu.monkey.objects.*
+import de.hfu.*
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -14,8 +14,8 @@ object Evaluator {
 	private val FALSE: BooleanObject = BooleanObject(false)
 	val NULL: NullObject.type = NullObject
 
-	def evaluateProgram(program: Program, environment: Environment): monkey.objects.Object = {
-		program.statements.foldLeft(NULL: monkey.objects.Object) { (_, statement) =>
+	def evaluateProgram(program: Program, environment: Environment): Object = {
+		program.statements.foldLeft(NULL: Object) { (_, statement) =>
 			val evaluatedStatement = evaluate(Some(statement), environment)
 			evaluatedStatement.`type`() match {
 				case ObjectType.RETURN =>
@@ -26,23 +26,23 @@ object Evaluator {
 		}
 	}
 
-	private def evaluate(node: Option[Node], environment: Environment): monkey.objects.Object = node match {
+	private def evaluate(node: Option[Node], environment: Environment): Object = node match {
 		case Some(program: Program) => evaluateProgram(program, environment)
 		case Some(expressionStatement: ExpressionStatement) => evaluate(Some(expressionStatement.expression), environment)
 		case Some(integerLiteral: IntegerLiteral) => IntegerObject(integerLiteral.value)
 		case Some(booleanLiteral: BooleanLiteral) => BooleanObject(booleanLiteral.value)
 		case Some(stringLiteral: StringLiteral) => StringObject(stringLiteral.value)
 		case Some(arrayLiteral: ArrayLiteral) =>
-			val elements: List[monkey.objects.Object] = evaluateExpressions(Some(arrayLiteral.elements), environment)
+			val elements: List[Object] = evaluateExpressions(Some(arrayLiteral.elements), environment)
 			if (elements.length == 1 && isError(elements.head)) elements.head else ArrayObject(elements)
 		case Some(hashLiteral: HashLiteral) => evaluateHashLiteral(hashLiteral, environment)
 		case Some(prefixExpression: PrefixExpression) => evaluatePrefixExpression(prefixExpression.operator, evaluate(Some(prefixExpression.value), environment))
 		case Some(infixExpression: InfixExpression) =>
-			val infixLeftValue: monkey.objects.Object = evaluate(Some(infixExpression.left), environment)
+			val infixLeftValue: Object = evaluate(Some(infixExpression.left), environment)
 			if (isError(infixLeftValue))
 				infixLeftValue
 			else {
-				val infixRightValue: monkey.objects.Object = evaluate(Some(infixExpression.right), environment)
+				val infixRightValue: Object = evaluate(Some(infixExpression.right), environment)
 				if (isError(infixRightValue))
 					infixRightValue
 				else
@@ -59,10 +59,10 @@ object Evaluator {
 		case _ => NULL
 	}
 
-	private def isError(value: monkey.objects.Object): Boolean = value != NULL && value.`type`() == ObjectType.ERROR
+	private def isError(value: Object): Boolean = value != NULL && value.`type`() == ObjectType.ERROR
 
-	private def evaluateBlockStatement(blockStatement: BlockStatement, environment: Environment): monkey.objects.Object = returning {
-		var result: monkey.objects.Object = NULL
+	private def evaluateBlockStatement(blockStatement: BlockStatement, environment: Environment): Object = returning {
+		var result: Object = NULL
 		for (statement <- blockStatement.statements) {
 			val evaluatedStatement = evaluate(Some(statement), environment)
 			evaluatedStatement.`type`() match {
@@ -73,7 +73,7 @@ object Evaluator {
 		result
 	}
 
-	private def evaluatePrefixExpression(operator: String, right: monkey.objects.Object): monkey.objects.Object = operator match {
+	private def evaluatePrefixExpression(operator: String, right: Object): Object = operator match {
 		case "!" if isTruthy(right) => FALSE
 		case "!" => TRUE
 		case "-" => right.`type`() match {
@@ -82,8 +82,8 @@ object Evaluator {
 		}
 	}
 
-	private def evaluateInfixExpression(operator: String, left: monkey.objects.Object, right: monkey.objects.Object): monkey.objects.Object = (left, operator, right) match {
-		case (left: monkey.objects.Object, opr: String, right: monkey.objects.Object) if left.`type`() != right.`type`() => ErrorObject(s"type mismatch: ${left.`type`()} $opr ${right.`type`()}")
+	private def evaluateInfixExpression(operator: String, left: Object, right: Object): Object = (left, operator, right) match {
+		case (left: Object, opr: String, right: Object) if left.`type`() != right.`type`() => ErrorObject(s"type mismatch: ${left.`type`()} $opr ${right.`type`()}")
 		case (left: IntegerObject, operator: String, right: IntegerObject) => evaluateIntegerInfixExpression(operator, left, right)
 		case (left: StringObject, operator: String, right: StringObject) => evaluateStringInfixExpression(operator, left, right)
 		case (left: BooleanObject, "==", right: BooleanObject) => if (left.value == right.value) TRUE else FALSE
@@ -91,7 +91,7 @@ object Evaluator {
 		case _ => ErrorObject(s"unknown operator: ${left.`type`()} $operator ${right.`type`()}")
 	}
 
-	private def evaluateIntegerInfixExpression(operator: String, left: IntegerObject, right: IntegerObject): monkey.objects.Object = operator match {
+	private def evaluateIntegerInfixExpression(operator: String, left: IntegerObject, right: IntegerObject): Object = operator match {
 		case "+" => IntegerObject(left.value + right.value)
 		case "-" => IntegerObject(left.value - right.value)
 		case "*" => IntegerObject(left.value * right.value)
@@ -103,12 +103,12 @@ object Evaluator {
 		case _ => ErrorObject(s"unknown operator: ${left.`type`()} $operator ${right.`type`()}")
 	}
 
-	private def evaluateStringInfixExpression(operator: String, left: StringObject, right: StringObject): monkey.objects.Object = operator match {
+	private def evaluateStringInfixExpression(operator: String, left: StringObject, right: StringObject): Object = operator match {
 		case "+" => StringObject(left.value + right.value)
 		case _ => ErrorObject(s"unknown operator: ${left.`type`()} $operator ${right.`type`()}")
 	}
 
-	private def evaluateHashLiteral(hashLiteral: HashLiteral, environment: Environment): monkey.objects.Object = returning {
+	private def evaluateHashLiteral(hashLiteral: HashLiteral, environment: Environment): Object = returning {
 		val pairs = mutable.HashMap.empty[HashKey, HashPair]
 		hashLiteral.pairs.foreach { (keyNode, valueNode) =>
 			val key = evaluate(Some(keyNode), environment)
@@ -129,8 +129,8 @@ object Evaluator {
 	}
 
 
-	private def evaluateIfExpression(ifExpression: IfExpression, environment: Environment): monkey.objects.Object = {
-		val condition: monkey.objects.Object = evaluate(Some(ifExpression.condition), environment)
+	private def evaluateIfExpression(ifExpression: IfExpression, environment: Environment): Object = {
+		val condition: Object = evaluate(Some(ifExpression.condition), environment)
 		if (isError(condition))
 			condition
 		else {
@@ -141,13 +141,13 @@ object Evaluator {
 		}
 	}
 
-	private def evaluateReturnStatement(returnStatement: ReturnStatement, environment: Environment): monkey.objects.Object = {
-		val returnValue: monkey.objects.Object = evaluate(Some(returnStatement.value), environment)
+	private def evaluateReturnStatement(returnStatement: ReturnStatement, environment: Environment): Object = {
+		val returnValue: Object = evaluate(Some(returnStatement.value), environment)
 		if (isError(returnValue)) returnValue else ReturnObject(Option(returnValue))
 	}
 
-	private def evaluateLetStatement(letStatement: LetStatement, environment: Environment): monkey.objects.Object = {
-		val letValue: monkey.objects.Object = evaluate(Some(letStatement.value), environment)
+	private def evaluateLetStatement(letStatement: LetStatement, environment: Environment): Object = {
+		val letValue: Object = evaluate(Some(letStatement.value), environment)
 		if (isError(letValue))
 			letValue
 		else {
@@ -156,8 +156,8 @@ object Evaluator {
 		}
 	}
 
-	private def evaluateIdentifier(identifier: Identifier, environment: Environment): monkey.objects.Object = {
-		val (result: Option[monkey.objects.Object], ok: Boolean) = environment.get(identifier.name)
+	private def evaluateIdentifier(identifier: Identifier, environment: Environment): Object = {
+		val (result: Option[Object], ok: Boolean) = environment.get(identifier.name)
 		if (ok) {
 			result.getOrElse(NULL)
 		} else {
@@ -169,20 +169,20 @@ object Evaluator {
 		}
 	}
 
-	private def evaluateFunctionLiteral(functionLiteral: FunctionLiteral, environment: Environment): monkey.objects.Object = {
+	private def evaluateFunctionLiteral(functionLiteral: FunctionLiteral, environment: Environment): Object = {
 		FunctionObject(Some(functionLiteral.parameters), Some(functionLiteral.body), environment)
 	}
 
-	private def evaluateCallExpression(callExpression: CallExpression, environment: Environment): monkey.objects.Object = {
-		val callFunction: monkey.objects.Object = evaluate(Some(callExpression.function), environment)
+	private def evaluateCallExpression(callExpression: CallExpression, environment: Environment): Object = {
+		val callFunction: Object = evaluate(Some(callExpression.function), environment)
 		if (isError(callFunction))
 			callFunction
 		else
-			val callArguments: List[monkey.objects.Object] = evaluateExpressions(Some(callExpression.arguments), environment)
+			val callArguments: List[Object] = evaluateExpressions(Some(callExpression.arguments), environment)
 			if (callArguments.length == 1 && isError(callArguments.head)) callArguments.head else applyFunction(callFunction, callArguments)
 	}
 
-	private def evaluateIndexExpression(indexExpression: IndexExpression, environment: Environment): monkey.objects.Object = {
+	private def evaluateIndexExpression(indexExpression: IndexExpression, environment: Environment): Object = {
 		val left = evaluate(Some(indexExpression.left), environment)
 		if (isError(left)) return left
 
@@ -203,8 +203,8 @@ object Evaluator {
 		}
 	}
 
-	private def evaluateExpressions(expressions: Option[List[Expression]], environment: Environment): List[monkey.objects.Object] = returning {
-		val result: ListBuffer[monkey.objects.Object] = ListBuffer.empty[monkey.objects.Object]
+	private def evaluateExpressions(expressions: Option[List[Expression]], environment: Environment): List[Object] = returning {
+		val result: ListBuffer[Object] = ListBuffer.empty[Object]
 
 		expressions match {
 			case Some(exps) =>
@@ -222,7 +222,7 @@ object Evaluator {
 		result.toList
 	}
 
-	private def applyFunction(function: monkey.objects.Object, arguments: List[monkey.objects.Object]): monkey.objects.Object = {
+	private def applyFunction(function: Object, arguments: List[Object]): Object = {
 		function match {
 			case functionObject: FunctionObject =>
 				val extendedEnvironment = extendFunctionEnvironment(functionObject, arguments)
@@ -236,7 +236,7 @@ object Evaluator {
 		}
 	}
 
-	private def extendFunctionEnvironment(function: FunctionObject, arguments: List[monkey.objects.Object]): Environment = {
+	private def extendFunctionEnvironment(function: FunctionObject, arguments: List[Object]): Environment = {
 		val environment = new Environment(Some(function.environment))
 		function.parameters.foreach { parameters =>
 			for ((parameter, argument) <- parameters.zip(arguments)) {
@@ -246,12 +246,12 @@ object Evaluator {
 		environment
 	}
 
-	private def unwrapReturnValue(obj: monkey.objects.Object): monkey.objects.Object = obj match {
+	private def unwrapReturnValue(obj: Object): Object = obj match {
 		case ReturnObject(value) => value.getOrElse(NULL)
 		case _ => obj
 	}
 
-	private def isTruthy(obj: monkey.objects.Object): Boolean = obj match {
+	private def isTruthy(obj: Object): Boolean = obj match {
 		case FALSE | NULL => false
 		case _ => true
 	}
