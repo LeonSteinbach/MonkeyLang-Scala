@@ -3,11 +3,13 @@ package de.hfu.monkey.code
 import de.hfu.monkey.code.Opcode.*
 
 import java.nio.{ByteBuffer, ByteOrder}
+import scala.annotation.targetName
 
 class UnsignedByte(byte: Short) extends AnyVal {
 	override def toString: String = s"${byte}u"
 
-	def &(i: Int): Int = byte & i
+	@targetName("and")
+	def &(int: Int): Int = byte & int
 
 	def toInt: Int = byte
 }
@@ -59,13 +61,13 @@ extension (instruction: Instructions) {
 		while (i < instruction.length) {
 			val definition = Definition.lookup(instruction(i))
 			val (operands, read) = readOperands(definition, instruction.offset(i + 1))
-			out.append(f"$i%04d ${instruction.fmtInstruction(definition, operands)}\n")
+			out.append(f"$i%04d ${instruction.formatInstruction(definition, operands)}\n")
 			i += 1 + read
 		}
 		out.toString()
 	}
 
-	def fmtInstruction(definition: Definition, operands: Array[Int]): String = {
+	def formatInstruction(definition: Definition, operands: Array[Int]): String = {
 		val operandCount = definition.operandWidths.length
 
 		if (operands.length != operandCount) {
