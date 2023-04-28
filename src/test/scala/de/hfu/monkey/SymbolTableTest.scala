@@ -37,13 +37,13 @@ class SymbolTableTest extends AnyFunSuite {
 		if (d != expected("d"))
 			fail(s"expected d=${expected("d")} got=$d")
 
-		val _ = new SymbolTable(outer = Some(local1))
+		val local2 = new SymbolTable(outer = Some(global))
 
-		val e = local1.define("e")
+		val e = local2.define("e")
 		if (e != expected("e"))
 			fail(s"expected e=${expected("e")} got=$e")
 
-		val f = local1.define("f")
+		val f = local2.define("f")
 		if (f != expected("f"))
 			fail(s"expected f=${expected("f")} got=$f")
 	}
@@ -165,7 +165,7 @@ class SymbolTableTest extends AnyFunSuite {
 			Symbol("a", GLOBAL, 0),
 			Symbol("c", FREE, 0),
 			Symbol("e", LOCAL, 0),
-			Symbol("f", LOCAL, 0),
+			Symbol("f", LOCAL, 1),
 		)
 
 		expected.foreach { symbol =>
