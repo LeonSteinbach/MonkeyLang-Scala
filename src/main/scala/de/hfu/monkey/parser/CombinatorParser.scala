@@ -6,7 +6,7 @@ import de.hfu.monkey.ast.*
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.JavaTokenParsers
 
-case class CombinatorParser() extends parser.Parser, JavaTokenParsers {
+case class CombinatorParser() extends parser.Parser with JavaTokenParsers {
 
 	override def errors: Seq[String] = Seq[String]()
 
@@ -65,7 +65,9 @@ case class CombinatorParser() extends parser.Parser, JavaTokenParsers {
 		case operator ~ value => PrefixExpression(operator, value)
 	}
 
-	private def factor: Parser[Expression] = ifExpression | function | callExpression(baseExpression) | prefixExpression | value | "(" ~> expression <~ ")"
+	private def groupedExpression: Parser[Expression] = "(" ~> expression <~ ")"
+
+	private def factor: Parser[Expression] = ifExpression | function | callExpression(baseExpression) | prefixExpression | value | groupedExpression
 
 	private def multiplicativeExpression: Parser[Expression] = infixExpression("*" | "/", indexExpression(factor))
 
@@ -96,13 +98,15 @@ case class CombinatorParser() extends parser.Parser, JavaTokenParsers {
 		value => ReturnStatement(value)
 	}
 
-	private def blockStatement: Parser[BlockStatement] = "{" ~> rep(statement) <~ "}" ^^ {
+	private def blockStatement: Parser[BlockStatement] = "{" ~> statementList <~ "}" ^^ {
 		statements => BlockStatement(statements)
 	}
 
+	private def statementList: Parser[List[Statement]] = rep(statement)
+
 	private def statement: Parser[Statement] = letStatement | returnStatement | expressionStatement | blockStatement
 
-	private def program: Parser[Program] = rep(statement) ^^ { statements => Program(statements) }
+	private def program: Parser[Program] = statementList ^^ { statements => Program(statements) }
 
 	override def parse(input: String): Program = parseAll(program, input).get
 }

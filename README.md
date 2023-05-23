@@ -34,22 +34,23 @@ versatility and flexibility for users when programming in MonkeyLang-Scala.
 <multiplicative-expression> ::= <index-expression> {("*" | "/") <index-expression>}
 <index-expression>          ::= <factor> {"[" <expression> "]"}
 <factor>                    ::= <if-expression>
-                              | <function-literal>
+                              | <function>
                               | <call-expression>
                               | <builtin-call-len>
                               | <builtin-call-arrays>
                               | <builtin-call-puts>
-                              | <unary-expression>
+                              | <prefix-expression>
                               | <value>
-                              | "(" <expression> ")"
+                              | <grouped-expression>
 
-<unary-expression>          ::= ("-" | "!") <factor>
-<call-expression>           ::= <identifier> "(" [<expression-list>] ")"
+<prefix-expression>          ::= ("-" | "!") <factor>
+<grouped-expression>		::= "(" <expression> ")"
+<call-expression>           ::= <expression> "(" [<expression-list>] ")"
 <builtin-call-len>          ::= "len" "(" (<string> | <array>) ")"
 <builtin-call-arrays>       ::= ("first" | "last" | "tail") "(" <array> ")"
 <builtin-call-puts>         ::= "puts" "(" [<expression-list>] ")"
 <if-expression>             ::= "if" "(" <expression> ")" <block-statement> ["else" <block-statement>]
-<function-literal>          ::= "fn" "(" [<parameter-list>] ")" <block-statement>
+<function>          		::= "fn" "(" [<parameter-list>] ")" <block-statement>
 
 <value>                     ::= <identifier>
                               | <int>
