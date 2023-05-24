@@ -71,14 +71,16 @@ class ParserTest extends AnyFunSuite {
 	}
 
 	test("parser.prefixExpression") {
-		val program: Program = parserCombinator.parse("!true; !!false; -1; --foo;")
-		assert(parserManual.parse("!true; !!false; -1; --foo;") === program)
+		val program: Program = parserCombinator.parse("!true; !!false; -1; --foo; !(true); -(if (true) { 1; });")
+		assert(parserManual.parse("!true; !!false; -1; --foo; !(true); -(if (true) { 1; });") === program)
 		assert(program ===
 			Program(List(
 				ExpressionStatement(PrefixExpression("!", BooleanLiteral(true))),
 				ExpressionStatement(PrefixExpression("!", PrefixExpression("!", BooleanLiteral(false)))),
 				ExpressionStatement(PrefixExpression("-", IntegerLiteral(1))),
-				ExpressionStatement(PrefixExpression("-", PrefixExpression("-", Identifier("foo")))))))
+				ExpressionStatement(PrefixExpression("-", PrefixExpression("-", Identifier("foo")))),
+				ExpressionStatement(PrefixExpression("!", BooleanLiteral(true))),
+				ExpressionStatement(PrefixExpression("-", IfExpression(BooleanLiteral(true), BlockStatement(List(ExpressionStatement(IntegerLiteral(1)))), BlockStatement(List())))))))
 	}
 
 	test("parser.infixExpression") {
