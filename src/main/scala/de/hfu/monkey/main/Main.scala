@@ -9,8 +9,10 @@ import de.hfu.monkey.vm.Vm
 import scopt.OParser
 
 import java.io.{BufferedWriter, File, FileWriter}
+import scala.annotation.tailrec
 
 case class Config(
+	repl: Boolean = false,
 	parser: String = "combinator",
 	engine: String = "interpreter",
 	evaluate: Boolean = true,
@@ -22,12 +24,23 @@ case class Config(
 )
 
 object Main {
-	def main(args: Array[String]): Unit = {
+	@tailrec
+	private def fib(n: Int, a: Int, b: Int): Int = {
+		if (n == 0)
+			return a
+		else if (n == 1)
+			return b
+		fib(n-1, b, a+b)
+	}
 
+	def main(args: Array[String]): Unit = {
 		val builder = OParser.builder[Config]
 		val parser = {
 			import builder.*
 			OParser.sequence(
+				opt[Unit]("repl")
+					.action((_, c) => c.copy(repl = true))
+					.text("Start the REPL"),
 				opt[String]("parser")
 					.validate(x => if (x == "manual" || x == "combinator") success else failure("Parser must be 'manual' or 'combinator'"))
 					.action((x, c) => c.copy(parser = x))
@@ -59,11 +72,15 @@ object Main {
 		OParser.parse(parser, args, Config()) match {
 			case Some(config) =>
 				val parser = if (config.parser == "manual") ManualParser() else CombinatorParser()
-				if (config.compareParsers) {
-					compareParsers(config.iterations, config.steps, config.appendMode, config.timingsParserFilename)
+				if (config.repl) {
+					Repl.start(parser, config.engine)
 				} else {
-					println(s"Using ${config.parser} parser and ${config.engine}\n")
-					printResult(parser, config.engine, config.evaluate)
+					if (config.compareParsers) {
+						compareParsers(config.iterations, config.steps, config.appendMode, config.timingsParserFilename)
+					} else {
+						println(s"Using ${config.parser} parser and ${config.engine}\n")
+						printResult(parser, config.engine, config.evaluate)
+					}
 				}
 			case _ =>
 		}
@@ -82,7 +99,8 @@ object Main {
 	}
 
 	private def printResult(parser: Parser, engine: String, evaluate: Boolean): Unit = {
-		val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(10);"
+		//val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(35);"
+		val input = "let fib = fn(n, a, b) { if (n == 0) { return a; } else { if (n == 1) { return b; }; }; fib(n-1, b, a+b); }; fib(35, 0, 1);"
 		var printString: String = ""
 
 		val startTime1 = System.currentTimeMillis()
@@ -93,7 +111,7 @@ object Main {
 
 		if (evaluate) {
 			var evaluated: Option[Object] = None
-			var startTime2 = System.currentTimeMillis()
+			var startTime2 = System.nanoTime()
 			if (engine == "interpreter") {
 				evaluated = Some(Evaluator.evaluateProgram(parsed, new Environment))
 			} else if (engine == "compiler") {
@@ -101,14 +119,14 @@ object Main {
 				compiler.compile(parsed)
 
 				val vm = Vm(compiler.bytecode)
-				startTime2 = System.currentTimeMillis()
+				startTime2 = System.nanoTime()
 				vm.run()
 
 				evaluated = Some(vm.lastPoppedStackElement)
 			}
-			val endTime2 = System.currentTimeMillis()
-			printString += s"\n\n${engine.capitalize} [ms]:   ${endTime2 - startTime2}\n"
-			printString += s"Result: ${evaluated.get}"
+			val endTime2 = System.nanoTime()
+			printString += s"\n\nResult:           ${evaluated.get}\n"
+			printString += s"${engine.capitalize} [ms]:    ${(endTime2 - startTime2) / (1000.0 * 1000.0)}"
 		}
 
 		println(printString)

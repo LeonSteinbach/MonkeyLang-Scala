@@ -13,12 +13,11 @@ val TRUE = BooleanObject(true)
 val FALSE = BooleanObject(false)
 val NULL = NullObject
 
-class Vm(bytecode: Bytecode) {
+class Vm(bytecode: Bytecode, private var globals: Array[Object] = Array.ofDim[Object](GLOBALS_SIZE)) {
 
 	private val constants: List[Object] = bytecode.constants
 	private val stack: Array[Object] = Array.ofDim[Object](STACK_SIZE)
 	private var stackPointer: Int = 0
-	private val globals: Array[Object] = Array.ofDim[Object](GLOBALS_SIZE)
 	private val frames: Array[Frame] = Array.ofDim[Frame](MAX_FRAMES)
 	private val mainClosure: ClosureObject = ClosureObject(CompiledFunctionObject(bytecode.instructions))
 	frames(0) = Frame(mainClosure, 0)

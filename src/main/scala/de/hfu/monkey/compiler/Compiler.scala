@@ -9,11 +9,7 @@ import de.hfu.monkey.compiler.SymbolScope.*
 import scala.collection.immutable.ListMap
 import scala.collection.mutable
 
-case class Compiler() {
-	var constants: Array[Object] = Array[Object]()
-
-	var symbolTable: SymbolTable = new SymbolTable()
-
+case class Compiler(private var constants: Array[Object] = Array[Object](), var symbolTable: SymbolTable = new SymbolTable()) {
 	var scopes: List[CompilationScope] = List[CompilationScope](CompilationScope())
 	var scopeIndex: Int = 0
 
