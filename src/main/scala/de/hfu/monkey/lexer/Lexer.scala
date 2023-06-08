@@ -10,7 +10,11 @@ case class Lexer(private val input: String) {
 	readCharacter()
 
 	private def readCharacter(): Unit = {
-		currentCharacter = if (readPosition >= input.length) Some(-1.toByte) else Some(input.charAt(readPosition).toByte)
+		currentCharacter =
+			if (readPosition >= input.length)
+				Some(-1.toByte)
+			else
+				Some(input.charAt(readPosition).toByte)
 		position = readPosition
 		readPosition += 1
 	}
