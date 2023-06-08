@@ -24,13 +24,20 @@ case class Config(
 )
 
 object Main {
+	private def fib(n: Int): Int = {
+		if (n <= 1) {
+			return n
+		}
+		fib(n - 1) + fib(n - 2)
+	}
+
 	@tailrec
-	private def fib(n: Int, a: Int, b: Int): Int = {
+	private def taiL_fib(n: Int, a: Int, b: Int): Int = {
 		if (n == 0)
 			return a
 		else if (n == 1)
 			return b
-		fib(n-1, b, a+b)
+		taiL_fib(n-1, b, a+b)
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -99,13 +106,20 @@ object Main {
 	}
 
 	private def printResult(parser: Parser, engine: String, evaluate: Boolean): Unit = {
+		//benchmarkEvaluator(parser, engine)
+
 		//val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(35);"
-		val input = "let fib = fn(n, a, b) { if (n == 0) { return a; } else { if (n == 1) { return b; }; }; fib(n-1, b, a+b); }; fib(35, 0, 1);"
+		//val input = "let fib = fn(n, a, b) { if (n == 0) { return a; } else { if (n == 1) { return b; }; }; fib(n-1, b, a+b); }; fib(35, 0, 1);"
+		val input = "true(0);"
+
 		var printString: String = ""
 
 		val startTime1 = System.currentTimeMillis()
 		val parsed: Program = parser.parse(input)
 		val endTime1 = System.currentTimeMillis()
+
+		println(parsed)
+
 		printString += s"Parsed result:    $parsed\n"
 		printString += s"Parser [ms]:      ${endTime1 - startTime1}"
 
@@ -132,6 +146,61 @@ object Main {
 		println(printString)
 
 		parser.errors.foreach(error => println(error))
+
+
+	}
+
+	private def benchmarkEvaluator(parser: Parser, engine: String): Unit = {
+		//val input = "let fib = fn(n, a, b) { if (n == 0) { return a; } else { if (n == 1) { return b; }; }; fib(n-1, b, a+b); }; fib(35, 0, 1);"
+		val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(20);"
+		val parsed: Program = parser.parse(input)
+
+		var results = Array[Double]()
+
+		val string = new StringBuilder("")
+
+		for (i <- 0 to 10000) {
+			var evaluated: Option[Object] = None
+
+			var a = System.nanoTime()
+			var b = System.nanoTime()
+
+			var end = System.nanoTime()
+			var start = System.nanoTime()
+
+			if (engine == "interpreter") {
+				val env = new Environment
+				start = System.nanoTime()
+				evaluated = Some(Evaluator.evaluateProgram(parsed, env))
+				end = System.nanoTime()
+			} else if (engine == "compiler") {
+				val compiler = Compiler()
+
+				a = System.nanoTime()
+				compiler.compile(parsed)
+				b = System.nanoTime()
+
+				val vm = Vm(compiler.bytecode)
+
+				start = System.nanoTime()
+				vm.run()
+				end = System.nanoTime()
+
+				evaluated = Some(vm.lastPoppedStackElement)
+			}
+
+			val time = (end - start) / (1000.0 * 1000.0)
+
+			results = results :+ time
+			string.append(time + "\n")
+			println(time)
+		}
+
+		val avg = results.sum / results.length
+
+		//println(string.toString())
+		println(avg)
+		println(results.last)
 	}
 
 	private def compareParsers(iterations: Int, steps: Int, appendMode: String, filename: Option[String]): Unit = {
