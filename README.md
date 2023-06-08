@@ -21,7 +21,6 @@ versatility and flexibility for users when programming in MonkeyLang-Scala.
 <statement>                 ::= <let-statement>
                               | <return-statement>
                               | <expression-statement>
-                              | <block-statement>
 <let-statement>             ::= "let" <identifier> "=" <expression> ";"
 <return-statement>          ::= "return" <expression> ";"
 <expression-statement>      ::= <expression> ";"
@@ -31,33 +30,29 @@ versatility and flexibility for users when programming in MonkeyLang-Scala.
 <equality-expression>       ::= <comparative-expression> {("==" | "!=") <comparative-expression>}
 <comparative-expression>    ::= <additive-expression> {("<" | ">") <additive-expression>}
 <additive-expression>       ::= <multiplicative-expression> {("+" | "-") <multiplicative-expression>}
-<multiplicative-expression> ::= <index-expression> {("*" | "/") <index-expression>}
-<index-expression>          ::= <factor> {"[" <expression> "]"}
-<factor>                    ::= <if-expression>
+<multiplicative-expression> ::= <prefix-expression> {("*" | "/") <prefix-expression>}
+<prefix-expression>         ::= ("-" | "!") <prefix-expression>
+                              | <postfix-expression>
+<postfix-expression>        ::= <primary-expression> {<call-postfix> | <index-postfix>}
+<call-postfix>              ::= "(" [<expression-list>] ")"
+<index-postfix>             ::= "[" <expression> "]"
+<primary-expression>        ::= <grouped-expression>
+                              | <if-expression>
                               | <function>
-                              | <call-expression>
-                              | <builtin-call-len>
-                              | <builtin-call-arrays>
-                              | <builtin-call-puts>
-                              | <prefix-expression>
+                              | <identifier>
                               | <value>
-                              | <grouped-expression>
 
-<prefix-expression>          ::= ("-" | "!") <factor>
+<prefix-expression>         ::= ("-" | "!") <expression>
 <grouped-expression>		::= "(" <expression> ")"
-<call-expression>           ::= <expression> "(" [<expression-list>] ")"
-<builtin-call-len>          ::= "len" "(" (<string> | <array>) ")"
-<builtin-call-arrays>       ::= ("first" | "last" | "tail") "(" <array> ")"
-<builtin-call-puts>         ::= "puts" "(" [<expression-list>] ")"
 <if-expression>             ::= "if" "(" <expression> ")" <block-statement> ["else" <block-statement>]
 <function>          		::= "fn" "(" [<parameter-list>] ")" <block-statement>
-
-<value>                     ::= <identifier>
-                              | <int>
+<identifier>                ::= <alpha> { <alpha> | <digit> | "_" }
+<value>                     ::= <int>
                               | <bool>
                               | <string>
                               | <array>
                               | <hash>
+
 <int>                       ::= <digit> { <digit> }
 <digit>                     ::= "0..9"
 <alpha>                     ::= "a..zA..Z"
@@ -67,7 +62,6 @@ versatility and flexibility for users when programming in MonkeyLang-Scala.
 <hash>                      ::= "{" [<key-value-pairs>] "}"
 <key-value-pairs>           ::= <expression> ":" <expression> { "," <expression> ":" <expression> }
 
-<identifier>                ::= <alpha> { <alpha> | <digit> | "_" }
 <expression-list>           ::= <expression> { "," <expression> }
 <parameter-list>            ::= <identifier> { "," <identifier> }
 ```

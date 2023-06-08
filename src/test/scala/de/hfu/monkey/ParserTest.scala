@@ -204,6 +204,49 @@ class ParserTest extends AnyFunSuite {
 				ReturnStatement(InfixExpression("+", Identifier("foo"), Identifier("bar"))))))
 	}
 
+	test("parser.precedences") {
+		val input: String = "1 + 2 * 3 < 4 == 5 - 6 / 7; myFunc(8); myArray[9 + 10]; !-11; foo()[12]; foo[13]();"
+		val program: Program = parserCombinator.parse(input)
+		//assert(parserManual.parse(input) === program)
+		assert(program === Program(List(
+			ExpressionStatement(
+				InfixExpression("==",
+					InfixExpression("<",
+						InfixExpression("+",
+							IntegerLiteral(1),
+							InfixExpression("*", IntegerLiteral(2), IntegerLiteral(3))),
+						IntegerLiteral(4)),
+					InfixExpression("-",
+						IntegerLiteral(5),
+						InfixExpression("/", IntegerLiteral(6), IntegerLiteral(7))
+					)
+				)
+			),
+			ExpressionStatement(
+				CallExpression(Identifier("myFunc"), List(IntegerLiteral(8)))
+			),
+			ExpressionStatement(
+				IndexExpression(Identifier("myArray"),
+					InfixExpression("+", IntegerLiteral(9), IntegerLiteral(10))
+				)
+			),
+			ExpressionStatement(
+				PrefixExpression("!", PrefixExpression("-", IntegerLiteral(11)))
+			),
+			ExpressionStatement(
+				IndexExpression(
+					CallExpression(Identifier("foo"), List()), IntegerLiteral(12)
+				)
+			),
+			ExpressionStatement(
+				CallExpression(
+					IndexExpression(Identifier("foo"), IntegerLiteral(13)),
+					List()
+				)
+			)
+		)))
+	}
+
 	test("parser.functionLiteralWithName") {
 		val program: Program = parserCombinator.parse("let myFunction = fn() {};")
 		assert(parserManual.parse("let myFunction = fn() {};") === program)
