@@ -26,15 +26,17 @@ object Repl {
 	"""
 
 	def start(parser: Parser, engine: String): Unit = {
-		val environment = new Environment
-		var constants = Array[Object]()
-		val symbolTable = new SymbolTable()
-		val globals = Array.ofDim[Object](65536)
+
 
 		println(face)
 		println("Welcome to the monkey REPL")
 
 		while (true) {
+			val environment = new Environment
+			var constants = Array[Object]()
+			val symbolTable = new SymbolTable()
+			val globals = Array.ofDim[Object](65536)
+
 			val input = readLine(">>> ")
 
 			if (input.trim() == "exit") {
