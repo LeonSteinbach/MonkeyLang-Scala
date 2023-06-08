@@ -10,9 +10,24 @@ case class CombinatorParser() extends parser.Parser with JavaTokenParsers {
 
 	override def errors: Seq[String] = Seq[String]()
 
-	private def identifier: Parser[Identifier] = not("let" | "return" | "fn" | "true" | "false") ~> """[a-zA-Z_]\w*\b""".r ^^ { name => Identifier(name) }
+	private def acceptIf[T <: Expression]
+		(parser: Parser[String])(
+			acceptable: String => Boolean,
+			successHandler: String => T,
+			errorMessage: String => String): Parser[T] =
+		parser flatMap { t => if (acceptable(t)) success(successHandler(t)) else err(errorMessage(t)) }
 
-	private def integer: Parser[IntegerLiteral] = wholeNumber ^^ { value => IntegerLiteral(value.toInt) }
+	private def identifier: Parser[Identifier] =
+		acceptIf("[a-zA-Z_][a-zA-Z_0-9]*".r)(
+			identifier => !Set("let", "if", "else", "return", "fn", "true", "false").contains(identifier),
+			identifier => Identifier(identifier),
+			identifier => s"Identifier '$identifier' is not acceptable here")
+
+	private def integer: Parser[IntegerLiteral] =
+		acceptIf("[0-9]+\\w*".r)(
+			value => value.matches("\\d+"),
+			value => IntegerLiteral(value.toInt),
+			value => s"Could not parse '$value' as integer.")
 
 	private def boolean: Parser[BooleanLiteral] = ("true" | "false") ^^ { value => BooleanLiteral(value.toBoolean) }
 
@@ -31,62 +46,61 @@ case class CombinatorParser() extends parser.Parser with JavaTokenParsers {
 		case parameters ~ body => FunctionLiteral(parameters, body)
 	}
 
-	private def value: Parser[Expression] = identifier | integer | boolean | string | array | hash
+	private def value: Parser[Expression] = integer | boolean | string | array | hash
 
 	private def ifExpression: Parser[IfExpression] = "if" ~> ("(" ~> expression <~ ")") ~ blockStatement ~ opt("else" ~> blockStatement) ^^ {
 		case condition ~ consequence ~ alternative => IfExpression(condition, consequence, alternative.getOrElse(BlockStatement(Nil)))
 	}
 
-	private def callExpression(operandParser: Parser[Expression]): Parser[Expression] = {
-		operandParser ~ rep("(" ~> repsep(expression, ",") <~ ")") ^^ {
-			case expression ~ list => (list foldLeft expression) {
-				case (left, args) => CallExpression(left, args)
-			}
-		}
-	}
-
-	private def indexExpression(operandParser: Parser[Expression]): Parser[Expression] = {
-		operandParser ~ rep("[" ~> expression <~ "]") ^^ {
-			case expression ~ list => (list foldLeft expression) {
-				case (left, right) => IndexExpression(left, right)
-			}
-		}
-	}
-
-	private def infixExpression(operatorParser: Parser[String], operandParser: Parser[Expression]): Parser[Expression] = {
-		operandParser ~ rep(operatorParser ~ operandParser) ^^ {
-			case expression ~ list => (list foldLeft expression) {
-				case (left, op ~ right) => InfixExpression(op, left, right)
-			}
-		}
-	}
-
-	private def prefixExpression: Parser[PrefixExpression] = ("-" | "!") ~ factor ^^ {
-		case operator ~ value => PrefixExpression(operator, value)
-	}
+	private def primaryExpression: Parser[Expression] = ifExpression | function | groupedExpression | identifier | value
 
 	private def groupedExpression: Parser[Expression] = "(" ~> expression <~ ")"
 
-	private def factor: Parser[Expression] = ifExpression | function | callExpression(baseExpression) | prefixExpression | value | groupedExpression
-
-	private def multiplicativeExpression: Parser[Expression] = infixExpression("*" | "/", indexExpression(factor))
-
-	private def additiveExpression: Parser[Expression] = infixExpression("+" | "-", multiplicativeExpression)
-
-	private def comparativeExpression: Parser[Expression] = infixExpression("<" | ">", additiveExpression)
-
-	private def equalityExpression: Parser[Expression] = infixExpression("==" | "!=", comparativeExpression)
+	private def infixExpression(operatorParser: Parser[String], operandParser: Parser[Expression]): Parser[Expression] =
+		operandParser ~ rep(operatorParser ~ operandParser) ^^ {
+			case expression ~ list => (list foldLeft expression) {
+				case (left, operator ~ right) => InfixExpression(operator, left, right)
+			}
+		}
 
 	private def expression: Parser[Expression] = equalityExpression
 
-	private def baseExpression: Parser[Expression] = prefixExpression | value | "(" ~> expression <~ ")"
+	private def equalityExpression: Parser[Expression] = infixExpression("==" | "!=", comparativeExpression)
+
+	private def comparativeExpression: Parser[Expression] = infixExpression("<" | ">", additiveExpression)
+
+	private def additiveExpression: Parser[Expression] = infixExpression("+" | "-", multiplicativeExpression)
+
+	private def multiplicativeExpression: Parser[Expression] = infixExpression("*" | "/", prefixExpression)
+
+	private def prefixExpression: Parser[Expression] =
+		rep("-" | "!") ~ postfixExpression ^^ {
+			case operators ~ expression =>
+				(operators foldRight expression) {
+					(operator, expression) => PrefixExpression(operator, expression)
+				}
+		}
+
+	private def postfixExpression: Parser[Expression] =
+		primaryExpression ~ rep(postfixOperator) ^^ {
+			case left ~ list => (list foldLeft left) {
+				case (left, (operator, right)) => operator match {
+					case "(" => CallExpression(left, right.asInstanceOf[List[Expression]])
+					case "[" => IndexExpression(left, right.asInstanceOf[Expression])
+				}
+			}
+		}
+
+	private def postfixOperator: Parser[(String, Any)] =
+		"(" ~> repsep(expression, ",") <~ ")" ^^ { args => ("(", args) } |
+		"[" ~> expression <~ "]" ^^ { expr => ("[", expr) }
 
 	private def expressionStatement: Parser[ExpressionStatement] = expression <~ ";" ^^ {
 		expression => ExpressionStatement(expression)
 	}
 
 	private def letStatement: Parser[LetStatement] = "let" ~> identifier ~ ("=" ~> expression <~ ";") ^^ {
-		case name ~ value => value match {
+		case name ~ expression => expression match {
 			case function: FunctionLiteral =>
 				function.name = name.name
 				LetStatement(name, function)
@@ -95,7 +109,7 @@ case class CombinatorParser() extends parser.Parser with JavaTokenParsers {
 	}
 
 	private def returnStatement: Parser[ReturnStatement] = "return" ~> expression <~ ";" ^^ {
-		value => ReturnStatement(value)
+		expression => ReturnStatement(expression)
 	}
 
 	private def blockStatement: Parser[BlockStatement] = "{" ~> statementList <~ "}" ^^ {
@@ -104,9 +118,20 @@ case class CombinatorParser() extends parser.Parser with JavaTokenParsers {
 
 	private def statementList: Parser[List[Statement]] = rep(statement)
 
-	private def statement: Parser[Statement] = letStatement | returnStatement | expressionStatement | blockStatement
+	private def statement: Parser[Statement] = letStatement | returnStatement | expressionStatement
 
 	private def program: Parser[Program] = statementList ^^ { statements => Program(statements) }
 
-	override def parse(input: String): Program = parseAll(program, input).get
+	override def parse(input: String): Program = {
+		val parseResult = parseAll(program, input)
+		parseResult match {
+			case Success(parsed, _) => parsed
+			case error: NoSuccess =>
+				val errorPosition = error.next.pos
+				val errorMessage = s"Parsing error at line ${errorPosition.line}, column ${errorPosition.column}: ${error.msg}"
+				println(errorMessage + "\n")
+				throw new RuntimeException("Parsing failed with errors.")
+		}
+	}
+
 }
