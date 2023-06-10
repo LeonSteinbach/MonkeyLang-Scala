@@ -50,7 +50,7 @@ object Repl {
 			var start = System.nanoTime()
 			if (engine == "interpreter") {
 				start = System.nanoTime()
-				evaluated = Some(Evaluator.evaluateProgram(program, environment))
+				evaluated = Some(Evaluator.evaluate(Some(program), environment))
 			} else if (engine == "compiler") {
 				val compiler = Compiler(constants, symbolTable)
 				compiler.compile(program)

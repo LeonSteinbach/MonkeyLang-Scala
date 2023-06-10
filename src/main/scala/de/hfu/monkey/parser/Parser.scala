@@ -6,3 +6,5 @@ trait Parser {
 	def errors: Seq[String] = Seq()
 	def parse(input: String): Program
 }
+
+class ParserException(message: String) extends RuntimeException(message)

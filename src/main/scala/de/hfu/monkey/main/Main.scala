@@ -110,7 +110,7 @@ object Main {
 
 		//val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(35);"
 		//val input = "let fib = fn(n, a, b) { if (n == 0) { return a; } else { if (n == 1) { return b; }; }; fib(n-1, b, a+b); }; fib(35, 0, 1);"
-		val input = "true(0);"
+		val input = "let foo = 1; foo;"
 
 		var printString: String = ""
 
@@ -127,7 +127,7 @@ object Main {
 			var evaluated: Option[Object] = None
 			var startTime2 = System.nanoTime()
 			if (engine == "interpreter") {
-				evaluated = Some(Evaluator.evaluateProgram(parsed, new Environment))
+				evaluated = Some(Evaluator.evaluate(Some(parsed), new Environment))
 			} else if (engine == "compiler") {
 				val compiler = Compiler()
 				compiler.compile(parsed)
@@ -171,7 +171,7 @@ object Main {
 			if (engine == "interpreter") {
 				val env = new Environment
 				start = System.nanoTime()
-				evaluated = Some(Evaluator.evaluateProgram(parsed, env))
+				evaluated = Some(Evaluator.evaluate(Some(parsed), env))
 				end = System.nanoTime()
 			} else if (engine == "compiler") {
 				val compiler = Compiler()

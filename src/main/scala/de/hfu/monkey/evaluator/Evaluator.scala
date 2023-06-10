@@ -14,7 +14,30 @@ object Evaluator {
 	private val FALSE: BooleanObject = BooleanObject(false)
 	val NULL: NullObject.type = NullObject
 
-	def evaluateProgram(program: Program, environment: Environment): Object = {
+	private def isError(value: Object): Boolean = value != NULL && value.`type`() == ObjectType.ERROR
+
+	def evaluate(node: Option[Node], env: Environment): Object = node match {
+		case Some(node: Program) => evaluateProgram(node, env)
+		case Some(node: ExpressionStatement) => evaluateExpressionStatement(node, env)
+		case Some(node: IntegerLiteral) => evaluateInteger(node)
+		case Some(node: BooleanLiteral) => evaluateBoolean(node)
+		case Some(node: StringLiteral) => evaluateString(node)
+		case Some(node: ArrayLiteral) => evaluateArray(node, env)
+		case Some(node: HashLiteral) => evaluateHash(node, env)
+		case Some(node: PrefixExpression) => evaluatePrefixExpression(node, env)
+		case Some(node: InfixExpression) => evaluateInfixExpression(node, env)
+		case Some(node: BlockStatement) => evaluateBlockStatement(node, env)
+		case Some(node: IfExpression) => evaluateIfExpression(node, env)
+		case Some(node: ReturnStatement) => evaluateReturnStatement(node, env)
+		case Some(node: LetStatement) => evaluateLetStatement(node, env)
+		case Some(node: Identifier) => evaluateIdentifier(node, env)
+		case Some(node: FunctionLiteral) => evaluateFunctionLiteral(node, env)
+		case Some(node: CallExpression) => evaluateCallExpression(node, env)
+		case Some(node: IndexExpression) => evaluateIndexExpression(node, env)
+		case _ => NULL
+	}
+
+	private def evaluateProgram(program: Program, environment: Environment): Object = {
 		program.statements.foldLeft(NULL: Object) { (_, statement) =>
 			val evaluatedStatement = evaluate(Some(statement), environment)
 			evaluatedStatement.`type`() match {
@@ -26,89 +49,28 @@ object Evaluator {
 		}
 	}
 
-	private def evaluate(node: Option[Node], environment: Environment): Object = node match {
-		case Some(program: Program) => evaluateProgram(program, environment)
-		case Some(expressionStatement: ExpressionStatement) => evaluate(Some(expressionStatement.expression), environment)
-		case Some(integerLiteral: IntegerLiteral) => IntegerObject(integerLiteral.value)
-		case Some(booleanLiteral: BooleanLiteral) => BooleanObject(booleanLiteral.value)
-		case Some(stringLiteral: StringLiteral) => StringObject(stringLiteral.value)
-		case Some(arrayLiteral: ArrayLiteral) =>
-			val elements: List[Object] = evaluateExpressions(Some(arrayLiteral.elements), environment)
-			if (elements.length == 1 && isError(elements.head)) elements.head else ArrayObject(elements)
-		case Some(hashLiteral: HashLiteral) => evaluateHashLiteral(hashLiteral, environment)
-		case Some(prefixExpression: PrefixExpression) => evaluatePrefixExpression(prefixExpression.operator, evaluate(Some(prefixExpression.value), environment))
-		case Some(infixExpression: InfixExpression) =>
-			val infixLeftValue: Object = evaluate(Some(infixExpression.left), environment)
-			if (isError(infixLeftValue))
-				infixLeftValue
-			else {
-				val infixRightValue: Object = evaluate(Some(infixExpression.right), environment)
-				if (isError(infixRightValue))
-					infixRightValue
-				else
-					evaluateInfixExpression(infixExpression.operator, infixLeftValue, infixRightValue)
-			}
-		case Some(blockStatement: BlockStatement) => evaluateBlockStatement(blockStatement, environment)
-		case Some(ifExpression: IfExpression) => evaluateIfExpression(ifExpression, environment)
-		case Some(returnStatement: ReturnStatement) => evaluateReturnStatement(returnStatement, environment)
-		case Some(letStatement: LetStatement) => evaluateLetStatement(letStatement, environment)
-		case Some(identifier: Identifier) => evaluateIdentifier(identifier, environment)
-		case Some(functionLiteral: FunctionLiteral) => evaluateFunctionLiteral(functionLiteral, environment)
-		case Some(callExpression: CallExpression) => evaluateCallExpression(callExpression, environment)
-		case Some(indexExpression: IndexExpression) => evaluateIndexExpression(indexExpression, environment)
-		case _ => NULL
+	private def evaluateExpressionStatement(statement: ExpressionStatement, environment: Environment): Object = {
+		evaluate(Some(statement.expression), environment)
 	}
 
-	private def isError(value: Object): Boolean = value != NULL && value.`type`() == ObjectType.ERROR
-
-	private def evaluateBlockStatement(blockStatement: BlockStatement, environment: Environment): Object = returning {
-		var result: Object = NULL
-		for (statement <- blockStatement.statements) {
-			val evaluatedStatement = evaluate(Some(statement), environment)
-			evaluatedStatement.`type`() match {
-				case ObjectType.RETURN | ObjectType.ERROR => throwReturn(evaluatedStatement)
-				case _ => result = evaluatedStatement
-			}
-		}
-		result
+	private def evaluateInteger(integerLiteral: IntegerLiteral): Object = {
+		IntegerObject(integerLiteral.value)
 	}
 
-	private def evaluatePrefixExpression(operator: String, right: Object): Object = operator match {
-		case "!" if isTruthy(right) => FALSE
-		case "!" => TRUE
-		case "-" => right.`type`() match {
-			case ObjectType.INTEGER => IntegerObject(-right.asInstanceOf[IntegerObject].value)
-			case _ => NULL
-		}
+	private def evaluateBoolean(booleanLiteral: BooleanLiteral): Object = {
+		BooleanObject(booleanLiteral.value)
 	}
 
-	private def evaluateInfixExpression(operator: String, left: Object, right: Object): Object = (left, operator, right) match {
-		case (left: Object, opr: String, right: Object) if left.`type`() != right.`type`() => ErrorObject(s"type mismatch: ${left.`type`()} $opr ${right.`type`()}")
-		case (left: IntegerObject, operator: String, right: IntegerObject) => evaluateIntegerInfixExpression(operator, left, right)
-		case (left: StringObject, operator: String, right: StringObject) => evaluateStringInfixExpression(operator, left, right)
-		case (left: BooleanObject, "==", right: BooleanObject) => if (left.value == right.value) TRUE else FALSE
-		case (left: BooleanObject, "!=", right: BooleanObject) => if (left.value != right.value) TRUE else FALSE
-		case _ => ErrorObject(s"unknown operator: ${left.`type`()} $operator ${right.`type`()}")
+	private def evaluateString(stringLiteral: StringLiteral): Object = {
+		StringObject(stringLiteral.value)
 	}
 
-	private def evaluateIntegerInfixExpression(operator: String, left: IntegerObject, right: IntegerObject): Object = operator match {
-		case "+" => IntegerObject(left.value + right.value)
-		case "-" => IntegerObject(left.value - right.value)
-		case "*" => IntegerObject(left.value * right.value)
-		case "/" => IntegerObject(left.value / right.value)
-		case "<" => if (left.value < right.value) TRUE else FALSE
-		case ">" => if (left.value > right.value) TRUE else FALSE
-		case "==" => if (left.value == right.value) TRUE else FALSE
-		case "!=" => if (left.value != right.value) TRUE else FALSE
-		case _ => ErrorObject(s"unknown operator: ${left.`type`()} $operator ${right.`type`()}")
+	private def evaluateArray(arrayLiteral: ArrayLiteral, environment: Environment): Object = {
+		val elements: List[Object] = evaluateExpressions(Some(arrayLiteral.elements), environment)
+		if (elements.length == 1 && isError(elements.head)) elements.head else ArrayObject(elements)
 	}
 
-	private def evaluateStringInfixExpression(operator: String, left: StringObject, right: StringObject): Object = operator match {
-		case "+" => StringObject(left.value + right.value)
-		case _ => ErrorObject(s"unknown operator: ${left.`type`()} $operator ${right.`type`()}")
-	}
-
-	private def evaluateHashLiteral(hashLiteral: HashLiteral, environment: Environment): Object = returning {
+	private def evaluateHash(hashLiteral: HashLiteral, environment: Environment): Object = returning {
 		val pairs = mutable.HashMap.empty[HashKey, HashPair]
 		hashLiteral.pairs.foreach { (keyNode, valueNode) =>
 			val key = evaluate(Some(keyNode), environment)
@@ -128,6 +90,72 @@ object Evaluator {
 		HashObject(pairs.toMap)
 	}
 
+	private def evaluateBlockStatement(blockStatement: BlockStatement, environment: Environment): Object = returning {
+		var result: Object = NULL
+		for (statement <- blockStatement.statements) {
+			val evaluatedStatement = evaluate(Some(statement), environment)
+			evaluatedStatement.`type`() match {
+				case ObjectType.RETURN | ObjectType.ERROR => throwReturn(evaluatedStatement)
+				case _ => result = evaluatedStatement
+			}
+		}
+		result
+	}
+
+	private def evaluatePrefixExpression(prefixExpression: PrefixExpression, environment: Environment): Object = {
+		val right: Object = evaluate(Some(prefixExpression.value), environment)
+
+		prefixExpression.operator match {
+			case "!" if isTruthy(right) => FALSE
+			case "!" => TRUE
+			case "-" => right.`type`() match {
+				case ObjectType.INTEGER => IntegerObject(-right.asInstanceOf[IntegerObject].value)
+				case _ => NULL
+			}
+		}
+	}
+
+	private def evaluateInfixExpression(infixExpression: InfixExpression, environment: Environment): Object = {
+		val infixLeftValue: Object = evaluate(Some(infixExpression.left), environment)
+		if (isError(infixLeftValue))
+			return infixLeftValue
+		
+		val infixRightValue: Object = evaluate(Some(infixExpression.right), environment)
+		if (isError(infixRightValue))
+			return infixRightValue
+
+		(infixLeftValue, infixExpression.operator, infixRightValue) match {
+			case (left: Object, opr: String, right: Object) if left.`type`() != right.`type`() =>
+				ErrorObject(s"type mismatch: ${left.`type`()} $opr ${right.`type`()}")
+			case (left: IntegerObject, operator: String, right: IntegerObject) =>
+				evaluateIntegerInfixExpression(operator, left, right)
+			case (left: StringObject, operator: String, right: StringObject) =>
+				evaluateStringInfixExpression(operator, left, right)
+			case (left: BooleanObject, "==", right: BooleanObject) =>
+				if (left.value == right.value) TRUE else FALSE
+			case (left: BooleanObject, "!=", right: BooleanObject) =>
+				if (left.value != right.value) TRUE else FALSE
+			case (left, operator, right) =>
+				ErrorObject(s"unknown operator: ${left.`type`()} $operator ${right.`type`()}")
+		}
+	}
+
+	private def evaluateIntegerInfixExpression(operator: String, left: IntegerObject, right: IntegerObject): Object = operator match {
+		case "+" => IntegerObject(left.value + right.value)
+		case "-" => IntegerObject(left.value - right.value)
+		case "*" => IntegerObject(left.value * right.value)
+		case "/" => IntegerObject(left.value / right.value)
+		case "<" => if (left.value < right.value) TRUE else FALSE
+		case ">" => if (left.value > right.value) TRUE else FALSE
+		case "==" => if (left.value == right.value) TRUE else FALSE
+		case "!=" => if (left.value != right.value) TRUE else FALSE
+		case _ => ErrorObject(s"unknown operator: ${left.`type`()} $operator ${right.`type`()}")
+	}
+
+	private def evaluateStringInfixExpression(operator: String, left: StringObject, right: StringObject): Object = operator match {
+		case "+" => StringObject(left.value + right.value)
+		case _ => ErrorObject(s"unknown operator: ${left.`type`()} $operator ${right.`type`()}")
+	}
 
 	private def evaluateIfExpression(ifExpression: IfExpression, environment: Environment): Object = {
 		val condition: Object = evaluate(Some(ifExpression.condition), environment)
