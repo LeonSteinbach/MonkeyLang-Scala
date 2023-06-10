@@ -10,41 +10,42 @@ case class CombinatorParser() extends parser.Parser with JavaTokenParsers {
 
 	override def errors: Seq[String] = Seq[String]()
 
-	private def acceptIf[T <: Expression]
-		(parser: Parser[String])(
-			acceptable: String => Boolean,
-			successHandler: String => T,
-			errorMessage: String => String): Parser[T] =
-		parser flatMap { t => if (acceptable(t)) success(successHandler(t)) else err(errorMessage(t)) }
-
 	private def identifier: Parser[Identifier] =
-		acceptIf("[a-zA-Z_][a-zA-Z_0-9]*".r)(
-			identifier => !Set("let", "if", "else", "return", "fn", "true", "false").contains(identifier),
-			identifier => Identifier(identifier),
-			identifier => s"Identifier '$identifier' is not acceptable here")
-
-	private def integer: Parser[IntegerLiteral] =
-		acceptIf("[0-9]+\\w*".r)(
-			value => value.matches("\\d+"),
-			value => IntegerLiteral(value.toInt),
-			value => s"Could not parse '$value' as integer.")
-
-	private def boolean: Parser[BooleanLiteral] = ("true" | "false") ^^ { value => BooleanLiteral(value.toBoolean) }
-
-	private def string: Parser[StringLiteral] = stringLiteral ^^ { value => StringLiteral(value.substring(1, value.length - 1) ) }
-
-	private def array: Parser[ArrayLiteral] = "[" ~> repsep(expression, ",") <~ "]" ^^ { elements => ArrayLiteral(elements) }
-
-	private def hash: Parser[HashLiteral] = "{" ~> repsep((expression <~ ":") ~ expression, ",") <~ "}" ^^ { keyValuePairs =>
-		val pairs = keyValuePairs.map {
-			case key ~ value => (key, value)
+		not("let" | "if" | "else" | "return" | "fn" | "true" | "false") ~> """[a-zA-Z_]\w*\b""".r ^^ {
+			name => Identifier(name)
 		}
-		HashLiteral(pairs.toMap)
+
+	private def integer: Parser[IntegerLiteral] = {
+		"""\d+\w*""".r >> {
+			case value if value.matches("(0|[1-9]+\\d*)") => success(IntegerLiteral(value.toInt))
+			case invalidInput => err(s"Could not parse '$invalidInput' as integer.")
+		}
 	}
 
-	private def function: Parser[FunctionLiteral] = "fn" ~> ("(" ~> repsep(identifier, ",") <~ ")") ~ blockStatement ^^ {
-		case parameters ~ body => FunctionLiteral(parameters, body)
+	private def boolean: Parser[BooleanLiteral] = ("true" | "false") ^^ {
+		value => BooleanLiteral(value.toBoolean)
 	}
+
+	private def string: Parser[StringLiteral] = stringLiteral ^^ {
+		value => StringLiteral(value.substring(1, value.length - 1))
+	}
+
+	private def array: Parser[ArrayLiteral] = "[" ~> repsep(expression, ",") <~ "]" ^^ {
+		elements => ArrayLiteral(elements)
+	}
+
+	private def hash: Parser[HashLiteral] = "{" ~> repsep((expression <~ ":") ~ expression, ",") <~ "}" ^^ {
+		keyValuePairs =>
+			val pairs = keyValuePairs.map {
+				case key ~ value => (key, value)
+			}
+			HashLiteral(pairs.toMap)
+		}
+
+	private def function: Parser[FunctionLiteral] =
+		"fn" ~> ("(" ~> repsep(identifier, ",") <~ ")") ~ blockStatement ^^ {
+			case parameters ~ body => FunctionLiteral(parameters, body)
+		}
 
 	private def value: Parser[Expression] = integer | boolean | string | array | hash
 
@@ -130,7 +131,7 @@ case class CombinatorParser() extends parser.Parser with JavaTokenParsers {
 				val errorPosition = error.next.pos
 				val errorMessage = s"Parsing error at line ${errorPosition.line}, column ${errorPosition.column}: ${error.msg}"
 				println(errorMessage + "\n")
-				throw new RuntimeException("Parsing failed with errors.")
+				throw new ParserException("Parsing failed with errors.")
 		}
 	}
 
