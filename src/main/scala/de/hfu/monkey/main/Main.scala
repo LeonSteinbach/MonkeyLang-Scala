@@ -108,17 +108,14 @@ object Main {
 	private def printResult(parser: Parser, engine: String, evaluate: Boolean): Unit = {
 		//benchmarkEvaluator(parser, engine)
 
-		//val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(35);"
+		val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(35);"
 		//val input = "let fib = fn(n, a, b) { if (n == 0) { return a; } else { if (n == 1) { return b; }; }; fib(n-1, b, a+b); }; fib(35, 0, 1);"
-		val input = "let foo = 1; foo;"
 
 		var printString: String = ""
 
 		val startTime1 = System.currentTimeMillis()
 		val parsed: Program = parser.parse(input)
 		val endTime1 = System.currentTimeMillis()
-
-		println(parsed)
 
 		printString += s"Parsed result:    $parsed\n"
 		printString += s"Parser [ms]:      ${endTime1 - startTime1}"
@@ -152,7 +149,7 @@ object Main {
 
 	private def benchmarkEvaluator(parser: Parser, engine: String): Unit = {
 		//val input = "let fib = fn(n, a, b) { if (n == 0) { return a; } else { if (n == 1) { return b; }; }; fib(n-1, b, a+b); }; fib(35, 0, 1);"
-		val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(20);"
+		val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(35);"
 		val parsed: Program = parser.parse(input)
 
 		var results = Array[Double]()

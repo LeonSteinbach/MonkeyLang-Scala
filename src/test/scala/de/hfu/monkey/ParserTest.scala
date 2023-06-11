@@ -164,14 +164,9 @@ class ParserTest extends AnyFunSuite {
 	test("parser.firstClassFunctions") {
 		val program: Program = parserCombinator.parse("foo()();")
 		assert(parserManual.parse("foo()();") === program)
-		/*assert(program ===
+		assert(program ===
 			Program(List(
-				ExpressionStatement(CallExpression(
-					Identifier("add"),
-					List(IntegerLiteral(1), IntegerLiteral(2)))),
-				ExpressionStatement(CallExpression(
-					Identifier("foo"),
-					List(InfixExpression("+", Identifier("a"), IntegerLiteral(1)), CallExpression(Identifier("bar"), List())))))))*/
+				ExpressionStatement(CallExpression(CallExpression(Identifier("foo"), List()), List())))))
 	}
 
 	test("parser.indexExpression") {
@@ -207,7 +202,7 @@ class ParserTest extends AnyFunSuite {
 	test("parser.precedences") {
 		val input: String = "1 + 2 * 3 < 4 == 5 - 6 / 7; myFunc(8); myArray[9 + 10]; !-11; foo()[12]; foo[13]();"
 		val program: Program = parserCombinator.parse(input)
-		//assert(parserManual.parse(input) === program)
+		assert(parserManual.parse(input) === program)
 		assert(program === Program(List(
 			ExpressionStatement(
 				InfixExpression("==",
