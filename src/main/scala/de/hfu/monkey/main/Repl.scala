@@ -27,12 +27,12 @@ object Repl {
 
 	def start(parser: Parser, engine: String): Unit = {
 
-
 		println(face)
 		println("Welcome to the monkey REPL")
 
+		val environment = new Environment
+
 		while (true) {
-			val environment = new Environment
 			var constants = Array[Object]()
 			val symbolTable = new SymbolTable()
 			val globals = Array.ofDim[Object](65536)
