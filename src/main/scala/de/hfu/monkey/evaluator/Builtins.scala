@@ -10,11 +10,11 @@ object Builtins {
 			if (args.length != 1) {
 				ErrorObject(s"wrong number of arguments. got ${args.length} but expected 1.")
 			} else {
-				args(0).`type`() match {
-					case ObjectType.ARRAY =>
-						IntegerObject(args(0).asInstanceOf[ArrayObject].elements.size)
-					case ObjectType.STRING =>
-						IntegerObject(args(0).asInstanceOf[StringObject].value.length)
+				args(0) match {
+					case arrayObject: ArrayObject =>
+						IntegerObject(arrayObject.elements.size)
+					case stringObject: StringObject =>
+						IntegerObject(stringObject.value.length)
 					case _ =>
 						ErrorObject(s"argument to `len` not supported, got ${args(0).`type`()}")
 				}
@@ -24,10 +24,9 @@ object Builtins {
 			if (args.length != 1) {
 				ErrorObject(s"wrong number of arguments. got ${args.length} but expected 1.")
 			} else {
-				args(0).`type`() match {
-					case ObjectType.ARRAY =>
-						val array = args(0).asInstanceOf[ArrayObject]
-						if (array.elements.nonEmpty) array.elements.head
+				args(0) match {
+					case arrayObject: ArrayObject =>
+						if (arrayObject.elements.nonEmpty) arrayObject.elements.head
 						else NullObject
 					case _ =>
 						ErrorObject(s"argument to `first` not supported, got ${args(0).`type`()}")
@@ -38,10 +37,9 @@ object Builtins {
 			if (args.length != 1) {
 				ErrorObject(s"wrong number of arguments. got ${args.length} but expected 1.")
 			} else {
-				args(0).`type`() match {
-					case ObjectType.ARRAY =>
-						val array = args(0).asInstanceOf[ArrayObject]
-						if (array.elements.nonEmpty) array.elements.last
+				args(0) match {
+					case arrayObject: ArrayObject =>
+						if (arrayObject.elements.nonEmpty) arrayObject.elements.last
 						else NullObject
 					case _ =>
 						ErrorObject(s"argument to `last` not supported, got ${args(0).`type`()}")
@@ -52,10 +50,9 @@ object Builtins {
 			if (args.length != 1) {
 				ErrorObject(s"wrong number of arguments. got ${args.length} but expected 1.")
 			} else {
-				args(0).`type`() match {
-					case ObjectType.ARRAY =>
-						val array = args(0).asInstanceOf[ArrayObject]
-						if (array.elements.nonEmpty) ArrayObject(array.elements.tail)
+				args(0) match {
+					case arrayObject: ArrayObject =>
+						if (arrayObject.elements.nonEmpty) ArrayObject(arrayObject.elements.tail)
 						else NullObject
 					case _ =>
 						ErrorObject(s"argument to `rest` not supported, got ${args(0).`type`()}")
@@ -66,10 +63,9 @@ object Builtins {
 			if (args.length != 2) {
 				ErrorObject(s"wrong number of arguments. got ${args.length} but expected 2.")
 			} else {
-				args(0).`type`() match {
-					case ObjectType.ARRAY =>
-						val array = args(0).asInstanceOf[ArrayObject]
-						val newElements = array.elements :+ args(1)
+				args(0) match {
+					case arrayObject: ArrayObject =>
+						val newElements = arrayObject.elements :+ args(1)
 						ArrayObject(newElements)
 					case _ =>
 						ErrorObject(s"argument to `push` not supported, got ${args(0).`type`()}")

@@ -1,6 +1,6 @@
 package de.hfu.monkey
 
-import de.hfu.monkey.objects.{BooleanObject, IntegerObject, NullObject, StringObject}
+import de.hfu.monkey.objects.{ArrayObject, BooleanObject, IntegerObject, NullObject, StringObject}
 import de.hfu.monkey.parser.CombinatorParser
 import de.hfu.monkey.evaluator.{Environment, Evaluator}
 import org.scalatest.funsuite.AnyFunSuite
@@ -125,6 +125,36 @@ class EvaluatorTest extends AnyFunSuite {
 		parsed = parser.parse("let bar = 1; let foo = fn(x) { let bar = 2; bar + x; }; foo(bar);")
 		evaluated = Evaluator.evaluate(Some(parsed), new Environment)
 		assert(evaluated == IntegerObject(3))
+	}
+
+	test("evaluator.builtins") {
+		var parsed = parser.parse("len(\"hallo\");")
+		var evaluated = Evaluator.evaluate(Some(parsed), new Environment)
+		assert(evaluated == IntegerObject(5))
+
+		parsed = parser.parse("len([1, 2, 3]);")
+		evaluated = Evaluator.evaluate(Some(parsed), new Environment)
+		assert(evaluated == IntegerObject(3))
+
+		parsed = parser.parse("first([1, 2, 3]);")
+		evaluated = Evaluator.evaluate(Some(parsed), new Environment)
+		assert(evaluated == IntegerObject(1))
+
+		parsed = parser.parse("last([1, 2, 3]);")
+		evaluated = Evaluator.evaluate(Some(parsed), new Environment)
+		assert(evaluated == IntegerObject(3))
+
+		parsed = parser.parse("rest([1, 2, 3]);")
+		evaluated = Evaluator.evaluate(Some(parsed), new Environment)
+		assert(evaluated == ArrayObject(List(IntegerObject(2), IntegerObject(3))))
+
+		parsed = parser.parse("push([1, 2, 3], 4);")
+		evaluated = Evaluator.evaluate(Some(parsed), new Environment)
+		assert(evaluated == ArrayObject(List(IntegerObject(1), IntegerObject(2), IntegerObject(3), IntegerObject(4))))
+
+		parsed = parser.parse("puts(\"hallo\");")
+		evaluated = Evaluator.evaluate(Some(parsed), new Environment)
+		assert(evaluated == NullObject)
 	}
 
 	test("evaluator.array") {
