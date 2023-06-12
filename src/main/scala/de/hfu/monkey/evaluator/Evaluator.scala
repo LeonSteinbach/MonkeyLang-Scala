@@ -108,8 +108,8 @@ object Evaluator {
 		prefixExpression.operator match {
 			case "!" if isTruthy(right) => FALSE
 			case "!" => TRUE
-			case "-" => right.`type`() match {
-				case ObjectType.INTEGER => IntegerObject(-right.asInstanceOf[IntegerObject].value)
+			case "-" => right match {
+				case right: IntegerObject => IntegerObject(-right.value)
 				case _ => NULL
 			}
 		}
@@ -125,8 +125,9 @@ object Evaluator {
 			return infixRightValue
 
 		(infixLeftValue, infixExpression.operator, infixRightValue) match {
-			case (left: Object, opr: String, right: Object) if left.`type`() != right.`type`() =>
-				ErrorObject(s"type mismatch: ${left.`type`()} $opr ${right.`type`()}")
+			case (left: Object, opr: String, right: Object)
+				if left.`type`() != right.`type`() =>
+					ErrorObject(s"type mismatch: ${left.`type`()} $opr ${right.`type`()}")
 			case (left: IntegerObject, operator: String, right: IntegerObject) =>
 				evaluateIntegerInfixExpression(operator, left, right)
 			case (left: StringObject, operator: String, right: StringObject) =>
@@ -179,7 +180,7 @@ object Evaluator {
 		if (isError(letValue))
 			letValue
 		else {
-			environment.set(letStatement.name.name, letValue)
+			environment.set(letStatement.identifier.name, letValue)
 			NULL
 		}
 	}

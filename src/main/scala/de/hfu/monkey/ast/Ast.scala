@@ -13,7 +13,7 @@ case class BooleanLiteral(value: Boolean) extends Expression
 case class StringLiteral(value: String) extends Expression
 case class ArrayLiteral(elements: List[Expression]) extends Expression
 case class HashLiteral(pairs: Map[Expression, Expression]) extends Expression
-case class LetStatement(name: Identifier, value: Expression) extends Statement
+case class LetStatement(identifier: Identifier, value: Expression) extends Statement
 case class ReturnStatement(value: Expression) extends Statement
 case class BlockStatement(statements: List[Statement]) extends Statement
 case class IfExpression(condition: Expression, consequence: BlockStatement, alternative: BlockStatement) extends Expression

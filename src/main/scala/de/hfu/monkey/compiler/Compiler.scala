@@ -76,7 +76,7 @@ case class Compiler(private var constants: Array[Object] = Array[Object](), var 
 					statement => compile(statement)
 				}
 			case letStatement: LetStatement =>
-				val symbol = symbolTable.define(letStatement.name.name)
+				val symbol = symbolTable.define(letStatement.identifier.name)
 				compile(letStatement.value)
 				val scopeOperation = if (symbol.scope == GLOBAL) OpSetGlobal else OpSetLocal
 				emit(scopeOperation, symbol.index)
