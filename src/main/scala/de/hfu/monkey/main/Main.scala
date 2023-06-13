@@ -2,6 +2,8 @@ package de.hfu.monkey.main
 
 import de.hfu.monkey.objects.Object
 import de.hfu.monkey.ast.Program
+import de.hfu.monkey.code.Opcode.*
+import de.hfu.monkey.code.*
 import de.hfu.monkey.compiler.Compiler
 import de.hfu.monkey.parser.*
 import de.hfu.monkey.evaluator.*
@@ -108,8 +110,9 @@ object Main {
 	private def printResult(parser: Parser, engine: String, evaluate: Boolean): Unit = {
 		//benchmarkEvaluator(parser, engine)
 
-		val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(35);"
+		//val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(35);"
 		//val input = "let fib = fn(n, a, b) { if (n == 0) { return a; } else { if (n == 1) { return b; }; }; fib(n-1, b, a+b); }; fib(35, 0, 1);"
+		val input = "if (true) { 1; }; 2;"
 
 		var printString: String = ""
 
@@ -129,6 +132,9 @@ object Main {
 				val compiler = Compiler()
 				compiler.compile(parsed)
 
+				println(compiler.bytecode.instructions.inspect)
+				println(compiler.bytecode.instructions.mkString("Array(", ", ", ")"))
+
 				val vm = Vm(compiler.bytecode)
 				startTime2 = System.nanoTime()
 				vm.run()
@@ -145,6 +151,14 @@ object Main {
 		parser.errors.foreach(error => println(error))
 
 
+	}
+
+	private def concatInstructions(instructions: List[Instructions]): Instructions = {
+		var out: Instructions = Array.empty[UnsignedByte]
+		for (ins <- instructions) {
+			out = Array.concat(out, ins)
+		}
+		out
 	}
 
 	private def benchmarkEvaluator(parser: Parser, engine: String): Unit = {

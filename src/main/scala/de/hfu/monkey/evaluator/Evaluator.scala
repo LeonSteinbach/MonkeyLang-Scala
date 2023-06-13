@@ -205,10 +205,13 @@ object Evaluator {
 	private def evaluateCallExpression(callExpression: CallExpression, environment: Environment): Object = {
 		val callFunction: Object = evaluate(Some(callExpression.function), environment)
 		if (isError(callFunction))
-			callFunction
+			return callFunction
+
+		val callArguments: List[Object] = evaluateExpressions(Some(callExpression.arguments), environment)
+		if (callArguments.length == 1 && isError(callArguments.head))
+			callArguments.head
 		else
-			val callArguments: List[Object] = evaluateExpressions(Some(callExpression.arguments), environment)
-			if (callArguments.length == 1 && isError(callArguments.head)) callArguments.head else applyFunction(callFunction, callArguments)
+			applyFunction(callFunction, callArguments)
 	}
 
 	private def evaluateIndexExpression(indexExpression: IndexExpression, environment: Environment): Object = {
