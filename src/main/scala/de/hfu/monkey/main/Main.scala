@@ -108,11 +108,11 @@ object Main {
 	}
 
 	private def printResult(parser: Parser, engine: String, evaluate: Boolean): Unit = {
-		//benchmarkEvaluator(parser, engine)
+		//testJvmWarmup(parser, engine)
+		//compareEvaluators(parser)
 
-		//val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(35);"
+		val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(30);"
 		//val input = "let fib = fn(n, a, b) { if (n == 0) { return a; } else { if (n == 1) { return b; }; }; fib(n-1, b, a+b); }; fib(35, 0, 1);"
-		val input = "if (true) { 1; }; 2;"
 
 		var printString: String = ""
 
@@ -125,18 +125,20 @@ object Main {
 
 		if (evaluate) {
 			var evaluated: Option[Object] = None
-			var startTime2 = System.nanoTime()
+			val environment: Environment = new Environment
+			val someParsed: Option[Program] = Some(parsed)
+
+			val startTime2 = System.nanoTime()
 			if (engine == "interpreter") {
-				evaluated = Some(Evaluator.evaluate(Some(parsed), new Environment))
+				evaluated = Some(Evaluator.evaluate(someParsed, environment))
 			} else if (engine == "compiler") {
 				val compiler = Compiler()
 				compiler.compile(parsed)
 
-				println(compiler.bytecode.instructions.inspect)
-				println(compiler.bytecode.instructions.mkString("Array(", ", ", ")"))
+				//println(compiler.bytecode.instructions.inspect)
+				//println(compiler.bytecode.instructions.mkString("Array(", ", ", ")"))
 
 				val vm = Vm(compiler.bytecode)
-				startTime2 = System.nanoTime()
 				vm.run()
 
 				evaluated = Some(vm.lastPoppedStackElement)
@@ -147,23 +149,37 @@ object Main {
 		}
 
 		println(printString)
-
 		parser.errors.foreach(error => println(error))
-
-
 	}
 
-	private def concatInstructions(instructions: List[Instructions]): Instructions = {
-		var out: Instructions = Array.empty[UnsignedByte]
-		for (ins <- instructions) {
-			out = Array.concat(out, ins)
-		}
-		out
+	private def compareEvaluators(parser: Parser): Unit = {
+		val baseInput = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(<n>);"
+
+		val n: Int = 35
+
+		val input = baseInput.replace("<n>", n.toString)
+		val parsed: Program = parser.parse(input)
+		val someParsed: Option[Program] = Some(parsed)
+		val environment: Environment = new Environment
+
+		val startInterpreter = System.nanoTime()
+		Evaluator.evaluate(someParsed, environment)
+		val endInterpreter = System.nanoTime()
+
+		val startCompiler = System.nanoTime()
+		val compiler = Compiler()
+		compiler.compile(parsed)
+		val vm = Vm(compiler.bytecode)
+		vm.run()
+		val endCompiler = System.nanoTime()
+
+		println(s"${(endInterpreter - startInterpreter) / (1000.0 * 1000.0)}\t${(endCompiler - startCompiler) / (1000.0 * 1000.0)}")
 	}
 
-	private def benchmarkEvaluator(parser: Parser, engine: String): Unit = {
+	private def testJvmWarmup(parser: Parser, engine: String): Unit = {
 		//val input = "let fib = fn(n, a, b) { if (n == 0) { return a; } else { if (n == 1) { return b; }; }; fib(n-1, b, a+b); }; fib(35, 0, 1);"
 		val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(35);"
+
 		val parsed: Program = parser.parse(input)
 
 		var results = Array[Double]()
@@ -209,13 +225,11 @@ object Main {
 
 		val avg = results.sum / results.length
 
-		//println(string.toString())
 		println(avg)
 		println(results.last)
 	}
 
 	private def compareParsers(iterations: Int, steps: Int, appendMode: String, filename: Option[String]): Unit = {
-
 		val parserInput: String =
 			if (appendMode == "nested")
 				"foo + bar("
@@ -253,7 +267,14 @@ object Main {
 				writeFile(Some(filename).get, finalString)
 			case _ =>
 		}
+	}
 
+	private def concatInstructions(instructions: List[Instructions]): Instructions = {
+		var out: Instructions = Array.empty[UnsignedByte]
+		for (ins <- instructions) {
+			out = Array.concat(out, ins)
+		}
+		out
 	}
 
 	private def writeFile(filename: String, s: String): Unit = {
