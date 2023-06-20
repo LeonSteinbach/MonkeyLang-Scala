@@ -25,8 +25,8 @@ case class Lexer(private val input: String) {
 		skipWhitespace()
 
 		val token = currentCharacter match {
-			case Some('=') => processDoubleCharacterToken(TokenType.EQ, TokenType.ASSIGN, '=')
-			case Some('!') => processDoubleCharacterToken(TokenType.NEQ, TokenType.BANG, '=')
+			case Some('=') => getDoubleCharacterToken(TokenType.EQ, TokenType.ASSIGN, '=')
+			case Some('!') => getDoubleCharacterToken(TokenType.NEQ, TokenType.BANG, '=')
 			case Some('+') => Token(TokenType.PLUS, "+")
 			case Some('-') => Token(TokenType.MINUS, "-")
 			case Some('*') => Token(TokenType.ASTERIX, "*")
@@ -84,7 +84,7 @@ case class Lexer(private val input: String) {
 		}
 	}
 
-	private def processDoubleCharacterToken(doubleCharTokenType: TokenType, singleCharTokenType: TokenType, currentChar: Char): Token = {
+	private def getDoubleCharacterToken(doubleCharTokenType: TokenType, singleCharTokenType: TokenType, currentChar: Char): Token = {
 		peekCharacter() match {
 			case Some(c) if c == currentChar =>
 				var literal = currentCharacter.get.toChar.toString
