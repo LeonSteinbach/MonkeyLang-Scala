@@ -6,14 +6,14 @@ Combinators".
 
 # EBNF (Extended Backus-Naur form)
 
-The EBNF below describes the grammar for MonkeyLang-Scala, as it is defined in the books.
+The EBNF below describes the grammar for Monkey, as it is defined in the books "Writing an Interpreter in Go" and "Writing a Compiler in Go" from Thorsten Ball.
 
-It employs prioritized function calls to establish precedence for expressions, ensuring that the order of evaluation
+It employs operator precedence for expressions, ensuring that the order of evaluation
 respects the rules of arithmetic and logic.
 
-In addition to the core language features, MonkeyLang-Scala also includes support for extended data structures from the
-original Monkey programming language. These data structures comprise Strings, Arrays, and Hashes, which provide more
-versatility and flexibility for users when programming in MonkeyLang-Scala.
+In addition to the core language features, Monkey also includes support for extended data structures from the
+original Monkey programming language. These data structures are Strings, Arrays, and Hashes, which provide more
+versatility and flexibility for users when programming in Monkey.
 
 ```
 <program>                   ::= <statement-list>
@@ -65,58 +65,3 @@ versatility and flexibility for users when programming in MonkeyLang-Scala.
 <expression-list>           ::= <expression> { "," <expression> }
 <parameter-list>            ::= <identifier> { "," <identifier> }
 ```
-
-# Benchmarks
-
-## Parser comparison
-
-The benchmarks below present a comparison between the manual parser (blue) and the parser using Scala parser combinators (red).
-The results demonstrate that as the text length increases linearly, the time required to parse the text also increases linearly.
-Consequently, both parsers exhibit a complexity of O(n).
-
-The manual parser is approximately 18 times faster than the parser employing Scala parser combinators.
-The spike observed between a text length multiplier of 0 and 100 can be attributed to overhead and typical compilation issues.
-
-It is noteworthy that the parser using Scala parser combinators experiences more significant fluctuations when dealing with nested function calls, as opposed to linearly increasing text. 
-
-<table>
-	<caption></caption>
-	<tr>
-		<td>
-			<img src="https://github.com/LeonSteinbach/MonkeyLang-Scala/blob/main/benchmarks/parser/timings-parser-append.png" alt="timings-parser-append" width="100%"/>
-		</td>
-		<td>
-			<img src="https://github.com/LeonSteinbach/MonkeyLang-Scala/blob/main/benchmarks/parser/timings-parser-nested.png" alt="timings-parser-nested" width="100%"/>
-		</td>
-	</tr>
-	<tr>
-		<td>
-			Duration [ms] for parsing linear increasing text
-		</td>
-		<td>
-			Duration [ms] for parsing increasingly nested function calls
-		</td>
-	</tr>
-</table>
-
-## Evaluator comparison
-
-This benchmark presents a comparison between the tree-walking evaluator of MonkeyLang-Scala and other popular programming languages.
-Specifically, the benchmark measures the duration in milliseconds it takes to compute the Fibonacci number with n=35 using a recursive implementation.
-
-All benchmarks were performed on the same computer, an AMD Ryzen 5 5600x, to ensure consistency and fairness in the results.
-
-<table>
-	<caption></caption>
-	<tr>
-		<td>
-			<img src="https://github.com/LeonSteinbach/MonkeyLang-Scala/blob/main/benchmarks/evaluator/timings-evaluator-fib.png" alt="timings-evaluator-fib" width="100%"/>
-		</td>
-	</tr>
-	<tr>
-		<td>
-			Recursive fibonacci performance [n=35]
-		</td>
-	</tr>
-</table>
-

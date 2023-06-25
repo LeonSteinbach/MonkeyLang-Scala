@@ -14,15 +14,9 @@ import java.io.{BufferedWriter, File, FileWriter}
 import scala.annotation.tailrec
 
 case class Config(
-	repl: Boolean = false,
-	parser: String = "combinator",
+	repl: Boolean = true,
+	parser: String = "manual",
 	engine: String = "interpreter",
-	evaluate: Boolean = true,
-	compareParsers: Boolean = false,
-	appendMode: String = "linear",
-	iterations: Int = 10000,
-	steps: Int = 10,
-	timingsParserFilename: Option[String] = None
 )
 
 object Main {
@@ -47,9 +41,9 @@ object Main {
 		val parser = {
 			import builder.*
 			OParser.sequence(
-				opt[Unit]("repl")
-					.action((_, c) => c.copy(repl = true))
-					.text("Start the REPL"),
+				opt[Unit]("no-repl")
+					.action((_, c) => c.copy(repl = false))
+					.text("Execute a predefined program instead of starting the REPL (used for testing)"),
 				opt[String]("parser")
 					.validate(x => if (x == "manual" || x == "combinator") success else failure("Parser must be 'manual' or 'combinator'"))
 					.action((x, c) => c.copy(parser = x))
@@ -57,24 +51,6 @@ object Main {
 				opt[String]("engine")
 					.action((x, c) => c.copy(engine = x))
 					.text("Engine implementation (interpreter or compiler)"),
-				opt[Unit]("compareParsers")
-					.action((_, c) => c.copy(compareParsers = true))
-					.text("Compare the different parser implementations by timing them")
-					.children(
-						opt[Int]("iterations")
-							.action((x, c) => c.copy(iterations = x))
-							.text("Number of iterations (length of the parsed text)"),
-						opt[Int]("steps")
-							.action((x, c) => c.copy(steps = x))
-							.text("Number of steps to take"),
-						opt[String]("file-parser")
-							.action((x, c) => c.copy(timingsParserFilename = Some(x)))
-							.text("File to write parser timings comparison"),
-						opt[String]("appendMode")
-							.action((x, c) => c.copy(appendMode = x))
-							.validate(x => if (x == "linear" || x == "nested") success else failure("Append mode must be 'linear' or 'nested'"))
-							.text("Append mode for building parsers (linear or nested)")
-					)
 			)
 		}
 
@@ -84,37 +60,21 @@ object Main {
 				if (config.repl) {
 					Repl.start(parser, config.engine)
 				} else {
-					if (config.compareParsers) {
-						compareParsers(config.iterations, config.steps, config.appendMode, config.timingsParserFilename)
-					} else {
-						println(s"Using ${config.parser} parser and ${config.engine}\n")
-						printResult(parser, config.engine, config.evaluate)
-					}
+					println(s"Using ${config.parser} parser and ${config.engine} engine\n")
+					executeProgram(parser, config.engine)
 				}
 			case _ =>
 		}
-
-/*
-		val lexer: Lexer = Lexer("\"hallo\";")
-		var token: Option[Token] = None
-		val startTime1 = System.currentTimeMillis()
-		while (token.forall(_.tokenType != TokenType.EOF)) {
-			token = Some(lexer.nextToken())
-			println(token.getOrElse(Token(TokenType.ILLEGAL, "")))
-		}
-		val endTime1 = System.currentTimeMillis()
-		println(s"Lexer [ms]: ${endTime1 - startTime1}")
-*/
 	}
 
-	private def printResult(parser: Parser, engine: String, evaluate: Boolean): Unit = {
+	private def executeProgram(parser: Parser, engine: String): Unit = {
 		//testJvmWarmup(parser, engine)
 		//compareEvaluators(parser)
 
 		val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(30);"
 		//val input = "let fib = fn(n, a, b) { if (n == 0) { return a; } else { if (n == 1) { return b; }; }; fib(n-1, b, a+b); }; fib(35, 0, 1);"
 
-		var printString: String = ""
+		var printString: String = s"Input:            $input\n\n"
 
 		val startTime1 = System.currentTimeMillis()
 		val parsed: Program = parser.parse(input)
@@ -123,30 +83,28 @@ object Main {
 		printString += s"Parsed result:    $parsed\n"
 		printString += s"Parser [ms]:      ${endTime1 - startTime1}"
 
-		if (evaluate) {
-			var evaluated: Option[Object] = None
-			val environment: Environment = new Environment
-			val someParsed: Option[Program] = Some(parsed)
+		var evaluated: Option[Object] = None
+		val environment: Environment = new Environment
+		val someParsed: Option[Program] = Some(parsed)
 
-			val startTime2 = System.nanoTime()
-			if (engine == "interpreter") {
-				evaluated = Some(Evaluator.evaluate(someParsed, environment))
-			} else if (engine == "compiler") {
-				val compiler = Compiler()
-				compiler.compile(parsed)
+		val startTime2 = System.nanoTime()
+		if (engine == "interpreter") {
+			evaluated = Some(Evaluator.evaluate(someParsed, environment))
+		} else if (engine == "compiler") {
+			val compiler = Compiler()
+			compiler.compile(parsed)
 
-				//println(compiler.bytecode.instructions.inspect)
-				//println(compiler.bytecode.instructions.mkString("Array(", ", ", ")"))
+			//println(compiler.bytecode.instructions.inspect)
+			//println(compiler.bytecode.instructions.mkString("Array(", ", ", ")"))
 
-				val vm = Vm(compiler.bytecode)
-				vm.run()
+			val vm = Vm(compiler.bytecode)
+			vm.run()
 
-				evaluated = Some(vm.lastPoppedStackElement)
-			}
-			val endTime2 = System.nanoTime()
-			printString += s"\n\nResult:           ${evaluated.get}\n"
-			printString += s"${engine.capitalize} [ms]:    ${(endTime2 - startTime2) / (1000.0 * 1000.0)}"
+			evaluated = Some(vm.lastPoppedStackElement)
 		}
+		val endTime2 = System.nanoTime()
+		printString += s"\n\nResult:           ${evaluated.get}\n"
+		printString += s"${engine.capitalize} [ms]: ${(endTime2 - startTime2) / (1000.0 * 1000.0)}"
 
 		println(printString)
 		parser.errors.foreach(error => println(error))
@@ -155,7 +113,7 @@ object Main {
 	private def compareEvaluators(parser: Parser): Unit = {
 		val baseInput = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(<n>);"
 
-		val n: Int = 35
+		val n: Int = 0
 
 		val input = baseInput.replace("<n>", n.toString)
 		val parsed: Program = parser.parse(input)
@@ -170,8 +128,8 @@ object Main {
 		val compiler = Compiler()
 		compiler.compile(parsed)
 		val vm = Vm(compiler.bytecode)
-		vm.run()
 		val endCompiler = System.nanoTime()
+		vm.run()
 
 		println(s"${(endInterpreter - startInterpreter) / (1000.0 * 1000.0)}\t${(endCompiler - startCompiler) / (1000.0 * 1000.0)}")
 	}
@@ -181,9 +139,7 @@ object Main {
 		val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(35);"
 
 		val parsed: Program = parser.parse(input)
-
 		var results = Array[Double]()
-
 		val string = new StringBuilder("")
 
 		for (i <- 0 to 10000) {
