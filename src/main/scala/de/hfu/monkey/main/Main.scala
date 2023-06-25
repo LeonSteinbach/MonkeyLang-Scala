@@ -11,7 +11,6 @@ import de.hfu.monkey.vm.Vm
 import scopt.OParser
 
 import java.io.{BufferedWriter, File, FileWriter}
-import scala.annotation.tailrec
 
 case class Config(
 	repl: Boolean = true,
@@ -20,22 +19,6 @@ case class Config(
 )
 
 object Main {
-	private def fib(n: Int): Int = {
-		if (n <= 1) {
-			return n
-		}
-		fib(n - 1) + fib(n - 2)
-	}
-
-	@tailrec
-	private def taiL_fib(n: Int, a: Int, b: Int): Int = {
-		if (n == 0)
-			return a
-		else if (n == 1)
-			return b
-		taiL_fib(n-1, b, a+b)
-	}
-
 	def main(args: Array[String]): Unit = {
 		val builder = OParser.builder[Config]
 		val parser = {
@@ -68,9 +51,6 @@ object Main {
 	}
 
 	private def executeProgram(parser: Parser, engine: String): Unit = {
-		//testJvmWarmup(parser, engine)
-		//compareEvaluators(parser)
-
 		val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(30);"
 		//val input = "let fib = fn(n, a, b) { if (n == 0) { return a; } else { if (n == 1) { return b; }; }; fib(n-1, b, a+b); }; fib(35, 0, 1);"
 
@@ -94,9 +74,6 @@ object Main {
 			val compiler = Compiler()
 			compiler.compile(parsed)
 
-			//println(compiler.bytecode.instructions.inspect)
-			//println(compiler.bytecode.instructions.mkString("Array(", ", ", ")"))
-
 			val vm = Vm(compiler.bytecode)
 			vm.run()
 
@@ -111,11 +88,8 @@ object Main {
 	}
 
 	private def compareEvaluators(parser: Parser): Unit = {
-		val baseInput = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(<n>);"
+		val input = "let fib = fn(n) { if (n < 2) { return n; }; fib(n-1) + fib(n-2); }; fib(0);"
 
-		val n: Int = 0
-
-		val input = baseInput.replace("<n>", n.toString)
 		val parsed: Program = parser.parse(input)
 		val someParsed: Option[Program] = Some(parsed)
 		val environment: Environment = new Environment
@@ -188,7 +162,7 @@ object Main {
 	private def compareParsers(iterations: Int, steps: Int, appendMode: String, filename: Option[String]): Unit = {
 		val parserInput: String =
 			if (appendMode == "nested")
-				"foo + bar("
+				"foo("
 			else
 				"let foo = fn(a, b) { let bar = a + b; return bar * bar; }; let x = foo(foo(1, 2), 3); if (-x > 0 == true == !false) { (0 + 1) * 2; } else { x; };"
 
@@ -223,14 +197,6 @@ object Main {
 				writeFile(Some(filename).get, finalString)
 			case _ =>
 		}
-	}
-
-	private def concatInstructions(instructions: List[Instructions]): Instructions = {
-		var out: Instructions = Array.empty[UnsignedByte]
-		for (ins <- instructions) {
-			out = Array.concat(out, ins)
-		}
-		out
 	}
 
 	private def writeFile(filename: String, s: String): Unit = {

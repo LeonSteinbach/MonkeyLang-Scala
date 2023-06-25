@@ -50,14 +50,15 @@ object Repl {
 						  |  --no-repl         Execute a predefined program instead of starting the REPL (used for testing)
 						  |  --parser <value>  Parser implementation (manual or combinator)
 						  |  --engine <value>  Engine implementation (interpreter or compiler)
-						  |""".stripMargin + "\n")
+						  |""".stripMargin)
 				case _ =>
 					execute(input, parser, engine, environment, symbolTable, constants, globals)
 			}
 		}
 	}
 
-	private def execute(input: String, parser: Parser, engine: String, environment: Environment, symbolTable: SymbolTable, constants: ArrayBuffer[Object], globals: Array[Object]): Unit = {
+	private def execute(input: String, parser: Parser, engine: String, environment: Environment,
+						symbolTable: SymbolTable, constants: ArrayBuffer[Object], globals: Array[Object]): Unit = {
 		val program = parser.parse(input)
 		var evaluated: Option[Object] = None
 
