@@ -66,8 +66,8 @@ object Evaluator {
 	}
 
 	private def evaluateArray(arrayLiteral: ArrayLiteral, environment: Environment): Object = {
-		val elements: List[Object] = evaluateExpressions(Some(arrayLiteral.elements), environment)
-		if (elements.length == 1 && isError(elements.head)) elements.head else ArrayObject(elements)
+		val elements: List[Option[Object]] = evaluateExpressions(Some(arrayLiteral.elements), environment)
+		if (elements.length == 1 && isError(elements.head.get)) elements.head.get else ArrayObject(elements.map(el => el.get))
 	}
 
 	private def evaluateHash(hashLiteral: HashLiteral, environment: Environment): Object = returning {
@@ -190,7 +190,7 @@ object Evaluator {
 		if (ok) {
 			result.getOrElse(NULL)
 		} else {
-			val maybeBuiltin = Builtins.builtins.get(identifier.name)
+			val maybeBuiltin = Builtins.getBuiltinByName(identifier.name)
 			maybeBuiltin match {
 				case Some(builtinObject: BuiltinObject) => Some(builtinObject).get
 				case None => ErrorObject(s"identifier not found: ${identifier.name}")
@@ -207,11 +207,12 @@ object Evaluator {
 		if (isError(callFunction))
 			return callFunction
 
-		val callArguments: List[Object] = evaluateExpressions(Some(callExpression.arguments), environment)
-		if (callArguments.length == 1 && isError(callArguments.head))
-			callArguments.head
+		val callArguments: List[Option[Object]] = evaluateExpressions(Some(callExpression.arguments), environment)
+
+		if (callArguments.length == 1 && isError(callArguments.head.get))
+			callArguments.head.get
 		else
-			applyFunction(callFunction, callArguments)
+			applyFunction(callFunction, callArguments).getOrElse(NULL)
 	}
 
 	private def evaluateIndexExpression(indexExpression: IndexExpression, environment: Environment): Object = {
@@ -235,17 +236,17 @@ object Evaluator {
 		}
 	}
 
-	private def evaluateExpressions(expressions: Option[List[Expression]], environment: Environment): List[Object] = returning {
-		val result: ListBuffer[Object] = ListBuffer.empty[Object]
+	private def evaluateExpressions(expressions: Option[List[Expression]], environment: Environment): List[Option[Object]] = returning {
+		val result: ListBuffer[Option[Object]] = ListBuffer.empty[Option[Object]]
 
 		expressions match {
 			case Some(exps) =>
 				exps.foreach { expression =>
 					val evaluated = evaluate(Some(expression), environment)
 					if (isError(evaluated)) {
-						throwReturn(List(evaluated))
+						throwReturn(List(Some(evaluated)))
 					} else {
-						result += evaluated
+						result += Some(evaluated)
 					}
 				}
 			case None =>
@@ -254,33 +255,34 @@ object Evaluator {
 		result.toList
 	}
 
-	private def applyFunction(function: Object, arguments: List[Object]): Object = {
+	private def applyFunction(function: Object, arguments: List[Option[Object]]): Option[Object] = {
 		function match {
 			case functionObject: FunctionObject =>
 				val extendedEnvironment = extendFunctionEnvironment(functionObject, arguments)
 				val evaluated = functionObject.body match {
 					case Some(body) => evaluate(Some(body), extendedEnvironment)
-					case _ => return NULL
+					case _ => return Some(NULL)
 				}
-				unwrapReturnValue(evaluated)
+				Some(unwrapReturnValue(Some(evaluated)))
 			case builtinObject: BuiltinObject => builtinObject.builtinFunction(arguments.toArray)
-			case _ => ErrorObject(s"not a function: ${function.`type`()}")
+			case _ => Some(ErrorObject(s"not a function: ${function.`type`()}"))
 		}
 	}
 
-	private def extendFunctionEnvironment(function: FunctionObject, arguments: List[Object]): Environment = {
+	private def extendFunctionEnvironment(function: FunctionObject, arguments: List[Option[Object]]): Environment = {
 		val environment = new Environment(Some(function.environment))
 		function.parameters.foreach { parameters =>
 			for ((parameter, argument) <- parameters.zip(arguments)) {
-				environment.set(parameter.name, argument)
+				environment.set(parameter.name, argument.get)
 			}
 		}
 		environment
 	}
 
-	private def unwrapReturnValue(obj: Object): Object = obj match {
-		case ReturnObject(value) => value.getOrElse(NULL)
-		case _ => obj
+	private def unwrapReturnValue(obj: Option[Object]): Object = obj match {
+		case Some(ReturnObject(value)) => value.getOrElse(NULL)
+		case Some(obj) => obj
+		case None => NULL
 	}
 
 	private def isTruthy(obj: Object): Boolean = obj match {

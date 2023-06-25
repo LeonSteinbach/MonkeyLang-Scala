@@ -50,4 +50,10 @@ class SymbolTable(val outer: Option[SymbolTable] = None, private val store: muta
 		store(name) = symbol
 		symbol
 	}
+
+	def defineBuiltin(index: Int, name: String): Symbol = {
+		val symbol = Symbol(name, BUILTIN, index)
+		store(name) = symbol
+		symbol
+	}
 }

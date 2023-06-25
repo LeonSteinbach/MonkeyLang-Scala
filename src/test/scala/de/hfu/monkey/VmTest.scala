@@ -306,4 +306,21 @@ class VmTest extends AnyFunSuite {
 		))
 	}
 
+	test("vm.builtins") {
+		runVmTests(List(
+			Test("len(\"\");", IntegerObject(0)),
+			Test("len(\"four\");", IntegerObject(4)),
+			Test("len(\"hello world\");", IntegerObject(11)),
+			Test("len([1, 2, 3]);", IntegerObject(3)),
+			Test("puts(\"hello\");", NullObject),
+			Test("first([1, 2, 3]);", IntegerObject(1)),
+			Test("first([]);", NullObject),
+			Test("last([1, 2, 3]);", IntegerObject(3)),
+			Test("last([]);", NullObject),
+			Test("rest([1, 2, 3]);", ArrayObject(List(IntegerObject(2), IntegerObject(3)))),
+			Test("rest([]);", NullObject),
+			Test("push([], 1);", ArrayObject(List(IntegerObject(1)))),
+		))
+	}
+
 }

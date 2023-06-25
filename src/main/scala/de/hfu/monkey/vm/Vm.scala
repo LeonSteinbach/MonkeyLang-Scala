@@ -125,6 +125,11 @@ class Vm(bytecode: Bytecode, private var globals: Array[Object] = Array.ofDim[Ob
 					push(currentFrame.closure.free(freeIndex.toInt))
 				case OpCurrentClosure =>
 					push(currentFrame.closure)
+				case OpGetBuiltin =>
+					val builtinIndex = ins.readByte(ip + 1)
+					currentFrame.ip += 1
+					val builtin = Builtins.builtins(builtinIndex.toInt)
+					push(builtin._2)
 				case _ => throw new Exception(s"unknown operation $operation")
 			}
 		}
@@ -143,7 +148,7 @@ class Vm(bytecode: Bytecode, private var globals: Array[Object] = Array.ofDim[Ob
 	private def executeCall(numArgs: Int): Unit = {
 		stack(stackPointer - 1 - numArgs) match {
 			case closure: ClosureObject => callClosure(closure, numArgs)
-			case builtin: BuiltinObject => // TODO: Implement builtins call
+			case builtin: BuiltinObject => callBuiltin(builtin, numArgs)
 			case _ => throw new Exception("calling non-closure and non-builtin")
 		}
 	}
@@ -154,6 +159,16 @@ class Vm(bytecode: Bytecode, private var globals: Array[Object] = Array.ofDim[Ob
 		val frame = Frame(closure, stackPointer - numArgs)
 		pushFrame(frame)
 		stackPointer = frame.basePointer + closure.function.numLocals
+	}
+
+	private def callBuiltin(builtin: BuiltinObject, numArgs: Int): Unit = {
+		val args = stack.slice(stackPointer - numArgs, stackPointer)
+		val result = builtin.builtinFunction(args.map(arg => Some(arg)))
+		stackPointer -= numArgs + 1
+		result match {
+			case Some(obj: Object) => push(obj)
+			case None => push(NULL)
+		}
 	}
 
 	private def currentFrame: Frame = frames(framesIndex - 1)

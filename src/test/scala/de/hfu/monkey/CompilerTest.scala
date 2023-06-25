@@ -611,6 +611,43 @@ class CompilerTest extends AnyFunSuite {
 		))
 	}
 
+	test("compiler.builtins") {
+		runCompilerTests(List(
+			Test(
+				"len([]); push([], 1);",
+				List(
+					1
+				),
+				List(
+					Definition.make(OpGetBuiltin, 0),
+					Definition.make(OpArray, 0),
+					Definition.make(OpCall, 1),
+					Definition.make(OpPop),
+					Definition.make(OpGetBuiltin, 5),
+					Definition.make(OpArray, 0),
+					Definition.make(OpConstant, 0),
+					Definition.make(OpCall, 2),
+					Definition.make(OpPop),
+				)
+			),
+			Test(
+				"fn() { len([]); };",
+				List(
+					List(
+						Definition.make(OpGetBuiltin, 0),
+						Definition.make(OpArray, 0),
+						Definition.make(OpCall, 1),
+						Definition.make(OpReturnValue),
+					)
+				),
+				List(
+					Definition.make(OpClosure, 0, 0),
+					Definition.make(OpPop),
+				)
+			),
+		))
+	}
+
 	test("compiler.scopes") {
 		val compiler = Compiler()
 		if (compiler.scopeIndex != 0)

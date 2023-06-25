@@ -92,6 +92,35 @@ class SymbolTableTest extends AnyFunSuite {
 		}
 	}
 
+	test("symbolTable.builtins") {
+		val global = new SymbolTable()
+		val local1 = new SymbolTable(outer = Some(global))
+		val local2 = new SymbolTable(outer = Some(local1))
+
+		val expected: List[Symbol] = List(
+			Symbol("a", BUILTIN, 0),
+			Symbol("c", BUILTIN, 1),
+			Symbol("e", BUILTIN, 2),
+			Symbol("f", BUILTIN, 3),
+		)
+
+		expected.zipWithIndex.foreach {
+			(symbol, i) => global.defineBuiltin(i, symbol.name)
+		}
+
+		List(global, local1, local2).foreach { table =>
+			expected.foreach { symbol =>
+				try {
+					val result = table.resolve(symbol.name)
+					if (result != symbol)
+						fail(s"expected ${symbol.name} to resolve to $symbol, got=$result")
+				} catch {
+					case e: Exception => fail(s"name ${symbol.name} not resolvable")
+				}
+			}
+		}
+	}
+
 	test("symbolTable.resolveFree") {
 		val global = new SymbolTable()
 		global.define("a")

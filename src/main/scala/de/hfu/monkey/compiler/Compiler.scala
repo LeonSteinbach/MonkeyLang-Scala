@@ -13,6 +13,10 @@ case class Compiler(private var constants: Array[Object] = Array[Object](), var 
 	var scopes: List[CompilationScope] = List[CompilationScope](CompilationScope())
 	var scopeIndex: Int = 0
 
+	Builtins.builtins.zipWithIndex.foreach {
+		case ((name, _), i) => symbolTable.defineBuiltin(i, name)
+	}
+
 	def compile(node: Node): Unit = {
 		node match {
 			case program: Program =>
@@ -152,7 +156,7 @@ case class Compiler(private var constants: Array[Object] = Array[Object](), var 
 		symbol.scope match {
 			case GLOBAL => emit(OpGetGlobal, symbol.index)
 			case LOCAL => emit(OpGetLocal, symbol.index)
-			case BUILTIN => // TODO: Implement builtin operation
+			case BUILTIN => emit(OpGetBuiltin, symbol.index)
 			case FREE => emit(OpGetFree, symbol.index)
 			case FUNCTION => emit(OpCurrentClosure)
 		}

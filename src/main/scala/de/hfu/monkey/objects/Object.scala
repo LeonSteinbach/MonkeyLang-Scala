@@ -9,7 +9,7 @@ enum ObjectType {
 	case INTEGER, BOOLEAN, STRING, ARRAY, HASH, NULL, RETURN, ERROR, FUNCTION, COMPILED_FUNCTION, BUILTIN, CLOSURE
 }
 
-type BuiltinFunction = Array[Object] => Object
+type BuiltinFunction = Array[Option[Object]] => Option[Object]
 
 trait Object {
 	def `type`(): ObjectType
